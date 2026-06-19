@@ -5,9 +5,14 @@ import { buildConfig, PayloadRequest } from 'payload'
 import { fileURLToPath } from 'url'
 
 import { Categories } from './collections/Categories'
+import { FAQs } from './collections/FAQs'
 import { Media } from './collections/Media'
 import { Pages } from './collections/Pages'
+import { PortfolioItems } from './collections/PortfolioItems'
 import { Posts } from './collections/Posts'
+import { PricingPlans } from './collections/PricingPlans'
+import { Tenants } from './collections/Tenants'
+import { Testimonials } from './collections/Testimonials'
 import { Users } from './collections/Users'
 import { Footer } from './Footer/config'
 import { Header } from './Header/config'
@@ -21,12 +26,12 @@ const dirname = path.dirname(filename)
 export default buildConfig({
   admin: {
     components: {
-      // The `BeforeLogin` component renders a message that you see while logging into your admin panel.
-      // Feel free to delete this at any time. Simply remove the line below.
       beforeLogin: ['@/components/BeforeLogin'],
-      // The `BeforeDashboard` component renders the 'welcome' block that you see after logging into your admin panel.
-      // Feel free to delete this at any time. Simply remove the line below.
       beforeDashboard: ['@/components/BeforeDashboard'],
+      // Reorders nav groups so Tenant Management appears above Collections.
+      // Payload's groupNavItems() hardcodes Collections/Globals first — CSS
+      // flexbox order corrects the visual placement.
+      beforeNavLinks: ['@/components/SidebarOrderFix'],
     },
     importMap: {
       baseDir: path.resolve(dirname),
@@ -60,7 +65,18 @@ export default buildConfig({
   db: mongooseAdapter({
     url: process.env.DATABASE_URL || '',
   }),
-  collections: [Pages, Posts, Media, Categories, Users],
+  collections: [
+    Tenants,
+    Pages,
+    Posts,
+    Media,
+    Categories,
+    Users,
+    Testimonials,
+    FAQs,
+    PortfolioItems,
+    PricingPlans,
+  ],
   cors: [getServerSideURL()].filter(Boolean),
   globals: [Header, Footer],
   plugins,

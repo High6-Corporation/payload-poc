@@ -11,7 +11,11 @@ import { RenderBlocks } from '@/blocks/RenderBlocks'
 import { RenderHero } from '@/heros/RenderHero'
 import { generateMeta } from '@/utilities/generateMeta'
 import PageClient from './page.client'
+import type { Tenant } from '@/payload-types'
+
 import { LivePreviewListener } from '@/components/LivePreviewListener'
+import { resolveTenantIdFromSlug, resolveTenantSlugFromId } from '@/utilities/resolveTenant'
+import { TenantCookieSync } from '@/components/TenantCookieSync'
 
 export async function generateStaticParams() {
   const payload = await getPayload({ config: configPromise })
@@ -41,14 +45,24 @@ type Args = {
   params: Promise<{
     slug?: string
   }>
+  searchParams: Promise<{
+    tenant?: string
+  }>
 }
 
-export default async function Page({ params: paramsPromise }: Args) {
+export default async function Page({
+  params: paramsPromise,
+  searchParams: searchParamsPromise,
+}: Args) {
   const { isEnabled: draft } = await draftMode()
   const { slug = 'home' } = await paramsPromise
+  const { tenant: tenantSlug } = await searchParamsPromise
   // Decode to support slugs with special characters
   const decodedSlug = decodeURIComponent(slug)
   const url = '/' + decodedSlug
+
+  const tenantId = await resolveTenantIdFromSlug(tenantSlug)
+
   let page: RequiredDataFromCollectionSlug<'pages'> | null
 
   page = await queryPageBySlug({
@@ -64,10 +78,17 @@ export default async function Page({ params: paramsPromise }: Args) {
     return <PayloadRedirects url={url} />
   }
 
+  // Resolve the page's tenant and sync it client-side so the
+  // Header nav can append ?tenant=<slug> to post-related links.
+  const pageTenantId =
+    typeof page.tenant === 'string' ? page.tenant : ((page.tenant as Tenant)?.id ?? null)
+  const pageTenantSlug = await resolveTenantSlugFromId(pageTenantId)
+
   const { hero, layout } = page
 
   return (
     <article className="pt-16 pb-24">
+      <TenantCookieSync tenantSlug={pageTenantSlug} />
       <PageClient />
       {/* Allows redirects for valid pages too */}
       <PayloadRedirects disableNotFound url={url} />
@@ -75,7 +96,7 @@ export default async function Page({ params: paramsPromise }: Args) {
       {draft && <LivePreviewListener />}
 
       <RenderHero {...hero} />
-      <RenderBlocks blocks={layout} />
+      <RenderBlocks blocks={layout} tenantId={tenantId} />
     </article>
   )
 }

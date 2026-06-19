@@ -1,18 +1,28 @@
 import type { Post, ArchiveBlock as ArchiveBlockProps } from '@/payload-types'
 
 import configPromise from '@payload-config'
-import { getPayload } from 'payload'
+import { getPayload, type Where } from 'payload'
 import React from 'react'
 import RichText from '@/components/RichText'
 
 import { CollectionArchive } from '@/components/CollectionArchive'
+import { buildTenantWhereClause } from '@/utilities/resolveTenant'
 
 export const ArchiveBlock: React.FC<
   ArchiveBlockProps & {
     id?: string
+    tenantId?: string | null
   }
 > = async (props) => {
-  const { id, categories, introContent, limit: limitFromProps, populateBy, selectedDocs } = props
+  const {
+    id,
+    categories,
+    introContent,
+    limit: limitFromProps,
+    populateBy,
+    selectedDocs,
+    tenantId,
+  } = props
 
   const limit = limitFromProps || 3
 
@@ -26,19 +36,27 @@ export const ArchiveBlock: React.FC<
       else return category
     })
 
+    // Build where conditions: optional category filter + optional tenant filter
+    const conditions: Where[] = []
+
+    if (flattenedCategories && flattenedCategories.length > 0) {
+      conditions.push({
+        categories: {
+          in: flattenedCategories,
+        },
+      })
+    }
+
+    const tenantWhere = buildTenantWhereClause(tenantId ?? null)
+    if (tenantWhere) {
+      conditions.push(tenantWhere)
+    }
+
     const fetchedPosts = await payload.find({
       collection: 'posts',
       depth: 1,
       limit,
-      ...(flattenedCategories && flattenedCategories.length > 0
-        ? {
-            where: {
-              categories: {
-                in: flattenedCategories,
-              },
-            },
-          }
-        : {}),
+      ...(conditions.length > 0 ? { where: { and: conditions } } : {}),
     })
 
     posts = fetchedPosts.docs

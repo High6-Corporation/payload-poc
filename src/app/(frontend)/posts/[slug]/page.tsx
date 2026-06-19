@@ -14,6 +14,7 @@ import { PostHero } from '@/heros/PostHero'
 import { generateMeta } from '@/utilities/generateMeta'
 import PageClient from './page.client'
 import { LivePreviewListener } from '@/components/LivePreviewListener'
+import { buildTenantWhereClause, resolveTenantIdFromSlug } from '@/utilities/resolveTenant'
 
 export async function generateStaticParams() {
   const payload = await getPayload({ config: configPromise })
@@ -39,15 +40,23 @@ type Args = {
   params: Promise<{
     slug?: string
   }>
+  searchParams: Promise<{
+    tenant?: string
+  }>
 }
 
-export default async function Post({ params: paramsPromise }: Args) {
+export default async function Post({
+  params: paramsPromise,
+  searchParams: searchParamsPromise,
+}: Args) {
   const { isEnabled: draft } = await draftMode()
   const { slug = '' } = await paramsPromise
+  const { tenant: tenantSlug } = await searchParamsPromise
   // Decode to support slugs with special characters
   const decodedSlug = decodeURIComponent(slug)
   const url = '/posts/' + decodedSlug
-  const post = await queryPostBySlug({ slug: decodedSlug })
+  const tenantId = await resolveTenantIdFromSlug(tenantSlug)
+  const post = await queryPostBySlug({ slug: decodedSlug, tenantId })
 
   if (!post) return <PayloadRedirects url={url} />
 
@@ -77,32 +86,39 @@ export default async function Post({ params: paramsPromise }: Args) {
   )
 }
 
-export async function generateMetadata({ params: paramsPromise }: Args): Promise<Metadata> {
+export async function generateMetadata({
+  params: paramsPromise,
+  searchParams: searchParamsPromise,
+}: Args): Promise<Metadata> {
   const { slug = '' } = await paramsPromise
+  const { tenant: tenantSlug } = await searchParamsPromise
   // Decode to support slugs with special characters
   const decodedSlug = decodeURIComponent(slug)
-  const post = await queryPostBySlug({ slug: decodedSlug })
+  const tenantId = await resolveTenantIdFromSlug(tenantSlug)
+  const post = await queryPostBySlug({ slug: decodedSlug, tenantId })
 
   return generateMeta({ doc: post })
 }
 
-const queryPostBySlug = cache(async ({ slug }: { slug: string }) => {
-  const { isEnabled: draft } = await draftMode()
+const queryPostBySlug = cache(
+  async ({ slug, tenantId }: { slug: string; tenantId?: string | null }) => {
+    const { isEnabled: draft } = await draftMode()
 
-  const payload = await getPayload({ config: configPromise })
+    const payload = await getPayload({ config: configPromise })
 
-  const result = await payload.find({
-    collection: 'posts',
-    draft,
-    limit: 1,
-    overrideAccess: draft,
-    pagination: false,
-    where: {
-      slug: {
-        equals: slug,
+    const tenantWhere = buildTenantWhereClause(tenantId ?? null)
+
+    const result = await payload.find({
+      collection: 'posts',
+      draft,
+      limit: 1,
+      overrideAccess: draft,
+      pagination: false,
+      where: {
+        and: [{ slug: { equals: slug } }, ...(tenantWhere ? [tenantWhere] : [])],
       },
-    },
-  })
+    })
 
-  return result.docs?.[0] || null
-})
+    return result.docs?.[0] || null
+  },
+)

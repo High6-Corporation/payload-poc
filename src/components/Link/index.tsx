@@ -16,6 +16,7 @@ type CMSLinkType = {
     value: Page | Post | string | number
   } | null
   size?: ButtonProps['size'] | null
+  tenantSlug?: string
   type?: 'custom' | 'reference' | null
   url?: string | null
 }
@@ -30,15 +31,21 @@ export const CMSLink: React.FC<CMSLinkType> = (props) => {
     newTab,
     reference,
     size: sizeFromProps,
+    tenantSlug,
     url,
   } = props
 
-  const href =
+  let href =
     type === 'reference' && typeof reference?.value === 'object' && reference.value.slug
       ? `${reference?.relationTo !== 'pages' ? `/${reference?.relationTo}` : ''}/${
           reference.value.slug
         }`
       : url
+
+  // Append tenant context to post-related links when navigating from a tenant page
+  if (tenantSlug && href?.startsWith('/posts')) {
+    href = `${href}?tenant=${tenantSlug}`
+  }
 
   if (!href) return null
 

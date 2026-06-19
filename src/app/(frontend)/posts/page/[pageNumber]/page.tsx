@@ -8,6 +8,7 @@ import { getPayload } from 'payload'
 import React from 'react'
 import PageClient from './page.client'
 import { notFound } from 'next/navigation'
+import { buildTenantWhereClause, resolveTenantIdFromSlug } from '@/utilities/resolveTenant'
 
 export const revalidate = 600
 
@@ -15,15 +16,25 @@ type Args = {
   params: Promise<{
     pageNumber: string
   }>
+  searchParams: Promise<{
+    tenant?: string
+  }>
 }
 
-export default async function Page({ params: paramsPromise }: Args) {
+export default async function Page({
+  params: paramsPromise,
+  searchParams: searchParamsPromise,
+}: Args) {
   const { pageNumber } = await paramsPromise
+  const { tenant: tenantSlug } = await searchParamsPromise
   const payload = await getPayload({ config: configPromise })
 
   const sanitizedPageNumber = Number(pageNumber)
 
   if (!Number.isInteger(sanitizedPageNumber)) notFound()
+
+  const tenantId = await resolveTenantIdFromSlug(tenantSlug)
+  const tenantWhere = buildTenantWhereClause(tenantId)
 
   const posts = await payload.find({
     collection: 'posts',
@@ -31,6 +42,7 @@ export default async function Page({ params: paramsPromise }: Args) {
     limit: 12,
     page: sanitizedPageNumber,
     overrideAccess: false,
+    ...(tenantWhere ? { where: tenantWhere } : {}),
   })
 
   return (

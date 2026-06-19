@@ -67,11 +67,16 @@ export interface Config {
   };
   blocks: {};
   collections: {
+    tenants: Tenant;
     pages: Page;
     posts: Post;
     media: Media;
     categories: Category;
     users: User;
+    testimonials: Testimonial;
+    faqs: Faq;
+    'portfolio-items': PortfolioItem;
+    'pricing-plans': PricingPlan;
     redirects: Redirect;
     forms: Form;
     'form-submissions': FormSubmission;
@@ -89,11 +94,16 @@ export interface Config {
     };
   };
   collectionsSelect: {
+    tenants: TenantsSelect<false> | TenantsSelect<true>;
     pages: PagesSelect<false> | PagesSelect<true>;
     posts: PostsSelect<false> | PostsSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
     categories: CategoriesSelect<false> | CategoriesSelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
+    testimonials: TestimonialsSelect<false> | TestimonialsSelect<true>;
+    faqs: FaqsSelect<false> | FaqsSelect<true>;
+    'portfolio-items': PortfolioItemsSelect<false> | PortfolioItemsSelect<true>;
+    'pricing-plans': PricingPlansSelect<false> | PricingPlansSelect<true>;
     redirects: RedirectsSelect<false> | RedirectsSelect<true>;
     forms: FormsSelect<false> | FormsSelect<true>;
     'form-submissions': FormSubmissionsSelect<false> | FormSubmissionsSelect<true>;
@@ -153,10 +163,26 @@ export interface UserAuthOperations {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "tenants".
+ */
+export interface Tenant {
+  id: string;
+  name: string;
+  /**
+   * When enabled, the slug will auto-generate from the title field on save and autosave.
+   */
+  generateSlug?: boolean | null;
+  slug: string;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "pages".
  */
 export interface Page {
   id: string;
+  tenant?: (string | null) | Tenant;
   title: string;
   hero: {
     type: 'none' | 'highImpact' | 'mediumImpact' | 'lowImpact';
@@ -226,6 +252,7 @@ export interface Page {
  */
 export interface Post {
   id: string;
+  tenant?: (string | null) | Tenant;
   title: string;
   heroImage?: (string | null) | Media;
   content: {
@@ -276,6 +303,7 @@ export interface Post {
  */
 export interface Media {
   id: string;
+  tenant?: (string | null) | Tenant;
   alt?: string | null;
   caption?: {
     root: {
@@ -292,6 +320,7 @@ export interface Media {
     };
     [k: string]: unknown;
   } | null;
+  prefix?: string | null;
   folder?: (string | null) | FolderInterface;
   updatedAt: string;
   createdAt: string;
@@ -395,6 +424,7 @@ export interface FolderInterface {
  */
 export interface Category {
   id: string;
+  tenant?: (string | null) | Tenant;
   title: string;
   /**
    * When enabled, the slug will auto-generate from the title field on save and autosave.
@@ -420,6 +450,12 @@ export interface Category {
 export interface User {
   id: string;
   name?: string | null;
+  tenants?:
+    | {
+        tenant: string | Tenant;
+        id?: string | null;
+      }[]
+    | null;
   updatedAt: string;
   createdAt: string;
   email: string;
@@ -783,6 +819,65 @@ export interface Form {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "testimonials".
+ */
+export interface Testimonial {
+  id: string;
+  tenant?: (string | null) | Tenant;
+  quote: string;
+  name: string;
+  position: string;
+  image: string | Media;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "faqs".
+ */
+export interface Faq {
+  id: string;
+  tenant?: (string | null) | Tenant;
+  question: string;
+  answer: string;
+  order?: number | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "portfolio-items".
+ */
+export interface PortfolioItem {
+  id: string;
+  tenant?: (string | null) | Tenant;
+  title: string;
+  category: string;
+  url: string;
+  image: string | Media;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "pricing-plans".
+ */
+export interface PricingPlan {
+  id: string;
+  tenant?: (string | null) | Tenant;
+  label: string;
+  items?:
+    | {
+        item: string;
+        id?: string | null;
+      }[]
+    | null;
+  order?: number | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "redirects".
  */
 export interface Redirect {
@@ -972,6 +1067,10 @@ export interface PayloadLockedDocument {
   id: string;
   document?:
     | ({
+        relationTo: 'tenants';
+        value: string | Tenant;
+      } | null)
+    | ({
         relationTo: 'pages';
         value: string | Page;
       } | null)
@@ -990,6 +1089,22 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'users';
         value: string | User;
+      } | null)
+    | ({
+        relationTo: 'testimonials';
+        value: string | Testimonial;
+      } | null)
+    | ({
+        relationTo: 'faqs';
+        value: string | Faq;
+      } | null)
+    | ({
+        relationTo: 'portfolio-items';
+        value: string | PortfolioItem;
+      } | null)
+    | ({
+        relationTo: 'pricing-plans';
+        value: string | PricingPlan;
       } | null)
     | ({
         relationTo: 'redirects';
@@ -1055,9 +1170,21 @@ export interface PayloadMigration {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "tenants_select".
+ */
+export interface TenantsSelect<T extends boolean = true> {
+  name?: T;
+  generateSlug?: T;
+  slug?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "pages_select".
  */
 export interface PagesSelect<T extends boolean = true> {
+  tenant?: T;
   title?: T;
   hero?:
     | T
@@ -1193,6 +1320,7 @@ export interface FormBlockSelect<T extends boolean = true> {
  * via the `definition` "posts_select".
  */
 export interface PostsSelect<T extends boolean = true> {
+  tenant?: T;
   title?: T;
   heroImage?: T;
   content?: T;
@@ -1224,8 +1352,10 @@ export interface PostsSelect<T extends boolean = true> {
  * via the `definition` "media_select".
  */
 export interface MediaSelect<T extends boolean = true> {
+  tenant?: T;
   alt?: T;
   caption?: T;
+  prefix?: T;
   folder?: T;
   updatedAt?: T;
   createdAt?: T;
@@ -1318,6 +1448,7 @@ export interface MediaSelect<T extends boolean = true> {
  * via the `definition` "categories_select".
  */
 export interface CategoriesSelect<T extends boolean = true> {
+  tenant?: T;
   title?: T;
   generateSlug?: T;
   slug?: T;
@@ -1339,6 +1470,12 @@ export interface CategoriesSelect<T extends boolean = true> {
  */
 export interface UsersSelect<T extends boolean = true> {
   name?: T;
+  tenants?:
+    | T
+    | {
+        tenant?: T;
+        id?: T;
+      };
   updatedAt?: T;
   createdAt?: T;
   email?: T;
@@ -1355,6 +1492,61 @@ export interface UsersSelect<T extends boolean = true> {
         createdAt?: T;
         expiresAt?: T;
       };
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "testimonials_select".
+ */
+export interface TestimonialsSelect<T extends boolean = true> {
+  tenant?: T;
+  quote?: T;
+  name?: T;
+  position?: T;
+  image?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "faqs_select".
+ */
+export interface FaqsSelect<T extends boolean = true> {
+  tenant?: T;
+  question?: T;
+  answer?: T;
+  order?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "portfolio-items_select".
+ */
+export interface PortfolioItemsSelect<T extends boolean = true> {
+  tenant?: T;
+  title?: T;
+  category?: T;
+  url?: T;
+  image?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "pricing-plans_select".
+ */
+export interface PricingPlansSelect<T extends boolean = true> {
+  tenant?: T;
+  label?: T;
+  items?:
+    | T
+    | {
+        item?: T;
+        id?: T;
+      };
+  order?: T;
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

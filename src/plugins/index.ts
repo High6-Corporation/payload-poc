@@ -1,29 +1,57 @@
 import { formBuilderPlugin } from '@payloadcms/plugin-form-builder'
+import { multiTenantPlugin } from '@payloadcms/plugin-multi-tenant'
 import { nestedDocsPlugin } from '@payloadcms/plugin-nested-docs'
 import { redirectsPlugin } from '@payloadcms/plugin-redirects'
 import { seoPlugin } from '@payloadcms/plugin-seo'
 import { searchPlugin } from '@payloadcms/plugin-search'
+import { s3Storage } from '@payloadcms/storage-s3'
 import { Plugin } from 'payload'
+import type { Config } from '@/payload-types'
 import { revalidateRedirects } from '@/hooks/revalidateRedirects'
 import { GenerateTitle, GenerateURL } from '@payloadcms/plugin-seo/types'
 import { FixedToolbarFeature, HeadingFeature, lexicalEditor } from '@payloadcms/richtext-lexical'
 import { searchFields } from '@/search/fieldOverrides'
 import { beforeSyncWithSearch } from '@/search/beforeSync'
-
 import { Page, Post } from '@/payload-types'
 import { getServerSideURL } from '@/utilities/getURL'
 
 const generateTitle: GenerateTitle<Post | Page> = ({ doc }) => {
   return doc?.title ? `${doc.title} | Payload Website Template` : 'Payload Website Template'
 }
-
 const generateURL: GenerateURL<Post | Page> = ({ doc }) => {
   const url = getServerSideURL()
-
   return doc?.slug ? `${url}/${doc.slug}` : url
 }
 
 export const plugins: Plugin[] = [
+  multiTenantPlugin<Config>({
+    cleanupAfterTenantDelete: false,
+    collections: {
+      pages: {},
+      posts: {},
+      media: {},
+      categories: {},
+      testimonials: {},
+      faqs: {},
+      'portfolio-items': {},
+      'pricing-plans': {},
+    },
+    userHasAccessToAllTenants: () => true,
+    useTenantsListFilter: false,
+  }),
+  s3Storage({
+    collections: { media: true },
+    bucket: process.env.SUPABASE_BUCKET || '',
+    config: {
+      credentials: {
+        accessKeyId: process.env.SUPABASE_ACCESS_KEY_ID || '',
+        secretAccessKey: process.env.SUPABASE_SECRET_ACCESS_KEY || '',
+      },
+      region: process.env.SUPABASE_REGION || '',
+      endpoint: process.env.SUPABASE_ENDPOINT || '',
+      forcePathStyle: true,
+    },
+  }),
   redirectsPlugin({
     collections: ['pages', 'posts'],
     overrides: {

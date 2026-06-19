@@ -8,11 +8,14 @@ const BeforeDashboard: React.FC = () => {
   return (
     <div className={baseClass}>
       <div className={`${baseClass}__card`}>
-        <h2>Payload Multi-Tenant POC</h2>
+        <h2>High6 CMS — Multi-Tenant Platform</h2>
         <p>
-          This admin panel manages content across multiple tenants. The{' '}
-          <strong>Tenant Management</strong> section at the top of the sidebar is where you
-          configure tenant identities — every other collection is scoped to a tenant.
+          Manage content across client sites from one dashboard. Every collection is scoped to a
+          tenant — configure identities in{' '}
+          <strong>
+            <a href="/admin/collections/tenants?limit=10">Tenant Management</a>
+          </strong>{' '}
+          before adding content.
         </p>
       </div>
     </div>

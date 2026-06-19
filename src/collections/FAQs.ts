@@ -16,6 +16,15 @@ export const FAQs: CollectionConfig = {
   },
   fields: [
     {
+      name: 'site',
+      type: 'relationship',
+      relationTo: 'sites',
+      required: true,
+      admin: {
+        position: 'sidebar',
+      },
+    },
+    {
       name: 'question',
       type: 'text',
       required: true,

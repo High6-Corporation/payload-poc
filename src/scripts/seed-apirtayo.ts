@@ -15,7 +15,7 @@
 const BASE_URL = process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:3000'
 const EMAIL = process.env.AGENT_EMAIL || 'agent@payload-poc.local'
 const PASSWORD = process.env.AGENT_PASSWORD || 'password123'
-const TENANT_SLUG = 'apir-tayo'
+const SITE_SLUG = 'apir-tayo'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -51,25 +51,25 @@ async function login(): Promise<string> {
   return data.token
 }
 
-async function resolveTenant(token: string, slug: string): Promise<string> {
-  const url = `${BASE_URL}/api/tenants?where[slug][equals]=${encodeURIComponent(slug)}`
+async function resolveSite(token: string, slug: string): Promise<string> {
+  const url = `${BASE_URL}/api/sites?where[slug][equals]=${encodeURIComponent(slug)}`
   const res = await fetch(url, {
     headers: { Authorization: `Bearer ${token}` },
   })
 
   if (!res.ok) {
     const body = await res.text()
-    throw new Error(`Tenant lookup failed (HTTP ${res.status}): ${body}`)
+    throw new Error(`Site lookup failed (HTTP ${res.status}): ${body}`)
   }
 
   const { docs } = (await res.json()) as { docs: { id: string; slug: string }[] }
   if (!docs?.length) {
-    throw new Error(`Tenant "${slug}" not found. Has the tenant been created in the admin panel?`)
+    throw new Error(`Site "${slug}" not found. Has it been created in the admin panel?`)
   }
 
   const { id } = docs[0]
   if (!/^[a-f0-9]{24}$/.test(id)) {
-    throw new Error(`Tenant "${slug}" resolved to invalid ObjectId: ${id}`)
+    throw new Error(`Site "${slug}" resolved to invalid ObjectId: ${id}`)
   }
 
   return id
@@ -78,11 +78,11 @@ async function resolveTenant(token: string, slug: string): Promise<string> {
 async function checkExists(
   token: string,
   collection: string,
-  tenantId: string,
+  siteId: string,
   matchField: string,
   matchValue: string,
 ): Promise<boolean> {
-  const url = `${BASE_URL}/api/${collection}?where[and][0][tenant][equals]=${encodeURIComponent(tenantId)}&where[and][1][${matchField}][equals]=${encodeURIComponent(matchValue)}`
+  const url = `${BASE_URL}/api/${collection}?where[and][0][site][equals]=${encodeURIComponent(siteId)}&where[and][1][${matchField}][equals]=${encodeURIComponent(matchValue)}`
   const res = await fetch(url, {
     headers: { Authorization: `Bearer ${token}` },
   })
@@ -131,19 +131,19 @@ async function createDoc(
 async function seedOne(
   token: string,
   collection: string,
-  tenantId: string,
+  siteId: string,
   matchField: string,
   matchValue: string,
   data: Record<string, unknown>,
 ): Promise<{ created: boolean; error?: string }> {
   try {
-    const exists = await checkExists(token, collection, tenantId, matchField, matchValue)
+    const exists = await checkExists(token, collection, siteId, matchField, matchValue)
     if (exists) {
       console.log(`  ⏭  Skipping "${matchValue}" (already exists)`)
       return { created: false }
     }
 
-    await createDoc(token, collection, { ...data, tenant: tenantId })
+    await createDoc(token, collection, { ...data, site: siteId })
     console.log(`  ✓  Created "${matchValue}"`)
     return { created: true }
   } catch (err) {
@@ -157,7 +157,7 @@ async function seedOne(
 // Collection seeders
 // ---------------------------------------------------------------------------
 
-async function seedFAQs(token: string, tenantId: string): Promise<SeedResult> {
+async function seedFAQs(token: string, siteId: string): Promise<SeedResult> {
   console.log('\n📋 Seeding FAQs…')
   const faqs = [
     {
@@ -197,7 +197,7 @@ async function seedFAQs(token: string, tenantId: string): Promise<SeedResult> {
   const errors: string[] = []
 
   for (const faq of faqs) {
-    const result = await seedOne(token, 'faqs', tenantId, 'question', faq.question, {
+    const result = await seedOne(token, 'faqs', siteId, 'question', faq.question, {
       question: faq.question,
       answer: faq.answer,
       order: faq.order,
@@ -210,7 +210,7 @@ async function seedFAQs(token: string, tenantId: string): Promise<SeedResult> {
   return { collection: 'FAQs', created, skipped, errors }
 }
 
-async function seedPricingPlans(token: string, tenantId: string): Promise<SeedResult> {
+async function seedPricingPlans(token: string, siteId: string): Promise<SeedResult> {
   console.log('\n💰 Seeding Pricing Plans…')
   const plans = [
     {
@@ -240,7 +240,7 @@ async function seedPricingPlans(token: string, tenantId: string): Promise<SeedRe
   const errors: string[] = []
 
   for (const plan of plans) {
-    const result = await seedOne(token, 'pricing-plans', tenantId, 'label', plan.label, {
+    const result = await seedOne(token, 'pricing-plans', siteId, 'label', plan.label, {
       label: plan.label,
       items: plan.items,
       order: plan.order,
@@ -253,7 +253,7 @@ async function seedPricingPlans(token: string, tenantId: string): Promise<SeedRe
   return { collection: 'Pricing Plans', created, skipped, errors }
 }
 
-async function seedTestimonials(token: string, tenantId: string): Promise<SeedResult> {
+async function seedTestimonials(token: string, siteId: string): Promise<SeedResult> {
   console.log('\n⭐ Seeding Testimonials…')
   const testimonials = [
     {
@@ -281,7 +281,7 @@ async function seedTestimonials(token: string, tenantId: string): Promise<SeedRe
   const errors: string[] = []
 
   for (const t of testimonials) {
-    const result = await seedOne(token, 'testimonials', tenantId, 'name', t.name, {
+    const result = await seedOne(token, 'testimonials', siteId, 'name', t.name, {
       quote: t.quote,
       name: t.name,
       position: t.position,
@@ -294,7 +294,7 @@ async function seedTestimonials(token: string, tenantId: string): Promise<SeedRe
   return { collection: 'Testimonials', created, skipped, errors }
 }
 
-async function seedPortfolioItems(token: string, tenantId: string): Promise<SeedResult> {
+async function seedPortfolioItems(token: string, siteId: string): Promise<SeedResult> {
   console.log('\n🖼  Seeding Portfolio Items…')
   const items = [
     { title: 'Soding Bros', category: 'Technology', url: 'https://sodingbros.com/' },
@@ -310,7 +310,7 @@ async function seedPortfolioItems(token: string, tenantId: string): Promise<Seed
   const errors: string[] = []
 
   for (const item of items) {
-    const result = await seedOne(token, 'portfolio-items', tenantId, 'title', item.title, {
+    const result = await seedOne(token, 'portfolio-items', siteId, 'title', item.title, {
       title: item.title,
       category: item.category,
       url: item.url,
@@ -328,28 +328,28 @@ async function seedPortfolioItems(token: string, tenantId: string): Promise<Seed
 // ---------------------------------------------------------------------------
 
 async function main(): Promise<void> {
-  console.log('🌱 Seed: apir-tayo tenant')
+  console.log('🌱 Seed: apir-tayo site')
   console.log(`   Server: ${BASE_URL}`)
   console.log(`   User:   ${EMAIL}`)
-  console.log(`   Tenant: ${TENANT_SLUG}`)
+  console.log(`   Site:   ${SITE_SLUG}`)
 
   // 1. Authenticate
   console.log('\n🔐 Logging in…')
   const token = await login()
   console.log('   Token obtained ✓')
 
-  // 2. Resolve tenant
-  console.log(`\n🔍 Resolving tenant "${TENANT_SLUG}"…`)
-  const tenantId = await resolveTenant(token, TENANT_SLUG)
-  console.log(`   Tenant ID: ${tenantId} ✓`)
+  // 2. Resolve site
+  console.log(`\n🔍 Resolving site "${SITE_SLUG}"…`)
+  const siteId = await resolveSite(token, SITE_SLUG)
+  console.log(`   Site ID: ${siteId} ✓`)
 
   // 3. Seed collections in order
   const results: SeedResult[] = []
 
-  results.push(await seedFAQs(token, tenantId))
-  results.push(await seedPricingPlans(token, tenantId))
-  results.push(await seedTestimonials(token, tenantId))
-  results.push(await seedPortfolioItems(token, tenantId))
+  results.push(await seedFAQs(token, siteId))
+  results.push(await seedPricingPlans(token, siteId))
+  results.push(await seedTestimonials(token, siteId))
+  results.push(await seedPortfolioItems(token, siteId))
 
   // 4. Summary
   const totalCreated = results.reduce((sum, r) => sum + r.created, 0)

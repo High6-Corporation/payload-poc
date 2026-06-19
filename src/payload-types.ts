@@ -68,6 +68,7 @@ export interface Config {
   blocks: {};
   collections: {
     tenants: Tenant;
+    sites: Site;
     pages: Page;
     posts: Post;
     media: Media;
@@ -95,6 +96,7 @@ export interface Config {
   };
   collectionsSelect: {
     tenants: TenantsSelect<false> | TenantsSelect<true>;
+    sites: SitesSelect<false> | SitesSelect<true>;
     pages: PagesSelect<false> | PagesSelect<true>;
     posts: PostsSelect<false> | PostsSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
@@ -173,6 +175,23 @@ export interface Tenant {
    */
   generateSlug?: boolean | null;
   slug: string;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "sites".
+ */
+export interface Site {
+  id: string;
+  name: string;
+  /**
+   * When enabled, the slug will auto-generate from the title field on save and autosave.
+   */
+  generateSlug?: boolean | null;
+  slug: string;
+  url: string;
+  tenant: string | Tenant;
   updatedAt: string;
   createdAt: string;
 }
@@ -823,7 +842,7 @@ export interface Form {
  */
 export interface Testimonial {
   id: string;
-  tenant?: (string | null) | Tenant;
+  site: string | Site;
   quote: string;
   name: string;
   position: string;
@@ -837,7 +856,7 @@ export interface Testimonial {
  */
 export interface Faq {
   id: string;
-  tenant?: (string | null) | Tenant;
+  site: string | Site;
   question: string;
   answer: string;
   order?: number | null;
@@ -850,7 +869,7 @@ export interface Faq {
  */
 export interface PortfolioItem {
   id: string;
-  tenant?: (string | null) | Tenant;
+  site: string | Site;
   title: string;
   category: string;
   url: string;
@@ -864,7 +883,7 @@ export interface PortfolioItem {
  */
 export interface PricingPlan {
   id: string;
-  tenant?: (string | null) | Tenant;
+  site: string | Site;
   label: string;
   items?:
     | {
@@ -1071,6 +1090,10 @@ export interface PayloadLockedDocument {
         value: string | Tenant;
       } | null)
     | ({
+        relationTo: 'sites';
+        value: string | Site;
+      } | null)
+    | ({
         relationTo: 'pages';
         value: string | Page;
       } | null)
@@ -1176,6 +1199,19 @@ export interface TenantsSelect<T extends boolean = true> {
   name?: T;
   generateSlug?: T;
   slug?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "sites_select".
+ */
+export interface SitesSelect<T extends boolean = true> {
+  name?: T;
+  generateSlug?: T;
+  slug?: T;
+  url?: T;
+  tenant?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -1498,7 +1534,7 @@ export interface UsersSelect<T extends boolean = true> {
  * via the `definition` "testimonials_select".
  */
 export interface TestimonialsSelect<T extends boolean = true> {
-  tenant?: T;
+  site?: T;
   quote?: T;
   name?: T;
   position?: T;
@@ -1511,7 +1547,7 @@ export interface TestimonialsSelect<T extends boolean = true> {
  * via the `definition` "faqs_select".
  */
 export interface FaqsSelect<T extends boolean = true> {
-  tenant?: T;
+  site?: T;
   question?: T;
   answer?: T;
   order?: T;
@@ -1523,7 +1559,7 @@ export interface FaqsSelect<T extends boolean = true> {
  * via the `definition` "portfolio-items_select".
  */
 export interface PortfolioItemsSelect<T extends boolean = true> {
-  tenant?: T;
+  site?: T;
   title?: T;
   category?: T;
   url?: T;
@@ -1536,7 +1572,7 @@ export interface PortfolioItemsSelect<T extends boolean = true> {
  * via the `definition` "pricing-plans_select".
  */
 export interface PricingPlansSelect<T extends boolean = true> {
-  tenant?: T;
+  site?: T;
   label?: T;
   items?:
     | T

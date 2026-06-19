@@ -10,7 +10,12 @@
  *   - Forbidden:          delete, tenant reassignment, media, any other collection
  */
 
-import { resolveTenantIdFromSlug } from '@/utilities/resolveTenant'
+// TODO(Workstream A): This currently resolves a tenant slug→ID for
+// isolation checks via resolveTenantIdFromSiteSlug (which derives the
+// tenant from a site). When Workstream A resumes, this should be changed
+// to resolve the Site slug→ID directly and derive the tenant via
+// site.tenant. Do not change the resolution logic until then.
+import { resolveTenantIdFromSiteSlug } from '@/utilities/resolveSite'
 import { getAgentToken, clearAgentToken } from '@/utilities/payloadAuth'
 
 // ---------------------------------------------------------------------------
@@ -135,7 +140,7 @@ export async function POST(request: Request): Promise<Response> {
     }
 
     // --- Step 2: Resolve tenant slug → ID ----------------------------------
-    const tenantId = await resolveTenantIdFromSlug(tenantSlug)
+    const tenantId = await resolveTenantIdFromSiteSlug(tenantSlug)
     if (!tenantId) {
       return Response.json({ error: 'Unknown tenant' }, { status: 400 })
     }

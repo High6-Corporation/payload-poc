@@ -44,7 +44,8 @@
   --breakpoint-xl: 80rem;
   --breakpoint-2xl: 86rem;
   --font-mono: var(--font-geist-mono);
-  --font-sans: var(--font-geist-sans);
+  --font-sans: var(--font-dm-sans);
+  --font-display: var(--font-space-grotesk);
 }
 
 @layer utilities {
@@ -86,78 +87,106 @@
   }
 }
 
+/* ==========================================================================
+   High6 "Signal" Theme
+   Derived from the High6 logo: Blue #006EE9, Green #009217, Orange #FF5A00
+   ========================================================================== */
+
 :root {
-  --background: oklch(100% 0 0deg);
-  --foreground: oklch(14.5% 0 0deg);
-  --card: oklch(96.5% 0.005 265deg);
-  --card-foreground: oklch(14.5% 0 0deg);
+  /* Surface & Text */
+  --background: oklch(97.5% 0.005 260deg);
+  --foreground: oklch(14.5% 0.01 260deg);
+  --card: oklch(100% 0 0deg);
+  --card-foreground: oklch(14.5% 0.01 260deg);
   --popover: oklch(100% 0 0deg);
-  --popover-foreground: oklch(14.5% 0 0deg);
-  --primary: oklch(20.5% 0 0deg);
+  --popover-foreground: oklch(14.5% 0.01 260deg);
+
+  /* Primary — High6 Blue #0066D6 */
+  --primary: oklch(52% 0.22 260deg);
   --primary-foreground: oklch(98.5% 0 0deg);
-  --secondary: oklch(97% 0 0deg);
-  --secondary-foreground: oklch(20.5% 0 0deg);
-  --muted: oklch(97% 0 0deg);
-  --muted-foreground: oklch(55.6% 0 0deg);
-  --accent: oklch(97% 0 0deg);
-  --accent-foreground: oklch(20.5% 0 0deg);
-  --destructive: oklch(57.7% 0.245 27.325deg);
-  --destructive-foreground: oklch(57.7% 0.245 27.325deg);
-  --border: oklch(92.2% 0 0deg);
-  --input: oklch(92.2% 0 0deg);
-  --ring: oklch(70.8% 0 0deg);
-  --chart-1: oklch(64.6% 0.222 41.116deg);
-  --chart-2: oklch(60% 0.118 184.704deg);
-  --chart-3: oklch(39.8% 0.07 227.392deg);
-  --chart-4: oklch(82.8% 0.189 84.429deg);
-  --chart-5: oklch(76.9% 0.188 70.08deg);
-  --radius: 0.625rem;
-  --sidebar: oklch(98.5% 0 0deg);
-  --sidebar-foreground: oklch(14.5% 0 0deg);
-  --sidebar-primary: oklch(20.5% 0 0deg);
+
+  /* Secondary */
+  --secondary: oklch(96% 0.005 255deg);
+  --secondary-foreground: oklch(20% 0.02 260deg);
+
+  /* Muted */
+  --muted: oklch(96% 0.005 255deg);
+  --muted-foreground: oklch(55% 0.02 260deg);
+
+  /* Accent — High6 Green #009236 */
+  --accent: oklch(55% 0.24 150deg);
+  --accent-foreground: oklch(98.5% 0 0deg);
+
+  /* Destructive */
+  --destructive: oklch(52% 0.2 20deg);
+  --destructive-foreground: oklch(52% 0.2 20deg);
+
+  /* Borders & Inputs */
+  --border: oklch(90% 0.01 260deg);
+  --input: oklch(90% 0.01 260deg);
+  --ring: oklch(52% 0.22 260deg);
+
+  /* Charts */
+  --chart-1: oklch(52% 0.22 260deg);
+  --chart-2: oklch(55% 0.24 150deg);
+  --chart-3: oklch(60% 0.2 50deg);
+  --chart-4: oklch(58% 0.15 200deg);
+  --chart-5: oklch(65% 0.15 280deg);
+
+  --radius: 0.5rem;
+
+  /* Sidebar */
+  --sidebar: oklch(98% 0.003 260deg);
+  --sidebar-foreground: oklch(14.5% 0.01 260deg);
+  --sidebar-primary: oklch(52% 0.22 260deg);
   --sidebar-primary-foreground: oklch(98.5% 0 0deg);
-  --sidebar-accent: oklch(97% 0 0deg);
-  --sidebar-accent-foreground: oklch(20.5% 0 0deg);
-  --sidebar-border: oklch(92.2% 0 0deg);
-  --sidebar-ring: oklch(70.8% 0 0deg);
+  --sidebar-accent: oklch(96% 0.005 255deg);
+  --sidebar-accent-foreground: oklch(20% 0.02 260deg);
+  --sidebar-border: oklch(90% 0.01 260deg);
+  --sidebar-ring: oklch(52% 0.22 260deg);
+
+  /* Semantic */
   --success: oklch(78% 0.08 200deg);
   --warning: oklch(89% 0.1 75deg);
   --error: oklch(75% 0.15 25deg);
 }
 
 [data-theme='dark'] {
-  --background: oklch(14.5% 0 0deg);
+  --background: oklch(14.5% 0.01 260deg);
   --foreground: oklch(98.5% 0 0deg);
-  --card: oklch(17% 0 0deg);
+  --card: oklch(17% 0.01 260deg);
   --card-foreground: oklch(98.5% 0 0deg);
-  --popover: oklch(14.5% 0 0deg);
+  --popover: oklch(14.5% 0.01 260deg);
   --popover-foreground: oklch(98.5% 0 0deg);
-  --primary: oklch(98.5% 0 0deg);
-  --primary-foreground: oklch(20.5% 0 0deg);
-  --secondary: oklch(26.9% 0 0deg);
+
+  --primary: oklch(65% 0.2 255deg);
+  --primary-foreground: oklch(10% 0.02 260deg);
+
+  --secondary: oklch(25% 0.01 260deg);
   --secondary-foreground: oklch(98.5% 0 0deg);
-  --muted: oklch(26.9% 0 0deg);
-  --muted-foreground: oklch(70.8% 0 0deg);
-  --accent: oklch(26.9% 0 0deg);
+
+  --muted: oklch(25% 0.01 260deg);
+  --muted-foreground: oklch(70% 0.02 260deg);
+
+  --accent: oklch(55% 0.2 155deg);
   --accent-foreground: oklch(98.5% 0 0deg);
-  --destructive: oklch(39.6% 0.141 25.723deg);
-  --destructive-foreground: oklch(63.7% 0.237 25.331deg);
-  --border: oklch(26.9% 0 0deg);
-  --input: oklch(26.9% 0 0deg);
-  --ring: oklch(43.9% 0 0deg);
-  --chart-1: oklch(48.8% 0.243 264.376deg);
-  --chart-2: oklch(69.6% 0.17 162.48deg);
-  --chart-3: oklch(76.9% 0.188 70.08deg);
-  --chart-4: oklch(62.7% 0.265 303.9deg);
-  --chart-5: oklch(64.5% 0.246 16.439deg);
-  --sidebar: oklch(20.5% 0 0deg);
+
+  --destructive: oklch(39% 0.14 25deg);
+  --destructive-foreground: oklch(63% 0.23 25deg);
+
+  --border: oklch(25% 0.01 260deg);
+  --input: oklch(25% 0.01 260deg);
+  --ring: oklch(65% 0.2 255deg);
+
+  --sidebar: oklch(18% 0.01 260deg);
   --sidebar-foreground: oklch(98.5% 0 0deg);
-  --sidebar-primary: oklch(48.8% 0.243 264.376deg);
-  --sidebar-primary-foreground: oklch(98.5% 0 0deg);
-  --sidebar-accent: oklch(26.9% 0 0deg);
+  --sidebar-primary: oklch(65% 0.2 255deg);
+  --sidebar-primary-foreground: oklch(10% 0.02 260deg);
+  --sidebar-accent: oklch(25% 0.01 260deg);
   --sidebar-accent-foreground: oklch(98.5% 0 0deg);
-  --sidebar-border: oklch(26.9% 0 0deg);
-  --sidebar-ring: oklch(43.9% 0 0deg);
+  --sidebar-border: oklch(25% 0.01 260deg);
+  --sidebar-ring: oklch(65% 0.2 255deg);
+
   --success: oklch(28% 0.1 200deg);
   --warning: oklch(35% 0.08 70deg);
   --error: oklch(45% 0.1 25deg);
@@ -210,7 +239,10 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground min-h-[100vh] flex flex-col;
+    @apply bg-background text-foreground min-h-[100vh] flex flex-col font-sans;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-space-grotesk), var(--font-dm-sans), sans-serif;
   }
 }
 
@@ -221,4 +253,27 @@ html {
 html[data-theme='dark'],
 html[data-theme='light'] {
   opacity: initial;
+}
+
+/* --------------------------------------------------------------------------
+   High6 Signature: Green accent rule for focus states
+   -------------------------------------------------------------------------- */
+@layer base {
+  :focus-visible {
+    outline: 2px solid oklch(55% 0.24 150deg) !important;
+    outline-offset: 2px;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Reduced motion
+   -------------------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

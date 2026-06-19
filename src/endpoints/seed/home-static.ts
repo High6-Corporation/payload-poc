@@ -1,6 +1,6 @@
 import type { RequiredDataFromCollectionSlug } from 'payload'
 
-// Used for pre-seeded content so that the homepage is not empty
+// Pre-seeded homepage content for High6 CMS
 export const homeStatic: RequiredDataFromCollectionSlug<'pages'> = {
   slug: 'home',
   _status: 'published',
@@ -19,7 +19,7 @@ export const homeStatic: RequiredDataFromCollectionSlug<'pages'> = {
                 format: 0,
                 mode: 'normal',
                 style: '',
-                text: 'Payload Website Template',
+                text: 'Websites that work as hard as you do',
                 version: 1,
               },
             ],
@@ -27,6 +27,25 @@ export const homeStatic: RequiredDataFromCollectionSlug<'pages'> = {
             format: '',
             indent: 0,
             tag: 'h1',
+            version: 1,
+          },
+          {
+            type: 'paragraph',
+            children: [
+              {
+                type: 'text',
+                detail: 0,
+                format: 0,
+                mode: 'normal',
+                style: '',
+                text: 'High6 builds headless CMS and managed WordPress platforms for growing businesses. API-first, multi-tenant, AI-assisted.',
+                version: 1,
+              },
+            ],
+            direction: 'ltr',
+            format: '',
+            indent: 0,
+            textFormat: 0,
             version: 1,
           },
           {
@@ -41,7 +60,7 @@ export const homeStatic: RequiredDataFromCollectionSlug<'pages'> = {
                     format: 0,
                     mode: 'normal',
                     style: '',
-                    text: 'Visit the admin dashboard',
+                    text: 'Open the admin panel',
                     version: 1,
                   },
                 ],
@@ -61,7 +80,7 @@ export const homeStatic: RequiredDataFromCollectionSlug<'pages'> = {
                 format: 0,
                 mode: 'normal',
                 style: '',
-                text: ' to make your account and seed content for your website.',
+                text: ' to manage content, tenants, and media.',
                 version: 1,
               },
             ],
@@ -80,8 +99,9 @@ export const homeStatic: RequiredDataFromCollectionSlug<'pages'> = {
     },
   },
   meta: {
-    description: 'An open-source website built with Payload and Next.js.',
-    title: 'Payload Website Template',
+    description:
+      'High6 builds headless CMS and managed WordPress platforms for growing businesses.',
+    title: 'High6 — Websites That Work as Hard as You Do',
   },
   title: 'Home',
   layout: [],

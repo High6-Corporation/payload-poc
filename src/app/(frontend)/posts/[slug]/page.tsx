@@ -14,7 +14,7 @@ import { PostHero } from '@/heros/PostHero'
 import { generateMeta } from '@/utilities/generateMeta'
 import PageClient from './page.client'
 import { LivePreviewListener } from '@/components/LivePreviewListener'
-import { buildTenantWhereClause, resolveTenantIdFromSlug } from '@/utilities/resolveTenant'
+import { resolveTenantIdFromSiteSlug } from '@/utilities/resolveSite'
 
 export async function generateStaticParams() {
   const payload = await getPayload({ config: configPromise })
@@ -55,7 +55,7 @@ export default async function Post({
   // Decode to support slugs with special characters
   const decodedSlug = decodeURIComponent(slug)
   const url = '/posts/' + decodedSlug
-  const tenantId = await resolveTenantIdFromSlug(tenantSlug)
+  const tenantId = await resolveTenantIdFromSiteSlug(tenantSlug)
   const post = await queryPostBySlug({ slug: decodedSlug, tenantId })
 
   if (!post) return <PayloadRedirects url={url} />
@@ -94,7 +94,7 @@ export async function generateMetadata({
   const { tenant: tenantSlug } = await searchParamsPromise
   // Decode to support slugs with special characters
   const decodedSlug = decodeURIComponent(slug)
-  const tenantId = await resolveTenantIdFromSlug(tenantSlug)
+  const tenantId = await resolveTenantIdFromSiteSlug(tenantSlug)
   const post = await queryPostBySlug({ slug: decodedSlug, tenantId })
 
   return generateMeta({ doc: post })
@@ -106,8 +106,6 @@ const queryPostBySlug = cache(
 
     const payload = await getPayload({ config: configPromise })
 
-    const tenantWhere = buildTenantWhereClause(tenantId ?? null)
-
     const result = await payload.find({
       collection: 'posts',
       draft,
@@ -115,7 +113,10 @@ const queryPostBySlug = cache(
       overrideAccess: draft,
       pagination: false,
       where: {
-        and: [{ slug: { equals: slug } }, ...(tenantWhere ? [tenantWhere] : [])],
+        and: [
+          { slug: { equals: slug } },
+          ...(tenantId ? [{ tenant: { equals: tenantId } }] : []),
+        ],
       },
     })
 

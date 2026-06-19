@@ -6,7 +6,6 @@ import React from 'react'
 import RichText from '@/components/RichText'
 
 import { CollectionArchive } from '@/components/CollectionArchive'
-import { buildTenantWhereClause } from '@/utilities/resolveTenant'
 
 export const ArchiveBlock: React.FC<
   ArchiveBlockProps & {
@@ -47,9 +46,8 @@ export const ArchiveBlock: React.FC<
       })
     }
 
-    const tenantWhere = buildTenantWhereClause(tenantId ?? null)
-    if (tenantWhere) {
-      conditions.push(tenantWhere)
+    if (tenantId) {
+      conditions.push({ tenant: { equals: tenantId } })
     }
 
     const fetchedPosts = await payload.find({

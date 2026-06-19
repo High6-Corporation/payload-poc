@@ -2,10 +2,10 @@ import React from 'react'
 
 const BeforeLogin: React.FC = () => {
   return (
-    <div>
+    <div style={{ marginBottom: '1.5rem' }}>
       <p>
-        <b>Welcome to your dashboard!</b>
-        {' This is where site admins will log in to manage your website.'}
+        <b>High6 CMS</b>
+        {' — Managed content platform'}
       </p>
     </div>
   )

@@ -2,6 +2,11 @@
 const config = {
   theme: {
     extend: {
+      fontFamily: {
+        sans: ['var(--font-dm-sans)', 'sans-serif'],
+        display: ['var(--font-space-grotesk)', 'sans-serif'],
+        mono: ['var(--font-geist-mono)', 'monospace'],
+      },
       typography: {
         DEFAULT: {
           css: [

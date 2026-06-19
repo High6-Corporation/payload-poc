@@ -11,6 +11,7 @@ import { Pages } from './collections/Pages'
 import { PortfolioItems } from './collections/PortfolioItems'
 import { Posts } from './collections/Posts'
 import { PricingPlans } from './collections/PricingPlans'
+import { Sites } from './collections/Sites'
 import { Tenants } from './collections/Tenants'
 import { Testimonials } from './collections/Testimonials'
 import { Users } from './collections/Users'
@@ -26,6 +27,9 @@ const dirname = path.dirname(filename)
 export default buildConfig({
   admin: {
     components: {
+      graphics: {
+        Logo: '@/components/High6Logo',
+      },
       beforeLogin: ['@/components/BeforeLogin'],
       beforeDashboard: ['@/components/BeforeDashboard'],
       // Reorders nav groups so Tenant Management appears above Collections.
@@ -67,6 +71,7 @@ export default buildConfig({
   }),
   collections: [
     Tenants,
+    Sites,
     Pages,
     Posts,
     Media,

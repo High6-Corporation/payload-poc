@@ -14,7 +14,7 @@ import PageClient from './page.client'
 import type { Tenant } from '@/payload-types'
 
 import { LivePreviewListener } from '@/components/LivePreviewListener'
-import { resolveTenantIdFromSlug, resolveTenantSlugFromId } from '@/utilities/resolveTenant'
+import { resolveTenantIdFromSiteSlug } from '@/utilities/resolveSite'
 import { TenantCookieSync } from '@/components/TenantCookieSync'
 
 export async function generateStaticParams() {
@@ -61,7 +61,7 @@ export default async function Page({
   const decodedSlug = decodeURIComponent(slug)
   const url = '/' + decodedSlug
 
-  const tenantId = await resolveTenantIdFromSlug(tenantSlug)
+  const tenantId = await resolveTenantIdFromSiteSlug(tenantSlug)
 
   let page: RequiredDataFromCollectionSlug<'pages'> | null
 
@@ -78,11 +78,25 @@ export default async function Page({
     return <PayloadRedirects url={url} />
   }
 
-  // Resolve the page's tenant and sync it client-side so the
-  // Header nav can append ?tenant=<slug> to post-related links.
+  // Resolve the page's tenant slug for the client-side cookie sync.
+  // Pages are tenant-scoped (multi-tenant plugin), so we look up the
+  // tenant directly — site derivation is not needed here.
   const pageTenantId =
     typeof page.tenant === 'string' ? page.tenant : ((page.tenant as Tenant)?.id ?? null)
-  const pageTenantSlug = await resolveTenantSlugFromId(pageTenantId)
+  let pageTenantSlug: string | null = null
+  if (pageTenantId) {
+    try {
+      const tenantPayload = await getPayload({ config: configPromise })
+      const tenant = await tenantPayload.findByID({
+        collection: 'tenants',
+        id: pageTenantId,
+        depth: 0,
+      })
+      pageTenantSlug = (tenant as { slug?: string })?.slug ?? null
+    } catch {
+      pageTenantSlug = null
+    }
+  }
 
   const { hero, layout } = page
 

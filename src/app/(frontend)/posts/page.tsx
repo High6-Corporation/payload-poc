@@ -7,7 +7,7 @@ import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 import React from 'react'
 import PageClient from './page.client'
-import { buildTenantWhereClause, resolveTenantIdFromSlug } from '@/utilities/resolveTenant'
+import { resolveTenantIdFromSiteSlug } from '@/utilities/resolveSite'
 
 export const revalidate = 600
 
@@ -19,8 +19,7 @@ export default async function Page({
   const { tenant: tenantSlug } = await searchParams
   const payload = await getPayload({ config: configPromise })
 
-  const tenantId = await resolveTenantIdFromSlug(tenantSlug)
-  const tenantWhere = buildTenantWhereClause(tenantId)
+  const tenantId = await resolveTenantIdFromSiteSlug(tenantSlug)
 
   const posts = await payload.find({
     collection: 'posts',
@@ -33,7 +32,7 @@ export default async function Page({
       categories: true,
       meta: true,
     },
-    ...(tenantWhere ? { where: tenantWhere } : {}),
+    ...(tenantId ? { where: { tenant: { equals: tenantId } } } : {}),
   })
 
   return (

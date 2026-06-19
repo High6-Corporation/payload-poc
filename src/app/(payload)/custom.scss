@@ -1,0 +1,135 @@
+/* ==========================================================================
+   High6 Admin Theme
+   Same palette as the landing page.
+   ========================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+
+@layer payload {
+  :root {
+    --font-body: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family:
+      'Space Grotesk',
+      'DM Sans',
+      -apple-system,
+      BlinkMacSystemFont,
+      sans-serif;
+  }
+
+  /* ---- Sidebar — #0A0E1A (same as landing page hero) ---- */
+  .nav {
+    background: #0a0e1a;
+    border-right: none;
+  }
+
+  /* Logo is black — invert it on the dark sidebar */
+  .nav header img,
+  .nav img[alt='High6'] {
+    filter: brightness(0) invert(1);
+  }
+
+  .nav__link {
+    color: rgba(255, 255, 255, 0.7);
+    transition:
+      background-color 150ms ease,
+      color 150ms ease;
+  }
+
+  .nav__link:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: #fff;
+  }
+
+  .nav__link--active {
+    background: rgba(255, 255, 255, 0.08);
+    color: #fff;
+    border-left-color: #009217;
+  }
+
+  .nav-group__label {
+    font-family: 'Space Grotesk', 'DM Sans', sans-serif;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    font-size: 0.7rem;
+    color: rgba(255, 255, 255, 0.3);
+  }
+
+  /* ---- Login screen — #0A0E1A ---- */
+  .payload__login {
+    background: #0a0e1a;
+    color: rgb(250, 250, 250);
+  }
+
+  .payload__login .login__form {
+    background: #161b28;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+  }
+
+  .payload__login input {
+    background: #101420;
+    border-color: rgba(255, 255, 255, 0.12);
+    color: rgb(250, 250, 250);
+  }
+
+  .payload__login input:focus {
+    border-color: #009217;
+    box-shadow: 0 0 0 2px rgba(0, 146, 23, 0.25);
+  }
+
+  .payload__login button[type='submit'] {
+    background: #009217;
+    color: white;
+    font-weight: 600;
+    transition: background-color 200ms ease;
+  }
+
+  .payload__login button[type='submit']:hover {
+    background: #007a12;
+  }
+
+  /* ---- Focus ---- */
+  :focus-visible {
+    outline: 2px solid #009217 !important;
+    outline-offset: 2px;
+  }
+
+  /* ---- Tables ---- */
+  .table thead th {
+    font-family: 'Space Grotesk', 'DM Sans', sans-serif;
+    font-weight: 600;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .table tbody tr {
+    transition: background-color 120ms ease;
+  }
+
+  /* ---- Doc header ---- */
+  .doc-header__title {
+    font-family: 'Space Grotesk', 'DM Sans', sans-serif;
+    font-weight: 600;
+  }
+
+  /* ---- Reduced motion ---- */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}

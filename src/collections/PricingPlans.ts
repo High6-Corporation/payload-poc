@@ -16,6 +16,15 @@ export const PricingPlans: CollectionConfig = {
   },
   fields: [
     {
+      name: 'site',
+      type: 'relationship',
+      relationTo: 'sites',
+      required: true,
+      admin: {
+        position: 'sidebar',
+      },
+    },
+    {
       name: 'label',
       type: 'text',
       required: true,

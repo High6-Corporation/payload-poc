@@ -33,7 +33,7 @@ import type { File } from 'payload'
 /** Apir-tayo project root — images are read from here */
 const APIR_TAYO_ASSETS = path.resolve(process.cwd(), '..', 'apir-tayo', 'public', 'assets')
 
-const TENANT_SLUG = 'apir-tayo'
+const SITE_SLUG = 'apir-tayo'
 
 /** Media guardrail — match Media.ts:74 */
 const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5 MB
@@ -153,27 +153,39 @@ function formatBytes(bytes: number): string {
 async function main(): Promise<void> {
   console.log('📸 Upload apir-tayo images to Payload Media')
   console.log(`   Assets dir: ${APIR_TAYO_ASSETS}`)
-  console.log(`   Tenant:     ${TENANT_SLUG}`)
+  console.log(`   Site:       ${SITE_SLUG}`)
 
   // 1. Initialize Payload (connects to MongoDB, S3, plugins)
   console.log('\n🔌 Initializing Payload…')
   const payload = await getPayload({ config })
   console.log('   Connected ✓')
 
-  // 2. Resolve tenant
-  console.log(`\n🔍 Resolving tenant "${TENANT_SLUG}"…`)
-  const tenantResult = await payload.find({
-    collection: 'tenants',
-    where: { slug: { equals: TENANT_SLUG } },
+  // 2. Resolve site (and derive tenant for media uploads)
+  console.log(`\n🔍 Resolving site "${SITE_SLUG}"…`)
+  const siteResult = await payload.find({
+    collection: 'sites',
+    where: { slug: { equals: SITE_SLUG } },
+    depth: 1,
     limit: 1,
   })
 
-  if (!tenantResult.docs.length) {
-    console.error(`   ✗ Tenant "${TENANT_SLUG}" not found. Has it been created?`)
+  if (!siteResult.docs.length) {
+    console.error(`   ✗ Site "${SITE_SLUG}" not found. Has it been created?`)
     process.exit(1)
   }
 
-  const tenantId = tenantResult.docs[0].id as string
+  const site = siteResult.docs[0]
+  const siteId = site.id as string
+  const tenantId =
+    typeof site.tenant === 'string'
+      ? site.tenant
+      : ((site.tenant as { id?: string } | undefined)?.id ?? null)
+
+  if (!tenantId) {
+    console.error('   ✗ Site has no tenant. Cannot proceed.')
+    process.exit(1)
+  }
+  console.log(`   Site ID:   ${siteId} ✓`)
   console.log(`   Tenant ID: ${tenantId} ✓`)
 
   // 3. Process each entry
@@ -184,12 +196,12 @@ async function main(): Promise<void> {
     console.log(`\n── ${label} ──`)
 
     try {
-      // 3a. Find the existing record
+      // 3a. Find the existing record (site-scoped lookup)
       const recordResult = await payload.find({
         collection: entry.collection,
         where: {
           and: [
-            { tenant: { equals: tenantId } },
+            { site: { equals: siteId } },
             { [entry.matchField]: { equals: entry.matchValue } },
           ],
         },

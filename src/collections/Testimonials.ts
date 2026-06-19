@@ -16,6 +16,15 @@ export const Testimonials: CollectionConfig = {
   },
   fields: [
     {
+      name: 'site',
+      type: 'relationship',
+      relationTo: 'sites',
+      required: true,
+      admin: {
+        position: 'sidebar',
+      },
+    },
+    {
       name: 'quote',
       type: 'textarea',
       required: true,

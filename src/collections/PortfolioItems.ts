@@ -16,6 +16,15 @@ export const PortfolioItems: CollectionConfig = {
   },
   fields: [
     {
+      name: 'site',
+      type: 'relationship',
+      relationTo: 'sites',
+      required: true,
+      admin: {
+        position: 'sidebar',
+      },
+    },
+    {
       name: 'title',
       type: 'text',
       required: true,

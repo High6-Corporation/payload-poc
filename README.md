@@ -1,15 +1,12 @@
-# Payload Website Template
+# Payload CMS — Multi-Tenant POC
 
-This is the official [Payload Website Template](https://github.com/payloadcms/payload/blob/3.x/templates/website). Use it to power websites, blogs, or portfolios from small to enterprise. This repo includes a fully-working backend, enterprise-grade admin panel, and a beautifully designed, production-ready website.
-
-This template is right for you if you are working on:
-
-- A personal or enterprise-grade website, blog, or portfolio
-- A content publishing platform with a fully featured publication workflow
-- Exploring the capabilities of Payload
+This started as the official [Payload Website Template](https://github.com/payloadcms/payload/blob/3.x/templates/website) and has been extended into a **multi-tenant CMS proof-of-concept** for [High6](https://high6.com/). The POC evaluates Payload as a headless CMS serving multiple client frontends, with [apir-tayo](https://apirtayo.com/) as the first connected tenant.
 
 Core features:
 
+- [Multi-Tenancy](#multi-tenancy) — tenant-scoped content via `@payloadcms/plugin-multi-tenant`
+- [Supabase / S3 Storage](#media) — per-tenant folder prefixing for media uploads
+- [Extended Collections](#collections) — Testimonials, PortfolioItems, FAQs, PricingPlans, Tenants
 - [Pre-configured Payload Config](#how-it-works)
 - [Authentication](#users-authentication)
 - [Access Control](#access-control)
@@ -22,6 +19,7 @@ Core features:
 - [Redirects](#redirects)
 - [Jobs and Scheduled Publishing](#jobs-and-scheduled-publish)
 - [Website](#website)
+- [apir-tayo Integration](#apir-tayo-integration)
 
 ## Quick Start
 
@@ -41,6 +39,11 @@ pnpx create-payload-app my-project -t website
 
 1. First [clone the repo](#clone) if you have not done so already
 1. `cd my-project && cp .env.example .env` to copy the example environment variables
+1. Configure the additional env vars for multi-tenancy and Supabase storage (see `.env.example`):
+   - `DATABASE_URL` — MongoDB connection string
+   - `PAYLOAD_SECRET` — encrypts JWTs
+   - `SUPABASE_BUCKET`, `SUPABASE_ENDPOINT`, `SUPABASE_REGION`, `SUPABASE_ACCESS_KEY_ID`, `SUPABASE_SECRET_ACCESS_KEY` — S3-compatible storage
+   - `AGENT_EMAIL`, `AGENT_PASSWORD` — service account for the AI agent route
 1. `pnpm install && pnpm dev` to install dependencies and start the dev server
 1. open `http://localhost:3000` to open the app in your browser
 
@@ -48,7 +51,11 @@ That's it! Changes made in `./src` will be reflected in your app. Follow the on-
 
 ## How it works
 
-The Payload config is tailored specifically to the needs of most websites. It is pre-configured in the following ways:
+The Payload config is extended from the website template with multi-tenancy, Supabase storage, and additional content collections. Key configuration areas:
+
+### Plugins
+
+See `src/plugins/index.ts` for the full plugin registry. Plugins are registered in order: multi-tenant, redirects, nested-docs, SEO, form-builder, search, and S3 storage.
 
 ### Collections
 
@@ -70,11 +77,31 @@ See the [Collections](https://payloadcms.com/docs/configuration/collections) doc
 
 - #### Media
 
-  This is the uploads enabled collection used by pages, posts, and projects to contain media like images, videos, downloads, and other assets. It features pre-configured sizes, focal point and manual resizing to help you manage your pictures.
+  This is the uploads enabled collection used by all content types to contain media like images, videos, downloads, and other assets. It features pre-configured sizes, focal point, manual resizing, and **per-tenant folder prefixing** for Supabase / S3 storage. A `beforeOperation` hook automatically sets the tenant `prefix` on upload, and validates files against MIME allow-list (JPEG, PNG, WebP, GIF, PDF), a 5 MB size limit, and magic byte checks. See [Supabase / S3 Storage](#supabase--s3-storage) for more details.
 
 - #### Categories
 
   A taxonomy used to group posts together. Categories can be nested inside of one another, for example "News > Technology". See the official [Payload Nested Docs Plugin](https://payloadcms.com/docs/plugins/nested-docs) for more details.
+
+- #### Tenants
+
+  Represents a client organization or site that owns its own scoped content. Each tenant gets a unique ID, name, and slug. The multi-tenant plugin automatically adds a `tenant` relationship field to all content collections and scopes API queries to the current tenant.
+
+- #### Testimonials
+
+  Client testimonials with `quote`, `name`, `position`, and a required `image` (upload relation to Media). Used by the apir-tayo frontend's testimonial carousel.
+
+- #### Portfolio Items
+
+  Portfolio / work showcase entries with `title`, `category`, `url`, and a required `image` (upload relation to Media). Used by the apir-tayo frontend's portfolio grid.
+
+- #### FAQs
+
+  Frequently asked questions with `question`, `answer`, and `order` fields. Tenant-scoped, fetched by the apir-tayo frontend.
+
+- #### Pricing Plans
+
+  Pricing tier descriptions with `label`, `items` (array of `{ item }` objects), and `order`. Tenant-scoped, used by the apir-tayo pricing section.
 
 ### Globals
 
@@ -87,6 +114,65 @@ See the [Globals](https://payloadcms.com/docs/configuration/globals) docs for de
 - `Footer`
 
   Same as above but for the footer of your site.
+
+## Multi-Tenancy
+
+This project uses `@payloadcms/plugin-multi-tenant` to scope content per client. Key configuration (in `src/plugins/index.ts`):
+
+- **Content collections**: `pages`, `posts`, `media`, `categories`, `testimonials`, `faqs`, `portfolio-items`, `pricing-plans` auto-get a `tenant` relationship field
+- **Users collection**: auto-gets a `tenants` array field for tenant assignment
+- `cleanupAfterTenantDelete: false` — no cascade deletes (POC safety)
+- `userHasAccessToAllTenants: () => true` — super-admin for all logged-in users (POC; replace with role check for production)
+
+The plugin layers its own access control on top of the collection-level access functions, automatically scoping queries to the active tenant.
+
+Each tenant resolves via the admin panel (select a tenant from the nav dropdown) or by passing a tenant ID in API requests.
+
+## Supabase / S3 Storage
+
+Media files are stored in a Supabase bucket via `@payloadcms/storage-s3` (S3-compatible API). The bucket name and credentials are configured in `.env`:
+
+```
+SUPABASE_BUCKET=payload-poc-media
+SUPABASE_ENDPOINT=https://<project>.supabase.co/storage/v1/s3
+SUPABASE_REGION=ap-southeast-1
+SUPABASE_ACCESS_KEY_ID=...
+SUPABASE_SECRET_ACCESS_KEY=...
+```
+
+**Per-tenant prefixing** is handled by a `beforeOperation` hook in `src/collections/Media.ts` that sets a hidden `prefix` field to the tenant ID on create/update. The S3 plugin uses this prefix as the folder path within the bucket, so files for the `apir-tayo` tenant end up under `<tenantId>/filename.png`.
+
+**Guardrails** (also in the `beforeOperation` hook):
+
+- MIME allow-list: `image/jpeg`, `image/png`, `image/webp`, `image/gif`, `application/pdf`
+- Max file size: 5 MB
+- Magic byte validation: verifies file headers match the claimed MIME type
+
+## apir-tayo Integration
+
+[apir-tayo](https://apirtayo.com/) is the first client frontend connected to this CMS. It fetches tenant-scoped content via Payload's REST API (`/api/<collection>?where[tenant][equals]=<id>`) and renders it in Next.js server components.
+
+### Scripts
+
+Located in `src/scripts/`:
+
+- **`seed-apirtayo.ts`** — Populates FAQs, PricingPlans, Testimonials, and PortfolioItems for the apir-tayo tenant. Uses the Payload REST API (requires dev server running). Idempotent — safe to re-run.
+
+  ```bash
+  pnpm tsx src/scripts/seed-apirtayo.ts
+  ```
+
+- **`upload-apirtayo-media.ts`** — Uploads testimonial and portfolio images from `apir-tayo/public/assets/` into the Media collection and links them to the correct records. Uses the Payload **Local API** (`getPayload({ config })`) — no dev server needed, runs with full server-side access. Automatically compresses images over 5 MB with sharp. Idempotent — re-running skips already-linked records.
+
+  ```bash
+  pnpm tsx src/scripts/upload-apirtayo-media.ts
+  ```
+
+  Run `seed-apirtayo.ts` first to create the records, then `upload-apirtayo-media.ts` to attach images.
+
+### Frontend (apir-tayo repo)
+
+The apir-tayo Next.js app at `../apir-tayo` fetches content via `fetchFromPayload()` in `app/lib/payload/fetchPayload.ts`. Images are rendered from Payload Media URLs (with the static image maps kept as fallback). See that repo for full details.
 
 ## Access control
 
@@ -224,15 +310,20 @@ That's it! The Docker instance will help you get up and running quickly while al
 
 ### Seed
 
-To seed the database with a few pages, posts, and projects you can click the 'seed database' link from the admin panel.
+Two approaches to seed the database:
 
-The seed script will also create a demo user for demonstration purposes only:
+**Admin panel:** Click the 'seed database' link from the admin panel. This seeds the demo website template data (pages, posts, author). The seed is destructive — it drops your current database to populate a fresh one.
 
-- Demo Author
-  - Email: `demo-author@payloadcms.com`
-  - Password: `password`
+- Demo Author: `demo-author@payloadcms.com` / `password`
 
-> NOTICE: seeding the database is destructive because it drops your current database to populate a fresh one from the seed template. Only run this command if you are starting a new project or can afford to lose your current data.
+**apir-tayo tenant (CLI):** Run the scripts in order from the project root:
+
+```bash
+pnpm tsx src/scripts/seed-apirtayo.ts       # Create records (needs dev server on :3000)
+pnpm tsx src/scripts/upload-apirtayo-media.ts  # Upload + link images (Local API, no server needed)
+```
+
+These are idempotent — re-running skips existing records and already-linked images.
 
 ## Production
 

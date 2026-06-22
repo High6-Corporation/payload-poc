@@ -11,6 +11,7 @@ import path from 'path'
 import { fileURLToPath } from 'url'
 import { anyone } from '../access/anyone'
 import { authenticated } from '../access/authenticated'
+import { sanitizeMediaFilename } from '../utilities/sanitizeMediaFilename'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -61,10 +62,15 @@ export const Media: CollectionConfig = {
             (typeof user?.tenant === 'string' ? user.tenant : user?.tenant?.id)
 
           if (!tenantId) {
-            throw new Error('Tenant ID not found when attempting to upload a file')
+            throw new APIError('Tenant ID not found when attempting to upload a file', 400)
           }
 
           args.data.prefix = String(tenantId)
+
+          // Sanitize filename for S3-compatible storage (Supabase).
+          // macOS screenshots contain U+202F (narrow non-breaking space) which
+          // causes S3 InvalidKey errors — see sanitizeMediaFilename.ts.
+          req.file.name = sanitizeMediaFilename(req.file.name)
         }
 
         return args

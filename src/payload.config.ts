@@ -1,7 +1,7 @@
 import { mongooseAdapter } from '@payloadcms/db-mongodb'
 import sharp from 'sharp'
 import path from 'path'
-import { buildConfig, PayloadRequest } from 'payload'
+import { APIError, buildConfig, PayloadRequest } from 'payload'
 import { fileURLToPath } from 'url'
 
 import { Categories } from './collections/Categories'
@@ -85,6 +85,22 @@ export default buildConfig({
   cors: [getServerSideURL()].filter(Boolean),
   globals: [Header, Footer],
   plugins,
+  hooks: {
+    afterError: [
+      ({ error }) => {
+        // Surface the real error message for plain Error objects thrown by
+        // plugins (e.g. @payloadcms/storage-s3). These lack `status` so
+        // Payload's isErrorPublic() hides them behind "Something went wrong".
+        if (!(error instanceof APIError) && error?.message) {
+          return {
+            response: {
+              errors: [{ message: error.message }],
+            },
+          }
+        }
+      },
+    ],
+  },
   secret: process.env.PAYLOAD_SECRET,
   sharp,
   typescript: {

@@ -65,6 +65,9 @@ export const Media: CollectionConfig = {
             throw new APIError('Tenant ID not found when attempting to upload a file', 400)
           }
 
+          // Initialize args.data if undefined — during multipart file uploads via
+          // the REST API, Payload only extracts the file binary, not FormData fields.
+          args.data ??= {}
           args.data.prefix = String(tenantId)
 
           // Sanitize filename for S3-compatible storage (Supabase).

@@ -63,11 +63,13 @@ export type SupportedTimezones =
 
 export interface Config {
   auth: {
+    'portal-clients': PortalClientAuthOperations;
     users: UserAuthOperations;
   };
   blocks: {};
   collections: {
     tenants: Tenant;
+    'portal-clients': PortalClient;
     sites: Site;
     pages: Page;
     posts: Post;
@@ -78,6 +80,7 @@ export interface Config {
     faqs: Faq;
     'portfolio-items': PortfolioItem;
     'pricing-plans': PricingPlan;
+    'agent-audit-log': AgentAuditLog;
     redirects: Redirect;
     forms: Form;
     'form-submissions': FormSubmission;
@@ -96,6 +99,7 @@ export interface Config {
   };
   collectionsSelect: {
     tenants: TenantsSelect<false> | TenantsSelect<true>;
+    'portal-clients': PortalClientsSelect<false> | PortalClientsSelect<true>;
     sites: SitesSelect<false> | SitesSelect<true>;
     pages: PagesSelect<false> | PagesSelect<true>;
     posts: PostsSelect<false> | PostsSelect<true>;
@@ -106,6 +110,7 @@ export interface Config {
     faqs: FaqsSelect<false> | FaqsSelect<true>;
     'portfolio-items': PortfolioItemsSelect<false> | PortfolioItemsSelect<true>;
     'pricing-plans': PricingPlansSelect<false> | PricingPlansSelect<true>;
+    'agent-audit-log': AgentAuditLogSelect<false> | AgentAuditLogSelect<true>;
     redirects: RedirectsSelect<false> | RedirectsSelect<true>;
     forms: FormsSelect<false> | FormsSelect<true>;
     'form-submissions': FormSubmissionsSelect<false> | FormSubmissionsSelect<true>;
@@ -133,7 +138,7 @@ export interface Config {
   widgets: {
     collections: CollectionsWidget;
   };
-  user: User;
+  user: PortalClient | User;
   jobs: {
     tasks: {
       schedulePublish: TaskSchedulePublish;
@@ -143,6 +148,24 @@ export interface Config {
       };
     };
     workflows: unknown;
+  };
+}
+export interface PortalClientAuthOperations {
+  forgotPassword: {
+    email: string;
+    password: string;
+  };
+  login: {
+    email: string;
+    password: string;
+  };
+  registerFirstUser: {
+    email: string;
+    password: string;
+  };
+  unlock: {
+    email: string;
+    password: string;
   };
 }
 export interface UserAuthOperations {
@@ -177,6 +200,32 @@ export interface Tenant {
   slug: string;
   updatedAt: string;
   createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "portal-clients".
+ */
+export interface PortalClient {
+  id: string;
+  tenant: string | Tenant;
+  updatedAt: string;
+  createdAt: string;
+  email: string;
+  resetPasswordToken?: string | null;
+  resetPasswordExpiration?: string | null;
+  salt?: string | null;
+  hash?: string | null;
+  loginAttempts?: number | null;
+  lockUntil?: string | null;
+  sessions?:
+    | {
+        id: string;
+        createdAt?: string | null;
+        expiresAt: string;
+      }[]
+    | null;
+  password?: string | null;
+  collection: 'portal-clients';
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -846,7 +895,7 @@ export interface Testimonial {
   quote: string;
   name: string;
   position: string;
-  image: string | Media;
+  image?: (string | null) | Media;
   updatedAt: string;
   createdAt: string;
 }
@@ -872,8 +921,8 @@ export interface PortfolioItem {
   site: string | Site;
   title: string;
   category: string;
-  url: string;
-  image: string | Media;
+  url?: string | null;
+  image?: (string | null) | Media;
   updatedAt: string;
   createdAt: string;
 }
@@ -885,6 +934,14 @@ export interface PricingPlan {
   id: string;
   site: string | Site;
   label: string;
+  /**
+   * Price for this plan (e.g. 99.99)
+   */
+  price: number;
+  /**
+   * Optional description of what this plan includes
+   */
+  description?: string | null;
   items?:
     | {
         item: string;
@@ -892,6 +949,23 @@ export interface PricingPlan {
       }[]
     | null;
   order?: number | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "agent-audit-log".
+ */
+export interface AgentAuditLog {
+  id: string;
+  tenant: string | Tenant;
+  action: string;
+  collection: string;
+  documentId: string;
+  slug: string;
+  previousValue: string;
+  newValue: string;
+  confirmedAt: string;
   updatedAt: string;
   createdAt: string;
 }
@@ -1090,6 +1164,10 @@ export interface PayloadLockedDocument {
         value: string | Tenant;
       } | null)
     | ({
+        relationTo: 'portal-clients';
+        value: string | PortalClient;
+      } | null)
+    | ({
         relationTo: 'sites';
         value: string | Site;
       } | null)
@@ -1130,6 +1208,10 @@ export interface PayloadLockedDocument {
         value: string | PricingPlan;
       } | null)
     | ({
+        relationTo: 'agent-audit-log';
+        value: string | AgentAuditLog;
+      } | null)
+    | ({
         relationTo: 'redirects';
         value: string | Redirect;
       } | null)
@@ -1150,10 +1232,15 @@ export interface PayloadLockedDocument {
         value: string | FolderInterface;
       } | null);
   globalSlug?: string | null;
-  user: {
-    relationTo: 'users';
-    value: string | User;
-  };
+  user:
+    | {
+        relationTo: 'portal-clients';
+        value: string | PortalClient;
+      }
+    | {
+        relationTo: 'users';
+        value: string | User;
+      };
   updatedAt: string;
   createdAt: string;
 }
@@ -1163,10 +1250,15 @@ export interface PayloadLockedDocument {
  */
 export interface PayloadPreference {
   id: string;
-  user: {
-    relationTo: 'users';
-    value: string | User;
-  };
+  user:
+    | {
+        relationTo: 'portal-clients';
+        value: string | PortalClient;
+      }
+    | {
+        relationTo: 'users';
+        value: string | User;
+      };
   key?: string | null;
   value?:
     | {
@@ -1201,6 +1293,29 @@ export interface TenantsSelect<T extends boolean = true> {
   slug?: T;
   updatedAt?: T;
   createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "portal-clients_select".
+ */
+export interface PortalClientsSelect<T extends boolean = true> {
+  tenant?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  email?: T;
+  resetPasswordToken?: T;
+  resetPasswordExpiration?: T;
+  salt?: T;
+  hash?: T;
+  loginAttempts?: T;
+  lockUntil?: T;
+  sessions?:
+    | T
+    | {
+        id?: T;
+        createdAt?: T;
+        expiresAt?: T;
+      };
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1574,6 +1689,8 @@ export interface PortfolioItemsSelect<T extends boolean = true> {
 export interface PricingPlansSelect<T extends boolean = true> {
   site?: T;
   label?: T;
+  price?: T;
+  description?: T;
   items?:
     | T
     | {
@@ -1581,6 +1698,22 @@ export interface PricingPlansSelect<T extends boolean = true> {
         id?: T;
       };
   order?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "agent-audit-log_select".
+ */
+export interface AgentAuditLogSelect<T extends boolean = true> {
+  tenant?: T;
+  action?: T;
+  collection?: T;
+  documentId?: T;
+  slug?: T;
+  previousValue?: T;
+  newValue?: T;
+  confirmedAt?: T;
   updatedAt?: T;
   createdAt?: T;
 }

@@ -37,13 +37,13 @@ export const PortfolioItems: CollectionConfig = {
     {
       name: 'url',
       type: 'text',
-      required: true,
+      required: false,
     },
     {
       name: 'image',
       type: 'upload',
       relationTo: 'media',
-      required: true,
+      required: false,
     },
   ],
 }

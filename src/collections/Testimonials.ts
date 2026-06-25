@@ -43,7 +43,7 @@ export const Testimonials: CollectionConfig = {
       name: 'image',
       type: 'upload',
       relationTo: 'media',
-      required: true,
+      required: false,
     },
   ],
 }

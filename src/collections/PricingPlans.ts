@@ -30,6 +30,22 @@ export const PricingPlans: CollectionConfig = {
       required: true,
     },
     {
+      name: 'price',
+      type: 'number',
+      required: true,
+      admin: {
+        description: 'Price for this plan (e.g. 99.99)',
+      },
+    },
+    {
+      name: 'description',
+      type: 'textarea',
+      required: false,
+      admin: {
+        description: 'Optional description of what this plan includes',
+      },
+    },
+    {
       name: 'items',
       type: 'array',
       fields: [

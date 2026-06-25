@@ -4,10 +4,12 @@ import path from 'path'
 import { APIError, buildConfig, PayloadRequest } from 'payload'
 import { fileURLToPath } from 'url'
 
+import { AgentAuditLog } from './collections/AgentAuditLog'
 import { Categories } from './collections/Categories'
 import { FAQs } from './collections/FAQs'
 import { Media } from './collections/Media'
 import { Pages } from './collections/Pages'
+import { PortalClients } from './collections/PortalClients'
 import { PortfolioItems } from './collections/PortfolioItems'
 import { Posts } from './collections/Posts'
 import { PricingPlans } from './collections/PricingPlans'
@@ -71,6 +73,7 @@ export default buildConfig({
   }),
   collections: [
     Tenants,
+    PortalClients,
     Sites,
     Pages,
     Posts,
@@ -81,8 +84,9 @@ export default buildConfig({
     FAQs,
     PortfolioItems,
     PricingPlans,
+    AgentAuditLog,
   ],
-  cors: [getServerSideURL()].filter(Boolean),
+  cors: [getServerSideURL(), 'http://localhost:3001', 'http://localhost:3002'].filter(Boolean),
   globals: [Header, Footer],
   plugins,
   hooks: {

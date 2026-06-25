@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>What is Payload CMS? — High6 Inc.</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* ── Reset & Base ─────────────────────────────────────────────────────── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:        #F8FAFC;
+    --surface:   #FFFFFF;
+    --border:    #E2E8F0;
+    --text:      #1E293B;
+    --muted:     #475569;
+    --subtle:    #94A3B8;
+    --accent:    #2563EB;
+    --accent-bg: #EFF6FF;
+    --accent-fg: #1D4ED8;
+    --green:     #059669;
+    --green-bg:  #ECFDF5;
+    --amber:     #D97706;
+    --amber-bg:  #FFFBEB;
+    --radius:    10px;
+    --radius-sm: 6px;
+    --max-width: 860px;
+  }
+
+  html {
+    font-size: 17px;
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    font-family: 'Inter', -apple-system, 'Segoe UI', system-ui, Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.65;
+    padding: 0 1.25rem 4rem;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+  }
+
+  /* ── Layout ───────────────────────────────────────────────────────────── */
+  .page {
+    max-width: var(--max-width);
+    margin: 0 auto;
+  }
+
+  section {
+    padding: 3.5rem 0;
+    border-bottom: 1px solid var(--border);
+  }
+  section:last-of-type { border-bottom: none; }
+
+  /* ── Typography ───────────────────────────────────────────────────────── */
+  h1 { font-size: 2.6rem; font-weight: 700; letter-spacing: -0.03em; line-height: 1.15; }
+  h2 { font-size: 1.55rem; font-weight: 600; letter-spacing: -0.02em; line-height: 1.3; margin-bottom: 1.25rem; }
+  h3 { font-size: 1.05rem; font-weight: 600; letter-spacing: -0.01em; line-height: 1.4; }
+  p  { color: var(--muted); margin-bottom: 0.85rem; }
+  p + p { margin-top: -0.25rem; }
+
+  .text-sm { font-size: 0.88rem; }
+  .text-xs { font-size: 0.78rem; }
+
+  /* ── Hero ─────────────────────────────────────────────────────────────── */
+  .hero {
+    padding: 5rem 0 3rem;
+    text-align: center;
+    border-bottom: 1px solid var(--border);
+    position: relative;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: -2rem; left: 50%;
+    width: 900px; height: 380px;
+    transform: translateX(-50%);
+    background: radial-gradient(ellipse at center, var(--accent-bg) 0%, transparent 70%);
+    opacity: 0.7;
+    z-index: -1;
+    pointer-events: none;
+  }
+  .hero h1 { margin-bottom: 0.75rem; }
+  .hero .subtitle {
+    font-size: 1.15rem;
+    color: var(--muted);
+    max-width: 620px;
+    margin: 0 auto 1.5rem;
+    line-height: 1.55;
+    font-weight: 400;
+  }
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: var(--accent-bg);
+    color: var(--accent-fg);
+    font-size: 0.78rem;
+    font-weight: 500;
+    padding: 0.35rem 0.8rem;
+    border-radius: 999px;
+    letter-spacing: 0.01em;
+  }
+  .badge-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+  }
+
+  /* ── Comparison Cards (What is Payload + Before/After) ────────────────── */
+  .cmp-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.25rem;
+    margin: 1.75rem 0;
+  }
+  .cmp-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.5rem 1.5rem 1.25rem;
+  }
+  .cmp-card .label {
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+  .cmp-card .label svg { width: 15px; height: 15px; flex-shrink: 0; }
+  .cmp-card h3 { margin-bottom: 0.4rem; }
+  .cmp-card p { font-size: 0.9rem; margin-bottom: 0; }
+
+  /* ── Capability Cards ─────────────────────────────────────────────────── */
+  .caps-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.25rem;
+    margin: 1.75rem 0;
+  }
+  .cap-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    transition: border-color 200ms ease, box-shadow 200ms ease;
+  }
+  .cap-card:hover {
+    border-color: #CBD5E1;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+  }
+  .cap-card .icon {
+    width: 38px; height: 38px;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--accent-bg);
+    border-radius: var(--radius-sm);
+    margin-bottom: 1rem;
+    color: var(--accent);
+  }
+  .cap-card .icon svg { width: 20px; height: 20px; }
+  .cap-card h3 { margin-bottom: 0.35rem; }
+  .cap-card p { font-size: 0.9rem; }
+
+  .cap-card.featured {
+    border-color: #BFDBFE;
+    background: linear-gradient(135deg, #F8FAFC 0%, #EFF6FF 100%);
+  }
+
+  /* ── Tenant Hierarchy Diagram ─────────────────────────────────────────── */
+  .tenant-chain {
+    display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+    margin: 1.25rem 0 0;
+    font-size: 0.82rem;
+    flex-wrap: wrap;
+  }
+  .tenant-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 0.4rem 0.75rem;
+    font-weight: 600;
+    color: var(--text);
+  }
+  .tenant-box.accent {
+    background: var(--accent-bg);
+    border-color: #BFDBFE;
+    color: var(--accent-fg);
+  }
+  .tenant-arrow { color: var(--subtle); font-size: 0.9rem; font-weight: 500; }
+
+  /* ── Architecture Diagram ──────────────────────────────────────────────── */
+  .arch-diagram {
+    display: flex; flex-direction: column; align-items: center;
+    margin: 2rem 0 1.5rem;
+  }
+  .arch-diagram svg { max-width: 100%; height: auto; }
+
+  /* ── Cache Note ───────────────────────────────────────────────────────── */
+  .callout {
+    display: flex; gap: 0.75rem; align-items: flex-start;
+    background: var(--amber-bg);
+    border: 1px solid #FDE68A;
+    border-radius: var(--radius);
+    padding: 1rem 1.25rem;
+    margin: 1.5rem 0 0;
+  }
+  .callout svg { width: 18px; height: 18px; flex-shrink: 0; margin-top: 2px; color: var(--amber); }
+  .callout p { font-size: 0.9rem; color: #92400E; margin: 0; }
+  .callout strong { color: #78350F; }
+
+  /* ── Dev Details (expandable) ─────────────────────────────────────────── */
+  details.dev-note {
+    margin-top: 1.25rem;
+    background: #F1F5F9;
+    border: 1px solid #CBD5E1;
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    transition: background 150ms ease;
+  }
+  details.dev-note[open] { background: var(--surface); }
+
+  details.dev-note summary {
+    display: flex; align-items: center; gap: 0.5rem;
+    padding: 0.65rem 1rem;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--muted);
+    cursor: pointer;
+    user-select: none;
+    letter-spacing: 0.01em;
+    transition: color 150ms ease;
+  }
+  details.dev-note summary:hover { color: var(--text); }
+  details.dev-note summary::marker { content: ''; }
+  details.dev-note summary::-webkit-details-marker { display: none; }
+
+  details.dev-note summary .chevron {
+    width: 14px; height: 14px;
+    transition: transform 200ms ease;
+    color: var(--subtle);
+    flex-shrink: 0;
+  }
+  details.dev-note[open] summary .chevron { transform: rotate(90deg); }
+
+  details.dev-note .inner {
+    padding: 0 1rem 1rem;
+    font-size: 0.85rem;
+    color: var(--muted);
+    line-height: 1.6;
+  }
+  details.dev-note .inner p { font-size: 0.85rem; }
+  details.dev-note .tag {
+    display: inline-block;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--accent-fg);
+    background: var(--accent-bg);
+    padding: 0.15rem 0.45rem;
+    border-radius: 3px;
+    margin-right: 0.35rem;
+  }
+
+  /* ── Flow Steps ───────────────────────────────────────────────────────── */
+  .flow-steps {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 1rem; margin: 1.75rem 0 1rem;
+  }
+  .flow-step {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.25rem;
+    text-align: center;
+    position: relative;
+  }
+  .flow-step .step-num {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    background: var(--accent-bg);
+    color: var(--accent-fg);
+    font-weight: 700;
+    font-size: 0.82rem;
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 0.6rem;
+  }
+  .flow-step h3 { font-size: 0.9rem; margin-bottom: 0.25rem; }
+  .flow-step p { font-size: 0.82rem; color: var(--muted); margin: 0; }
+
+  /* ── Roadmap ───────────────────────────────────────────────────────────── */
+  .roadmap-items {
+    display: flex; flex-direction: column; gap: 0.85rem;
+    margin: 1.5rem 0 0.5rem;
+  }
+  .roadmap-item {
+    display: flex; gap: 0.85rem; align-items: flex-start;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.25rem 1.5rem;
+  }
+  .roadmap-item .ri-icon {
+    width: 36px; height: 36px;
+    border-radius: var(--radius-sm);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+  .ri-done .ri-icon { background: var(--green-bg); color: var(--green); }
+  .ri-next .ri-icon { background: var(--accent-bg); color: var(--accent); }
+  .ri-paused .ri-icon { background: #F1F5F9; color: var(--subtle); }
+
+  .ri-icon svg { width: 18px; height: 18px; }
+  .roadmap-item h3 { margin-bottom: 0.15rem; font-size: 0.95rem; }
+  .roadmap-item p { font-size: 0.85rem; margin: 0; }
+
+  .roadmap-item .status-tag {
+    display: inline-block;
+    font-size: 0.7rem; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.05em;
+    padding: 0.15rem 0.5rem; border-radius: 3px;
+    margin-left: 0.5rem; vertical-align: middle;
+  }
+  .tag-done   { background: var(--green-bg); color: var(--green); }
+  .tag-next   { background: var(--accent-bg); color: var(--accent-fg); }
+  .tag-paused { background: #F1F5F9; color: var(--muted); }
+
+  /* ── Footer ───────────────────────────────────────────────────────────── */
+  footer {
+    text-align: center;
+    padding: 2.5rem 0 1rem;
+    color: var(--subtle);
+    font-size: 0.82rem;
+  }
+
+  /* ── Responsive ───────────────────────────────────────────────────────── */
+  @media (max-width: 768px) {
+    html { font-size: 15px; }
+    h1 { font-size: 2rem; }
+    .cmp-grid, .caps-grid, .flow-steps { grid-template-columns: 1fr; }
+    .hero { padding: 3.5rem 0 2rem; }
+    section { padding: 2.5rem 0; }
+  }
+  @media (max-width: 480px) {
+    html { font-size: 14px; }
+    body { padding: 0 0.75rem 3rem; }
+    .hero h1 { font-size: 1.75rem; }
+    .tenant-chain { gap: 0.3rem; }
+    .tenant-box { font-size: 0.75rem; padding: 0.3rem 0.5rem; }
+    .arch-diagram svg { width: 100%; }
+  }
+
+  @media print {
+    body { background: #fff; color: #000; font-size: 12px; }
+    section { border-bottom: 1px solid #ccc; page-break-inside: avoid; }
+    details.dev-note { display: block; }
+    details.dev-note[open] .inner, details.dev-note .inner { display: block; }
+    details.dev-note summary .chevron { display: none; }
+    .callout { background: #fff; border-color: #ccc; }
+  }
+</style>
+</head>
+<body>
+
+<div class="page">
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- HERO                                                                   -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <header class="hero">
+    <h1>What is Payload CMS?</h1>
+    <p class="subtitle">
+      A modern content management system that separates content editing from website display,
+      so your team can update the site without touching code.
+    </p>
+    <span class="badge">
+      <span class="badge-dot"></span> High6 Inc. &middot; Internal Presentation
+    </span>
+  </header>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- SECTION 1: WHAT IS PAYLOAD?                                            -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <section id="what-is-payload">
+    <h2>First, what is it?</h2>
+
+    <p>
+      A <strong>CMS</strong> (Content Management System) is a tool that lets you create and edit
+      the text, images, and other content on a website &mdash; without needing to write code.
+      WordPress is a CMS you've probably encountered.
+    </p>
+    <p>
+      Payload is a <strong>headless CMS</strong>. &ldquo;Headless&rdquo; means the content-editing
+      part (the &ldquo;body&rdquo;) and the website that displays the content (the &ldquo;head&rdquo;)
+      are two separate systems. They talk to each other through an API, not by being bolted
+      together in the same application.
+    </p>
+
+    <div class="cmp-grid">
+      <div class="cmp-card">
+        <span class="label" style="color: var(--muted);">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+          Traditional CMS
+        </span>
+        <h3>Editing &amp; display are glued together</h3>
+        <p>WordPress runs both the admin panel <em>and</em> the public website in one system. Change something, and you're working inside the same codebase that visitors see.</p>
+      </div>
+      <div class="cmp-card">
+        <span class="label" style="color: var(--accent);">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="17" x2="16" y2="17"/><line x1="12" y1="17" x2="12" y2="21"/><line x1="2" y1="8" x2="22" y2="8"/></svg>
+          Headless CMS (Payload)
+        </span>
+        <h3>Editing is separate from display</h3>
+        <p>Payload handles content editing in its own application. The website fetches that content over an API and displays it independently. Each system can be updated or even replaced without touching the other.</p>
+      </div>
+    </div>
+
+    <details class="dev-note">
+      <summary>
+        <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+        For the developers
+      </summary>
+      <div class="inner">
+        <p><span class="tag">Stack</span> Payload 3.85 + Next.js 16 App Router + MongoDB + TypeScript strict mode. Built on top of the official Payload Website Template and extended with <code>@payloadcms/plugin-multi-tenant</code>. Content is exposed via both REST and GraphQL APIs, tenant-scoped automatically.</p>
+      </div>
+    </details>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- SECTION 2: WHY DID WE USE THIS?                                        -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <section id="why">
+    <h2>Why did we use this?</h2>
+
+    <p>
+      <strong>apir-tayo's</strong> homepage content &mdash; FAQs, testimonials, portfolio items,
+      pricing &mdash; used to be <strong>hardcoded directly in the website's code</strong>.
+      Changing a single FAQ answer meant a developer had to edit code files and redeploy the entire site.
+    </p>
+
+    <div class="cmp-grid">
+      <div class="cmp-card">
+        <span class="label" style="color: #B91C1C;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+          Before
+        </span>
+        <h3>Every content change needed a developer</h3>
+        <p>Text and images were baked into the frontend code. Update an FAQ? Edit a TypeScript file, commit, and redeploy. Even the simplest change was a development task.</p>
+      </div>
+      <div class="cmp-card">
+        <span class="label" style="color: var(--green);">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="9 12 11 14 15 10"/></svg>
+          After
+        </span>
+        <h3>Content lives in an editable admin panel</h3>
+        <p>Content is stored in Payload and edited through a visual admin panel. A non-developer can update FAQs, swap images, or add testimonials &mdash; no code, no deploy, no waiting.</p>
+      </div>
+    </div>
+
+    <p style="text-align: center; font-style: italic; color: var(--muted); margin-top: 1.25rem;">
+      Changing an FAQ answer used to mean editing code and redeploying.<br>
+      <strong>Now it means typing in a form and hitting Save.</strong>
+    </p>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- SECTION 3: WHAT CAN IT DO?                                             -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <section id="capabilities">
+    <h2>What can it do?</h2>
+
+    <div class="caps-grid">
+      <!-- Card 1: Visual Content Editing -->
+      <div class="cap-card">
+        <div class="icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        </div>
+        <h3>Visual content editing</h3>
+        <p>Edit text, images, and page layouts through a clean admin panel &mdash; not a database, not a code editor. Think of it like a form-based editor designed for people who manage websites, not people who build them.</p>
+      </div>
+
+      <!-- Card 2: Media Management -->
+      <div class="cap-card">
+        <div class="icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+        </div>
+        <h3>Media uploads with safety checks</h3>
+        <p>Upload images directly to Payload. It automatically enforces file type restrictions and size limits, generates multiple sizes for different uses (thumbnail, preview, full), and keeps uploads organized in folders &mdash; so nobody accidentally uploads a 50MB raw photo to the live site.</p>
+      </div>
+
+      <!-- Card 3: Multi-Tenant -->
+      <div class="cap-card featured">
+        <div class="icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="8" height="8" rx="1.5"/><rect x="14" y="2" width="8" height="8" rx="1.5"/><rect x="2" y="14" width="8" height="8" rx="1.5"/><rect x="14" y="14" width="8" height="8" rx="1.5"/></svg>
+        </div>
+        <h3>Multi-tenant, multi-site</h3>
+        <p>One Payload instance can serve content to <em>multiple different websites</em>. Content is organized in a clear hierarchy: a <strong>Tenant</strong> (like High6) owns one or more <strong>Sites</strong> (like apir-tayo). Each site's content is scoped and isolated &mdash; editing apir-tayo can't accidentally change another site. Add a new site later without rebuilding anything.</p>
+
+        <div class="tenant-chain">
+          <span class="tenant-box accent">High6<br><span style="font-weight:400;font-size:0.75em;">Tenant</span></span>
+          <span class="tenant-arrow">&rarr;</span>
+          <span class="tenant-box">apir-tayo<br><span style="font-weight:400;font-size:0.75em;">Site</span></span>
+          <span class="tenant-arrow">&rarr;</span>
+          <span class="tenant-box" style="border-style:dashed;">Pages, Posts, Media<br><span style="font-weight:400;font-size:0.75em;">Content</span></span>
+        </div>
+      </div>
+
+      <!-- Card 4: API-First -->
+      <div class="cap-card">
+        <div class="icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+        </div>
+        <h3>API-first</h3>
+        <p>All content is exposed through an API (both REST and GraphQL) that any frontend can fetch from. The website doesn't need to know how Payload stores data internally &mdash; it just asks &ldquo;what's the latest content for this page?&rdquo; and gets back structured data. The same API could power a mobile app or a third-party integration later.</p>
+      </div>
+    </div>
+
+    <details class="dev-note">
+      <summary>
+        <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+        For the developers
+      </summary>
+      <div class="inner">
+        <p>The REST API is available at <code>/api/:collection</code> with full query support (filters, pagination, depth, locale). GraphQL is at <code>/api/graphql</code>. Both are <strong>automatically tenant-scoped</strong> &mdash; queries only return content belonging to the current tenant context. The multi-tenant plugin layers access control on top of Payload's existing auth system, so there's no separate permission layer to maintain.</p>
+      </div>
+    </details>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- SECTION 4: HOW DOES IT ACTUALLY WORK?                                  -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <section id="how-it-works">
+    <h2>How does it actually work?</h2>
+
+    <p>
+      At a high level, there are <strong>two separate systems</strong> working together: Payload
+      (where content is edited) and apir-tayo (the live website visitors see). They communicate
+      over an API, not by sharing code or a database.
+    </p>
+
+    <!-- Architecture diagram -->
+    <div class="arch-diagram">
+      <svg viewBox="0 0 720 320" width="720" height="320" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <filter id="shadow" x="-4%" y="-4%" width="108%" height="116%">
+            <feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="#0F172A" flood-opacity="0.06"/>
+          </filter>
+        </defs>
+
+        <!-- Payload Box -->
+        <rect x="20" y="30" width="290" height="190" rx="10" fill="#fff" stroke="#E2E8F0" stroke-width="1.5" filter="url(#shadow)"/>
+        <rect x="20" y="30" width="290" height="40" rx="10" fill="#EFF6FF"/>
+        <rect x="20" y="52" width="290" height="18" fill="#EFF6FF"/>
+        <text x="165" y="56" text-anchor="middle" font-family="Inter,sans-serif" font-weight="700" font-size="16" fill="#1D4ED8">Payload CMS</text>
+        <text x="165" y="89" text-anchor="middle" font-family="Inter,sans-serif" font-size="12.5" fill="#64748B">Content editing &amp; storage</text>
+
+        <!-- Mini content list in Payload -->
+        <rect x="40" y="108" width="250" height="22" rx="4" fill="#F8FAFC" stroke="#E2E8F0" stroke-width="1"/>
+        <text x="52" y="123" font-family="Inter,sans-serif" font-size="11.5" fill="#475569">📄 FAQ: "What are your pricing plans?"</text>
+        <rect x="40" y="135" width="250" height="22" rx="4" fill="#F8FAFC" stroke="#E2E8F0" stroke-width="1"/>
+        <text x="52" y="150" font-family="Inter,sans-serif" font-size="11.5" fill="#475569">🖼 Hero image: hero-banner.jpg</text>
+        <rect x="40" y="162" width="250" height="22" rx="4" fill="#F8FAFC" stroke="#E2E8F0" stroke-width="1"/>
+        <text x="52" y="177" font-family="Inter,sans-serif" font-size="11.5" fill="#475569">⭐ Testimonial: "Great service..."</text>
+        <text x="165" y="205" text-anchor="middle" font-family="Inter,sans-serif" font-size="10.5" fill="#94A3B8">Admin panel at /admin</text>
+
+        <!-- apir-tayo Box -->
+        <rect x="410" y="30" width="290" height="190" rx="10" fill="#fff" stroke="#E2E8F0" stroke-width="1.5" filter="url(#shadow)"/>
+        <rect x="410" y="30" width="290" height="40" rx="10" fill="#ECFDF5"/>
+        <rect x="410" y="52" width="290" height="18" fill="#ECFDF5"/>
+        <text x="555" y="56" text-anchor="middle" font-family="Inter,sans-serif" font-weight="700" font-size="16" fill="#059669">apir-tayo Website</text>
+        <text x="555" y="89" text-anchor="middle" font-family="Inter,sans-serif" font-size="12.5" fill="#64748B">Live website (visitors see this)</text>
+
+        <!-- Mini display in apir-tayo -->
+        <rect x="430" y="108" width="250" height="50" rx="4" fill="#F8FAFC" stroke="#E2E8F0" stroke-width="1"/>
+        <text x="555" y="126" text-anchor="middle" font-family="Inter,sans-serif" font-size="11.5" font-weight="700" fill="#1E293B">FAQ</text>
+        <text x="555" y="141" text-anchor="middle" font-family="Inter,sans-serif" font-size="11.5" fill="#475569">What are your pricing plans?</text>
+        <text x="555" y="154" text-anchor="middle" font-family="Inter,sans-serif" font-size="10.5" fill="#94A3B8">Starting at ₱999/month...</text>
+
+        <rect x="430" y="163" width="250" height="22" rx="4" fill="#F8FAFC" stroke="#E2E8F0" stroke-width="1"/>
+        <text x="455" y="178" font-family="Inter,sans-serif" font-size="11.5" fill="#94A3B8">🖼 Hero banner (auto-sized)</text>
+        <text x="555" y="205" text-anchor="middle" font-family="Inter,sans-serif" font-size="10.5" fill="#94A3B8">apirtayo.com</text>
+
+        <!-- Arrow: Edit action (left to right, top) -->
+        <defs><marker id="arrow-blue" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="#2563EB"/></marker></defs>
+        <line x1="315" y1="100" x2="404" y2="100" stroke="#2563EB" stroke-width="1.8" marker-end="url(#arrow-blue)"/>
+        <text x="360" y="92" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" fill="#2563EB" font-weight="600">Fetches latest content</text>
+
+        <!-- Arrow: Cache/ISR note (right to left, bottom) -->
+        <line x1="404" y1="230" x2="315" y2="230" stroke="#D97706" stroke-width="1.2" stroke-dasharray="5,4"/>
+        <text x="360" y="247" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" fill="#D97706" font-weight="500">Cached copy (refreshes ~60s)</text>
+
+        <!-- Bottom: DB label -->
+        <rect x="60" y="260" width="210" height="32" rx="6" fill="#F1F5F9" stroke="#E2E8F0" stroke-width="1"/>
+        <text x="165" y="281" text-anchor="middle" font-family="Inter,sans-serif" font-size="11.5" fill="#64748B">MongoDB — stores all content</text>
+        <line x1="165" y1="220" x2="165" y2="258" stroke="#CBD5E1" stroke-width="1"/>
+
+        <!-- Bottom: Vercel label -->
+        <rect x="450" y="260" width="210" height="32" rx="6" fill="#F1F5F9" stroke="#E2E8F0" stroke-width="1"/>
+        <text x="555" y="281" text-anchor="middle" font-family="Inter,sans-serif" font-size="11.5" fill="#64748B">Deployed on Vercel</text>
+        <line x1="555" y1="220" x2="555" y2="258" stroke="#CBD5E1" stroke-width="1"/>
+      </svg>
+    </div>
+
+    <!-- Flow steps -->
+    <div class="flow-steps">
+      <div class="flow-step">
+        <div class="step-num">1</div>
+        <h3>Edit in Payload</h3>
+        <p>Someone edits content in the admin panel &mdash; changes an FAQ, swaps a hero image, adds a testimonial. The change is saved to MongoDB.</p>
+      </div>
+      <div class="flow-step">
+        <div class="step-num">2</div>
+        <h3>API delivers content</h3>
+        <p>apir-tayo's website asks Payload's API: &ldquo;What's the current content?&rdquo; Payload returns it as structured JSON data.</p>
+      </div>
+      <div class="flow-step">
+        <div class="step-num">3</div>
+        <h3>Visitors see it</h3>
+        <p>The website renders the content into the live page. Visitors see the update without knowing anything changed behind the scenes.</p>
+      </div>
+    </div>
+
+    <!-- Cache note -->
+    <div class="callout">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      <p>
+        <strong>Note on timing:</strong> There's a brief delay (up to 60 seconds) between an edit in Payload
+        and it appearing on the live site. This is intentional &mdash; the site keeps a locally cached copy
+        of the content so it loads instantly for every visitor, rather than asking Payload for fresh
+        content on every single page view. The cache re-validates automatically; no manual step needed.
+        (A &ldquo;publish instantly&rdquo; button can be added later if the team decides it's necessary.)
+      </p>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- SECTION 5: WHAT'S NEXT                                                 -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <section id="whats-next">
+    <h2>What's next</h2>
+
+    <p>
+      This is the starting point &mdash; not the finish line. The same approach that moved FAQs and
+      testimonials into Payload can be applied to every content section on the site.
+    </p>
+
+    <div class="roadmap-items">
+
+      <div class="roadmap-item ri-done">
+        <div class="ri-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <div>
+          <h3>Foundation <span class="status-tag tag-done">Done</span></h3>
+          <p>Payload CMS is running with multi-tenant support, content collections (Pages, Posts, Media, Categories), and REST + GraphQL APIs. apir-tayo content is seeded and served through the Tenant &rarr; Site &rarr; Content structure.</p>
+        </div>
+      </div>
+
+      <div class="roadmap-item ri-next">
+        <div class="ri-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+        </div>
+        <div>
+          <h3>More content sections <span class="status-tag tag-next">Planned</span></h3>
+          <p>Migrate additional apir-tayo sections (Hero, How It Works, portfolio detail pages, pricing tiers) into Payload the same way &mdash; one section at a time, each one becoming editable through the admin panel.</p>
+        </div>
+      </div>
+
+      <div class="roadmap-item ri-paused">
+        <div class="ri-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a4 4 0 0 1 4 4v1h2a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h2V6a4 4 0 0 1 4-4z"/><path d="M9 10h.01M15 10h.01"/><circle cx="12" cy="15" r="3"/></svg>
+        </div>
+        <div>
+          <h3>AI Agent <span class="status-tag tag-paused">On hold — team discussion needed</span></h3>
+          <p>
+            The core concept is already implemented and working: a <code>/api/agent</code> endpoint
+            accepts plain-language instructions (&ldquo;Change the pricing page title to Our Plans&rdquo;),
+            parses them into CMS actions, and executes them against Payload's API.
+            <strong>Guardrails</strong> define exactly which fields and collections the agent is allowed
+            to modify &mdash; no deleting, no tenant reassignment, no touching anything outside the
+            approved scope. This means both <strong>developers</strong> and <strong>clients</strong>
+            could configure their sites by typing instructions instead of navigating the admin panel.
+            This feature is intentionally paused for team discussion before expanding beyond its current
+            proof-of-concept scope.
+          </p>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- FOOTER                                                                 -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <footer>
+    Payload CMS POC &middot; High6 Inc. &middot; June 2026
+  </footer>
+
+</div>
+
+</body>
+</html>

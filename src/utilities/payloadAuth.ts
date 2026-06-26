@@ -6,16 +6,14 @@
  * Re-logs in proactively if the token is within 5 minutes of expiry.
  */
 
+import { getServerSideURL } from './getURL'
+
 interface TokenCache {
   token: string
   expiresAt: number // Date.now() ms
 }
 
 let tokenCache: TokenCache | null = null
-
-function getServerURL(): string {
-  return process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:3000'
-}
 
 /** Decode the `exp` claim from a JWT without a library. Returns ms since epoch, or null. */
 function decodeJwtExp(token: string): number | null {
@@ -57,7 +55,7 @@ export async function getAgentToken(): Promise<string> {
     throw new Error('AGENT_EMAIL and AGENT_PASSWORD must be set in environment')
   }
 
-  const baseUrl = getServerURL()
+  const baseUrl = getServerSideURL()
   const res = await fetch(`${baseUrl}/api/users/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

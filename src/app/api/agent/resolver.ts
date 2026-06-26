@@ -2,10 +2,11 @@
 // Agent API — Record resolution and data access helpers
 // ---------------------------------------------------------------------------
 
+import { getServerSideURL } from '@/utilities/getURL'
 import { type SelectionRecord } from './types'
 
-export function getServerURL(): string {
-  return process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:3000'
+function getServerURL(): string {
+  return getServerSideURL()
 }
 
 // ---------------------------------------------------------------------------

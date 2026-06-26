@@ -11,6 +11,7 @@ import {
   fetchTenantRecords,
 } from '../resolver'
 import { writeAuditLog } from '../audit'
+import { getServerSideURL } from '@/utilities/getURL'
 import { clearAgentToken, getAgentToken } from '@/utilities/payloadAuth'
 
 /** Field map: action → { collection, field, label } */
@@ -376,7 +377,7 @@ export async function handleTextUpdate(
 // ---------------------------------------------------------------------------
 
 function getServerURL(): string {
-  return process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:3000'
+  return getServerSideURL()
 }
 
 /** POST a new document to a collection. Returns the response for inspection. */

@@ -11,9 +11,10 @@
  */
 
 import { getAgentToken } from '@/utilities/payloadAuth'
+import { getServerSideURL } from '@/utilities/getURL'
 
 function getServerURL(): string {
-  return process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:3000'
+  return getServerSideURL()
 }
 
 export async function POST(request: Request): Promise<Response> {

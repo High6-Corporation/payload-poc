@@ -13,6 +13,7 @@ import { PortalClients } from './collections/PortalClients'
 import { PortfolioItems } from './collections/PortfolioItems'
 import { Posts } from './collections/Posts'
 import { PricingPlans } from './collections/PricingPlans'
+import { SiteSettings } from './collections/SiteSettings'
 import { Sites } from './collections/Sites'
 import { Tenants } from './collections/Tenants'
 import { Testimonials } from './collections/Testimonials'
@@ -84,6 +85,7 @@ export default buildConfig({
     FAQs,
     PortfolioItems,
     PricingPlans,
+    SiteSettings,
     AgentAuditLog,
   ],
   cors: [getServerSideURL(), 'http://localhost:3001', 'http://localhost:3002'].filter(Boolean),

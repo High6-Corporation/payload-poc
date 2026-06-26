@@ -33,7 +33,7 @@ export async function writeAuditLog(params: {
     body: JSON.stringify({
       tenant: params.tenantId,
       action: params.action,
-      collection: params.collection,
+      collectionSlug: params.collection,
       documentId: params.documentId,
       slug: params.slug,
       previousValue: params.previousValue,

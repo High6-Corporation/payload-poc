@@ -80,6 +80,7 @@ export interface Config {
     faqs: Faq;
     'portfolio-items': PortfolioItem;
     'pricing-plans': PricingPlan;
+    'site-settings': SiteSetting;
     'agent-audit-log': AgentAuditLog;
     redirects: Redirect;
     forms: Form;
@@ -110,6 +111,7 @@ export interface Config {
     faqs: FaqsSelect<false> | FaqsSelect<true>;
     'portfolio-items': PortfolioItemsSelect<false> | PortfolioItemsSelect<true>;
     'pricing-plans': PricingPlansSelect<false> | PricingPlansSelect<true>;
+    'site-settings': SiteSettingsSelect<false> | SiteSettingsSelect<true>;
     'agent-audit-log': AgentAuditLogSelect<false> | AgentAuditLogSelect<true>;
     redirects: RedirectsSelect<false> | RedirectsSelect<true>;
     forms: FormsSelect<false> | FormsSelect<true>;
@@ -954,13 +956,60 @@ export interface PricingPlan {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "site-settings".
+ */
+export interface SiteSetting {
+  id: string;
+  site: string | Site;
+  hero?: {
+    heroHeadline?: string | null;
+    heroSubheadline?: string | null;
+  };
+  whyOnePage?: {
+    whyOnePageTitle?: string | null;
+    whyOnePageParagraph?: string | null;
+  };
+  howItWorks?: {
+    howItWorksTitle?: string | null;
+    howItWorksParagraph?: string | null;
+  };
+  trust?: {
+    trustSectionTitle?: string | null;
+    trustSectionParagraph?: string | null;
+  };
+  cta?: {
+    ctaTitle?: string | null;
+    ctaParagraph?: string | null;
+    ctaButtonText?: string | null;
+    ctaCaption?: string | null;
+  };
+  footer?: {
+    footerCopy?: string | null;
+  };
+  custom?: {
+    /**
+     * Extensible key/value pairs for section headings not covered by the tabs above. Keys should be lowercase, hyphen-separated (e.g. partner-logos-title). Duplicate keys resolve to "last one wins" on the frontend — uniqueness is not enforced here.
+     */
+    customFields?:
+      | {
+          key: string;
+          value: string;
+          id?: string | null;
+        }[]
+      | null;
+  };
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "agent-audit-log".
  */
 export interface AgentAuditLog {
   id: string;
   tenant: string | Tenant;
   action: string;
-  collection: string;
+  collectionSlug: string;
   documentId: string;
   slug: string;
   previousValue: string;
@@ -1206,6 +1255,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'pricing-plans';
         value: string | PricingPlan;
+      } | null)
+    | ({
+        relationTo: 'site-settings';
+        value: string | SiteSetting;
       } | null)
     | ({
         relationTo: 'agent-audit-log';
@@ -1703,12 +1756,69 @@ export interface PricingPlansSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "site-settings_select".
+ */
+export interface SiteSettingsSelect<T extends boolean = true> {
+  site?: T;
+  hero?:
+    | T
+    | {
+        heroHeadline?: T;
+        heroSubheadline?: T;
+      };
+  whyOnePage?:
+    | T
+    | {
+        whyOnePageTitle?: T;
+        whyOnePageParagraph?: T;
+      };
+  howItWorks?:
+    | T
+    | {
+        howItWorksTitle?: T;
+        howItWorksParagraph?: T;
+      };
+  trust?:
+    | T
+    | {
+        trustSectionTitle?: T;
+        trustSectionParagraph?: T;
+      };
+  cta?:
+    | T
+    | {
+        ctaTitle?: T;
+        ctaParagraph?: T;
+        ctaButtonText?: T;
+        ctaCaption?: T;
+      };
+  footer?:
+    | T
+    | {
+        footerCopy?: T;
+      };
+  custom?:
+    | T
+    | {
+        customFields?:
+          | T
+          | {
+              key?: T;
+              value?: T;
+              id?: T;
+            };
+      };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "agent-audit-log_select".
  */
 export interface AgentAuditLogSelect<T extends boolean = true> {
   tenant?: T;
   action?: T;
-  collection?: T;
+  collectionSlug?: T;
   documentId?: T;
   slug?: T;
   previousValue?: T;

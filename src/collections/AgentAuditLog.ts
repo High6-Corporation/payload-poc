@@ -12,7 +12,7 @@ export const AgentAuditLog: CollectionConfig = {
   },
   admin: {
     useAsTitle: 'action',
-    defaultColumns: ['action', 'collection', 'slug', 'confirmedAt'],
+    defaultColumns: ['action', 'collectionSlug', 'slug', 'confirmedAt'],
     group: 'Tenant Management',
   },
   defaultSort: '-confirmedAt',
@@ -29,7 +29,7 @@ export const AgentAuditLog: CollectionConfig = {
       required: true,
     },
     {
-      name: 'collection',
+      name: 'collectionSlug',
       type: 'text',
       required: true,
     },

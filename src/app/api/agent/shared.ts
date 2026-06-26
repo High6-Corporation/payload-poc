@@ -138,14 +138,29 @@ export function initCreateFlow(
   }
 }
 
+/** Per-field conversational prompts for the create-record flow.
+ *  Optional fields include a skip hint — the caller controls whether it
+ *  is shown via the `isOptional` parameter. */
+const FIELD_PROMPTS: Record<string, string> = {
+  question: 'What would you like the question to say?',
+  answer: 'What should the answer be?',
+  name: "What's the name for this entry?",
+  quote: "What's the testimonial quote?",
+  position: "What's their position or title?",
+  title: "What's the title for this item?",
+  category: 'What category does this fall under?',
+  url: "What's the URL?",
+  label: 'What should this plan be called?',
+  price: "What's the price?",
+  description: 'Add a short description?',
+  features: 'Any features to list? Enter them comma-separated',
+}
+
 /** Build a human-readable prompt for a field. */
 function buildFieldPrompt(field: string, label: string, isOptional: boolean): string {
-  const skip = isOptional ? ' (type "skip" to leave empty)' : ''
-  const prefix =
-    field === 'features'
-      ? 'Enter the features as a comma-separated list'
-      : `What should the ${label} be`
-  return `${prefix}?${skip}`
+  const base = FIELD_PROMPTS[field] ?? `What should the ${label} be?`
+  if (field === 'features') return isOptional ? `${base}, or skip.` : base
+  return isOptional ? `${base} (You can skip this.)` : base
 }
 
 // ---------------------------------------------------------------------------
@@ -228,6 +243,31 @@ export function advanceFieldCollection(
 // Proposal builder
 // ---------------------------------------------------------------------------
 
+/** Field key → display label for proposal messages. */
+const FIELD_DISPLAY_LABELS: Record<string, string> = {
+  question: 'Question',
+  answer: 'Answer',
+  name: 'Name',
+  quote: 'Quote',
+  position: 'Position',
+  title: 'Title',
+  category: 'Category',
+  url: 'URL',
+  label: 'Plan name',
+  price: 'Price',
+  description: 'Description',
+  features: 'Features',
+  image: 'Image',
+}
+
+/** Collection name to use in proposal opening sentences. */
+const COLLECTION_OPENERS: Record<string, string> = {
+  add_faq: 'FAQs',
+  add_testimonial: 'testimonials',
+  add_portfolio_item: 'portfolio',
+  add_pricing_plan: 'pricing plans',
+}
+
 function buildCreateProposal(
   action: string,
   collected: Record<string, string>,
@@ -240,17 +280,22 @@ function buildCreateProposal(
     add_pricing_plan: 'pricing plan',
   }
 
-  // Build a human-readable summary — never expose raw media IDs to the client.
-  // The image field (when present) is shown as a fixed placeholder line.
-  const fieldsSummary = Object.entries(collected)
-    .filter(([k, v]) => k !== '_skippedOptional' && k !== 'image' && v && v.trim() !== '')
-    .map(([k, v]) => `  ${k}: "${v}"`)
-    .join('\n')
+  // Build field lines using plain labeled format — no quotes, no colons after values
+  const lines: string[] = []
+  for (const [k, v] of Object.entries(collected)) {
+    if (k === '_skippedOptional' || k === '_complete' || !v || v.trim() === '') continue
+    const label = FIELD_DISPLAY_LABELS[k] ?? k.charAt(0).toUpperCase() + k.slice(1)
+    // The image field holds a mediaId — never expose raw IDs to the client
+    if (k === 'image') {
+      lines.push(`${label}: (attached)`)
+    } else {
+      lines.push(`${label}: ${v.trim()}`)
+    }
+  }
 
-  const imageLine =
-    collected.image && collected.image.trim() !== '' ? '\n  image: (uploaded image attached)' : ''
-
-  const fullSummary = fieldsSummary + imageLine
+  const opener = COLLECTION_OPENERS[action] ?? 'your records'
+  const body = lines.length > 0 ? '\n\n' + lines.join('\n') : ''
+  const message = `Here's what I'll add to your ${opener}:${body}\n\nType "confirm" or tap Confirm to save this.`
 
   return {
     status: 'pending_confirmation',
@@ -258,8 +303,8 @@ function buildCreateProposal(
       action,
       // Human-readable label for the confirmation display
       id: actionLabels[action] ?? action,
-      currentValue: '(new record)',
-      newValue: fullSummary,
+      currentValue: '',
+      newValue: message,
       collection: def.collection,
       // Store the actual field data for execute
       _collected: collected,

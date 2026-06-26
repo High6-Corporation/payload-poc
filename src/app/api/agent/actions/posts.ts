@@ -30,13 +30,11 @@ export async function handlePosts(
       )
     }
 
+    const rawValue =
+      ((proposal as unknown as Record<string, unknown>)._rawValue as string) ?? proposal.newValue
+
     let currentToken = token
-    let patchResult = await patchTitle(
-      collection,
-      proposal.documentId,
-      proposal.newValue,
-      currentToken,
-    )
+    let patchResult = await patchTitle(collection, proposal.documentId, rawValue, currentToken)
 
     if (patchResult.status === 401) {
       clearAgentToken()
@@ -45,12 +43,7 @@ export async function handlePosts(
       } catch {
         return Response.json({ error: 'Token refresh failed after 401 response' }, { status: 500 })
       }
-      patchResult = await patchTitle(
-        collection,
-        proposal.documentId,
-        proposal.newValue,
-        currentToken,
-      )
+      patchResult = await patchTitle(collection, proposal.documentId, rawValue, currentToken)
       if (patchResult.status === 401) {
         return Response.json(
           { error: 'Authentication failed after token refresh' },
@@ -102,7 +95,7 @@ export async function handlePosts(
         slug: parsed.slug,
         collection,
         field: 'title',
-        prompt: `What should the new title be for the ${kind} "${parsed.slug}"?`,
+        prompt: `What should the new title be?`,
       },
       { status: 200 },
     )
@@ -131,7 +124,8 @@ export async function handlePosts(
         action: parsed.action,
         slug: parsed.slug,
         currentValue,
-        newValue: parsed.value,
+        newValue: `Here's what I'll update in the "${parsed.slug}" ${collection === 'posts' ? 'post' : 'page'}:\n\nTitle: ${parsed.value}\n\nType "confirm" or tap Confirm to save this.`,
+        _rawValue: parsed.value,
         collection,
         documentId: docId,
       },

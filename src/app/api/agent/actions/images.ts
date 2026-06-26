@@ -3,12 +3,7 @@
 // ---------------------------------------------------------------------------
 
 import { type ParsedAction, type ProposalPayload } from '../types'
-import {
-  fetchRecordById,
-  getFieldValue,
-  resolveRecordTenant,
-  fetchTenantRecords,
-} from '../resolver'
+import { fetchRecordById, resolveRecordTenant, fetchTenantRecords } from '../resolver'
 import { writeAuditLog } from '../audit'
 import { patchWithRetry } from './shared'
 
@@ -151,10 +146,6 @@ export async function handleImages(
     )
   }
 
-  // Get the current image value and record label for the proposal preview
-  const currentImage = getFieldValue(record, 'image')
-  const currentDisplay = currentImage ? '(image set)' : '(no image)'
-
   // Extract display label from the record — same logic as shared.ts getRecordDisplayLabel
   const displayLabel =
     parsed.collection === 'testimonials'
@@ -165,14 +156,17 @@ export async function handleImages(
         ? record.title
         : '(no title)'
 
+  const collectionLabel = parsed.collection === 'testimonials' ? 'testimonial' : 'portfolio item'
+  const message = `I'll attach your uploaded image to the ${displayLabel} ${collectionLabel}.\n\nType "confirm" or tap Confirm to save this.`
+
   return Response.json(
     {
       status: 'pending_confirmation',
       proposal: {
         action: parsed.action,
         id: displayLabel,
-        currentValue: currentDisplay,
-        newValue: '[uploaded image]',
+        currentValue: '',
+        newValue: message,
         collection: parsed.collection,
         documentId: parsed.id,
         imageMediaId: parsed.mediaId,

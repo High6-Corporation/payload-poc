@@ -145,10 +145,11 @@ export async function handleTextUpdate(
       )
     }
 
+    const rawValue = (proposal as unknown as Record<string, unknown>)._rawValue ?? proposal.newValue
     const patchResult = await patchWithRetry(
       meta.collection,
       proposal.documentId,
-      { [meta.field]: proposal.newValue },
+      { [meta.field]: rawValue },
       token,
     )
 
@@ -204,6 +205,12 @@ export async function handleTextUpdate(
       const nextMeta = ACTION_META[proposal.nextAction]
       if (nextMeta) {
         const nextFieldLabel = nextMeta.field.replace(/_/g, ' ')
+        const nextFieldPrompts: Record<string, string> = {
+          question: 'And what would you like the question to say?',
+          answer: 'And what should the answer be?',
+        }
+        const nextPrompt =
+          nextFieldPrompts[nextMeta.field] ?? `And what should the ${nextFieldLabel} be?`
         return Response.json(
           {
             status: 'awaiting_value',
@@ -211,7 +218,7 @@ export async function handleTextUpdate(
             id: proposal.documentId,
             collection: nextMeta.collection,
             field: nextMeta.field,
-            prompt: `And what would you like the ${nextFieldLabel} to say?`,
+            prompt: nextPrompt,
           },
           { status: 200 },
         )
@@ -239,23 +246,13 @@ export async function handleTextUpdate(
       return Response.json({ error: `Missing "id" for action ${parsed.action}` }, { status: 400 })
     }
 
-    let displayLabel = parsed.id
-    try {
-      const record = await fetchRecordById(meta.collection, parsed.id, token)
-      if (record) {
-        displayLabel = getRecordDisplayLabel(meta.collection, record)
-      }
-    } catch {
-      // Keep the raw id as fallback
-    }
-
     return Response.json(
       {
         status: 'awaiting_field',
         action: parsed.action,
         id: parsed.id,
         collection: meta.collection,
-        prompt: `Would you like to update the question, the answer, or both for '${displayLabel}'?`,
+        prompt: `Would you like to update the question, the answer, or both?`,
       },
       { status: 200 },
     )
@@ -271,7 +268,20 @@ export async function handleTextUpdate(
     // Missing value — this is the expected path when a client picks a record
     // but never specified what to change.  Ask them for the new value instead
     // of throwing a raw error string.
-    const fieldLabel = meta.field.replace(/_/g, ' ')
+
+    // Per-field conversational prompts — never echo the old value or record name
+    const fieldPrompts: Record<string, string> = {
+      question: 'What would you like the question to say?',
+      answer: 'What should the answer be?',
+      name: "What's the name?",
+      quote: "What's the testimonial quote?",
+      position: "What's their position or title?",
+      title: "What's the title?",
+      category: 'What category should this be?',
+      url: "What's the URL?",
+    }
+    const prompt =
+      fieldPrompts[meta.field] ?? `What should the ${meta.field.replace(/_/g, ' ')} be?`
 
     const awaitingValueBody: Record<string, unknown> = {
       status: 'awaiting_value',
@@ -279,7 +289,7 @@ export async function handleTextUpdate(
       id: parsed.id,
       collection: meta.collection,
       field: meta.field,
-      prompt: `What would you like the ${fieldLabel} to say instead?`,
+      prompt,
     }
 
     // Carry nextAction through so "both" flows survive the round-trip
@@ -349,13 +359,29 @@ export async function handleTextUpdate(
 
   const displayLabel = getRecordDisplayLabel(meta.collection, record)
 
+  // Field display labels for proposal messages
+  const fieldDisplayLabels: Record<string, string> = {
+    question: 'Question',
+    answer: 'Answer',
+    name: 'Name',
+    quote: 'Quote',
+    position: 'Position',
+    title: 'Title',
+    category: 'Category',
+    url: 'URL',
+  }
+
+  const fLabel = fieldDisplayLabels[meta.field] ?? meta.field.replace(/_/g, ' ')
+  const message = `Here's what I'll update in the ${displayLabel} ${meta.label.toLowerCase()}:\n\n${fLabel}: ${parsed.value}\n\nType "confirm" or tap Confirm to save this.`
+
   const proposalBody: Record<string, unknown> = {
     action: parsed.action,
     id: displayLabel,
     currentValue,
-    newValue: parsed.value,
+    newValue: message,
     collection: meta.collection,
     documentId: parsed.id,
+    _rawValue: parsed.value,
   }
 
   // Carry nextAction through so "both" survives the confirmation round-trip

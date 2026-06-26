@@ -23,10 +23,7 @@ export async function handleList(
 ): Promise<Response> {
   const listCollection = LIST_COLLECTION[parsed.action]
   if (!listCollection) {
-    return Response.json(
-      { error: `Unknown list action: ${parsed.action}` },
-      { status: 400 },
-    )
+    return Response.json({ error: `Unknown list action: ${parsed.action}` }, { status: 400 })
   }
 
   const records = await fetchTenantRecords(listCollection, tenantId, token)
@@ -56,10 +53,17 @@ export async function handleList(
     'portfolio-items': 'portfolio items',
   }
 
+  const prompts: Record<string, string> = {
+    faqs: 'Here are your FAQs. Which one would you like to update?',
+    testimonials: 'Here are your testimonials. Which one would you like to update?',
+    'portfolio-items': 'Here are your portfolio items. Which one would you like to update?',
+  }
+
   return Response.json(
     {
       status: 'needs_selection',
       collection: collectionLabels[listCollection],
+      prompt: prompts[listCollection],
       records,
     },
     { status: 200 },

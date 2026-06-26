@@ -268,7 +268,7 @@ export async function POST(request: Request): Promise<Response> {
           id: af.id,
           collection: 'faqs',
           field: 'question',
-          prompt: `What would you like the question to say instead?`,
+          prompt: `What would you like the question to say?`,
           nextAction: 'update_faq_answer',
         }
         return Response.json(awaitingValueBody, { status: 200 })
@@ -284,7 +284,7 @@ export async function POST(request: Request): Promise<Response> {
           id: af.id,
           collection: 'faqs',
           field,
-          prompt: `What would you like the ${field} to say instead?`,
+          prompt: `What would you like the ${field} to say?`,
         },
         { status: 200 },
       )

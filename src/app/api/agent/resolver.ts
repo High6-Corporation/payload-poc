@@ -205,19 +205,25 @@ export async function fetchTenantRecords(
       if (collection === 'faqs') {
         const question = typeof doc.question === 'string' ? doc.question : ''
         const answer = typeof doc.answer === 'string' ? doc.answer : ''
+        const answerPreview = answer
+          ? answer.length > 80
+            ? answer.slice(0, 77) + '...'
+            : answer
+          : ''
         return {
           id,
-          label: question.length > 60 ? question.slice(0, 57) + '...' : question || '(no question)',
-          preview: answer.length > 80 ? answer.slice(0, 77) + '...' : answer || '(no answer)',
+          label: question || '(no question)',
+          preview: answerPreview ? `"${answerPreview}"` : '',
         }
       }
       if (collection === 'testimonials') {
         const name = typeof doc.name === 'string' ? doc.name : ''
         const quote = typeof doc.quote === 'string' ? doc.quote : ''
+        const quotePreview = quote ? (quote.length > 60 ? quote.slice(0, 57) + '...' : quote) : ''
         return {
           id,
           label: name || '(no name)',
-          preview: quote.length > 80 ? quote.slice(0, 77) + '...' : quote || '(no quote)',
+          preview: quotePreview ? `"${quotePreview}"` : '',
         }
       }
       // portfolio-items

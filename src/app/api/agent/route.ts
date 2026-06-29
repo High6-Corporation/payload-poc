@@ -23,26 +23,26 @@ import { handleAwaitingFieldsRoundTrip, CREATE_FIELD_DEFS } from './shared'
 // Dry-run dispatch — maps action → handler(dryRun)
 // ---------------------------------------------------------------------------
 
-type DryRunHandler = (p: ParsedAction, tid: string, tok: string) => Promise<Response>
+type DryRunHandler = (p: ParsedAction, tid: string, tok: string, siteId?: string) => Promise<Response>
 
 const DRY_RUN: Record<string, DryRunHandler> = {
-  update_faq_question: (p, tid, tok) => handleFaqs(p, tid, tok, false),
-  update_faq_answer: (p, tid, tok) => handleFaqs(p, tid, tok, false),
-  update_faq: (p, tid, tok) => handleFaqs(p, tid, tok, false),
-  update_testimonial_quote: (p, tid, tok) => handleTestimonials(p, tid, tok, false),
-  update_testimonial_name: (p, tid, tok) => handleTestimonials(p, tid, tok, false),
-  update_testimonial_position: (p, tid, tok) => handleTestimonials(p, tid, tok, false),
-  update_portfolio_title: (p, tid, tok) => handlePortfolio(p, tid, tok, false),
-  update_portfolio_category: (p, tid, tok) => handlePortfolio(p, tid, tok, false),
-  update_portfolio_url: (p, tid, tok) => handlePortfolio(p, tid, tok, false),
-  link_image: (p, tid, tok) => handleImages(p, tid, tok, false),
-  list_faqs: (p, tid, tok) => handleList(p, tid, tok),
-  list_testimonials: (p, tid, tok) => handleList(p, tid, tok),
-  list_portfolio_items: (p, tid, tok) => handleList(p, tid, tok),
-  add_faq: (p, tid, tok) => handleCreateFaq(p, tid, tok, false),
-  add_testimonial: (p, tid, tok) => handleCreateTestimonial(p, tid, tok, false),
-  add_portfolio_item: (p, tid, tok) => handleCreatePortfolio(p, tid, tok, false),
-  add_pricing_plan: (p, tid, tok) => handlePricing(p, tid, tok, false),
+  update_faq_question: (p, tid, tok, sid) => handleFaqs(p, tid, tok, false, undefined, sid),
+  update_faq_answer: (p, tid, tok, sid) => handleFaqs(p, tid, tok, false, undefined, sid),
+  update_faq: (p, tid, tok, sid) => handleFaqs(p, tid, tok, false, undefined, sid),
+  update_testimonial_quote: (p, tid, tok, sid) => handleTestimonials(p, tid, tok, false, undefined, sid),
+  update_testimonial_name: (p, tid, tok, sid) => handleTestimonials(p, tid, tok, false, undefined, sid),
+  update_testimonial_position: (p, tid, tok, sid) => handleTestimonials(p, tid, tok, false, undefined, sid),
+  update_portfolio_title: (p, tid, tok, sid) => handlePortfolio(p, tid, tok, false, undefined, sid),
+  update_portfolio_category: (p, tid, tok, sid) => handlePortfolio(p, tid, tok, false, undefined, sid),
+  update_portfolio_url: (p, tid, tok, sid) => handlePortfolio(p, tid, tok, false, undefined, sid),
+  link_image: (p, tid, tok, sid) => handleImages(p, tid, tok, false, undefined, sid),
+  list_faqs: (p, tid, tok, sid) => handleList(p, tid, tok, sid),
+  list_testimonials: (p, tid, tok, sid) => handleList(p, tid, tok, sid),
+  list_portfolio_items: (p, tid, tok, sid) => handleList(p, tid, tok, sid),
+  add_faq: (p, tid, tok, sid) => handleCreateFaq(p, tid, tok, false, undefined, sid),
+  add_testimonial: (p, tid, tok, sid) => handleCreateTestimonial(p, tid, tok, false, undefined, sid),
+  add_portfolio_item: (p, tid, tok, sid) => handleCreatePortfolio(p, tid, tok, false, undefined, sid),
+  add_pricing_plan: (p, tid, tok, sid) => handlePricing(p, tid, tok, false, undefined, sid),
 }
 
 // ---------------------------------------------------------------------------
@@ -55,6 +55,7 @@ export async function POST(request: Request): Promise<Response> {
     let body: {
       message?: string
       tenantId?: string
+      siteId?: string
       confirmed?: boolean
       proposal?: Record<string, unknown>
       mediaId?: string
@@ -87,6 +88,7 @@ export async function POST(request: Request): Promise<Response> {
     const {
       message,
       tenantId,
+      siteId,
       confirmed = false,
       proposal,
       mediaId,
@@ -137,16 +139,16 @@ export async function POST(request: Request): Promise<Response> {
 
       const pp = proposal as unknown as ProposalPayload
       if (pAction === 'update_post_title' || pAction === 'update_page_title')
-        return handlePosts(synthetic, tenantId, token, true, pp)
-      if (ACTION_META[pAction]) return handleFaqs(synthetic, tenantId, token, true, pp)
-      if (pAction === 'link_image') return handleImages(synthetic, tenantId, token, true, pp)
-      if (pAction === 'add_faq') return handleCreateFaq(synthetic, tenantId, token, true, proposal)
+        return handlePosts(synthetic, tenantId, token, true, pp, siteId)
+      if (ACTION_META[pAction]) return handleFaqs(synthetic, tenantId, token, true, pp, siteId)
+      if (pAction === 'link_image') return handleImages(synthetic, tenantId, token, true, pp, siteId)
+      if (pAction === 'add_faq') return handleCreateFaq(synthetic, tenantId, token, true, proposal, siteId)
       if (pAction === 'add_testimonial')
-        return handleCreateTestimonial(synthetic, tenantId, token, true, proposal)
+        return handleCreateTestimonial(synthetic, tenantId, token, true, proposal, siteId)
       if (pAction === 'add_portfolio_item')
-        return handleCreatePortfolio(synthetic, tenantId, token, true, proposal)
+        return handleCreatePortfolio(synthetic, tenantId, token, true, proposal, siteId)
       if (pAction === 'add_pricing_plan')
-        return handlePricing(synthetic, tenantId, token, true, proposal)
+        return handlePricing(synthetic, tenantId, token, true, proposal, siteId)
       return Response.json(
         { error: `Action "${proposal.action}" is not supported for execution` },
         { status: 400 },
@@ -181,11 +183,11 @@ export async function POST(request: Request): Promise<Response> {
 
       // Post/page title updates dispatch through handlePosts (slug-based)
       if (av.action === 'update_post_title' || av.action === 'update_page_title') {
-        return handlePosts(synthetic, tenantId, token, false)
+        return handlePosts(synthetic, tenantId, token, false, undefined, siteId)
       }
 
       const dryRunHandler = DRY_RUN[synthetic.action]
-      if (dryRunHandler) return dryRunHandler(synthetic, tenantId, token)
+      if (dryRunHandler) return dryRunHandler(synthetic, tenantId, token, siteId)
 
       return Response.json(
         { error: `Action "${synthetic.action}" is not supported` },
@@ -342,15 +344,16 @@ export async function POST(request: Request): Promise<Response> {
         parsed.collection as 'testimonials' | 'portfolio-items',
         tenantId,
         token,
+        siteId,
       )
       return Response.json({ status: 'needs_selection', collection: parsed.collection, records })
     }
 
     if (parsed.action === 'update_post_title' || parsed.action === 'update_page_title')
-      return handlePosts(parsed, tenantId, token, false)
+      return handlePosts(parsed, tenantId, token, false, undefined, siteId)
 
     const dryRunHandler = DRY_RUN[parsed.action]
-    if (dryRunHandler) return dryRunHandler(parsed, tenantId, token)
+    if (dryRunHandler) return dryRunHandler(parsed, tenantId, token, siteId)
 
     return Response.json({ error: `Action "${parsed.action}" is not supported` }, { status: 400 })
   } catch (e) {

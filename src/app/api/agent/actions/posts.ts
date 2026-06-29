@@ -16,6 +16,7 @@ export async function handlePosts(
   token: string,
   confirmed: boolean,
   proposal?: ProposalPayload,
+  _siteId?: string,
 ): Promise<Response> {
   const collection = parsed.action === 'update_post_title' ? 'posts' : 'pages'
 

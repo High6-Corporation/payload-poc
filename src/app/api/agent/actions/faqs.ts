@@ -15,8 +15,9 @@ export async function handleFaqs(
   token: string,
   confirmed: boolean,
   proposal?: ProposalPayload,
+  siteId?: string,
 ): Promise<Response> {
-  return handleTextUpdate(parsed, tenantId, token, confirmed, proposal)
+  return handleTextUpdate(parsed, tenantId, token, confirmed, proposal, siteId)
 }
 
 /**
@@ -28,6 +29,7 @@ export async function handleCreateFaq(
   token: string,
   confirmed: boolean,
   proposal?: Record<string, unknown>,
+  siteId?: string,
 ): Promise<Response> {
   if (confirmed) {
     if (!proposal) {
@@ -36,7 +38,7 @@ export async function handleCreateFaq(
         { status: 400 },
       )
     }
-    return executeCreate('add_faq', proposal, tenantId, token)
+    return executeCreate('add_faq', proposal, tenantId, token, siteId)
   }
 
   // Dry-run: initiate multi-field collection

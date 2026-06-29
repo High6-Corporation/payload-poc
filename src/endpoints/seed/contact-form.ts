@@ -1,6 +1,7 @@
 import { RequiredDataFromCollectionSlug } from 'payload'
 
-export const contactForm: RequiredDataFromCollectionSlug<'forms'> = {
+export const contactForm = (site: string): RequiredDataFromCollectionSlug<'forms'> => ({
+  site,
   confirmationMessage: {
     root: {
       type: 'root',
@@ -108,4 +109,4 @@ export const contactForm: RequiredDataFromCollectionSlug<'forms'> = {
   submitButtonLabel: 'Submit',
   title: 'Contact Form',
   updatedAt: '2023-01-12T21:47:41.374Z',
-}
+})

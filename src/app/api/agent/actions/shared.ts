@@ -122,6 +122,7 @@ export async function handleTextUpdate(
   token: string,
   confirmed: boolean,
   proposal?: ProposalPayload,
+  siteId?: string,
 ): Promise<Response> {
   const meta = ACTION_META[parsed.action]
 
@@ -305,7 +306,7 @@ export async function handleTextUpdate(
   if (!record) {
     // ID lookup failed — try resolving by name via tenant records list
     const listCollection = meta.collection as 'faqs' | 'testimonials' | 'portfolio-items'
-    const records = await fetchTenantRecords(listCollection, tenantId, token)
+    const records = await fetchTenantRecords(listCollection, tenantId, token, siteId)
     if (records && records.length > 0) {
       const search = parsed.id!.toLowerCase()
       const exact = records.filter((r) => r.label.toLowerCase() === search)
@@ -459,17 +460,51 @@ export async function createWithRetry(
 }
 
 /**
- * Resolve the first site ID for a tenant.
+ * Resolve a site ID for a tenant, deterministically.
  *
- * POC ASSUMPTION: This assumes one site per tenant.  In production with
- * multi-site tenants, this will need updating — likely by passing a siteId
- * through the portal session or letting the client choose from a site list.
+ * When `siteId` is provided, validates that the site belongs to the tenant and
+ * returns it.  When omitted, queries all sites for the tenant:
+ * - 1 site  → returns it (backward-compatible single-site path)
+ * - 0 sites → throws
+ * - 2+ sites → throws with a clear message (no silent "first site" guess)
  */
-export async function getTenantSiteId(tenantId: string, token: string): Promise<string> {
+export async function getTenantSiteId(
+  tenantId: string,
+  token: string,
+  siteId?: string,
+): Promise<string> {
   const baseUrl = getServerURL()
-  const res = await fetch(`${baseUrl}/api/sites?where[tenant][equals]=${tenantId}&limit=1`, {
-    headers: { Authorization: `Bearer ${token}` },
-  })
+
+  // --- Explicit siteId: validate ownership --------------------------------
+  if (siteId) {
+    const siteRes = await fetch(`${baseUrl}/api/sites/${siteId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+
+    if (!siteRes.ok) {
+      throw new Error(`Site "${siteId}" not found (HTTP ${siteRes.status})`)
+    }
+
+    const siteData = await siteRes.json()
+    const siteTenant =
+      typeof siteData?.tenant === 'string'
+        ? siteData.tenant
+        : (siteData?.tenant as Record<string, unknown>)?.id
+
+    if (siteTenant !== tenantId) {
+      throw new Error(
+        `Site "${siteId}" does not belong to tenant ${tenantId}`,
+      )
+    }
+
+    return siteId
+  }
+
+  // --- Implicit: auto-detect with multi-site guard -----------------------
+  const res = await fetch(
+    `${baseUrl}/api/sites?where[tenant][equals]=${tenantId}&limit=100`,
+    { headers: { Authorization: `Bearer ${token}` } },
+  )
 
   if (!res.ok) {
     throw new Error(`Failed to fetch sites (HTTP ${res.status})`)
@@ -479,7 +514,15 @@ export async function getTenantSiteId(tenantId: string, token: string): Promise<
   const docs: Array<{ id: string }> = data?.docs ?? []
 
   if (docs.length === 0) {
-    throw new Error(`No site found for tenant ${tenantId}. Create a site in the admin panel first.`)
+    throw new Error(
+      `No site found for tenant ${tenantId}. Create a site in the admin panel first.`,
+    )
+  }
+
+  if (docs.length > 1) {
+    throw new Error(
+      `Multiple sites exist for tenant ${tenantId} — a siteId must be specified`,
+    )
   }
 
   return docs[0].id

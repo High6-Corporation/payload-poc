@@ -14,6 +14,7 @@ export async function handlePricing(
   token: string,
   confirmed: boolean,
   proposal?: Record<string, unknown>,
+  siteId?: string,
 ): Promise<Response> {
   if (confirmed) {
     if (!proposal) {
@@ -22,7 +23,7 @@ export async function handlePricing(
         { status: 400 },
       )
     }
-    return executeCreate('add_pricing_plan', proposal, tenantId, token)
+    return executeCreate('add_pricing_plan', proposal, tenantId, token, siteId)
   }
 
   // Dry-run: initiate multi-field collection

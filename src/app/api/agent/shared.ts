@@ -325,6 +325,7 @@ export async function executeCreate(
   proposal: Record<string, unknown>,
   tenantId: string,
   token: string,
+  explicitSiteId?: string,
 ): Promise<Response> {
   const def = CREATE_FIELD_DEFS[action]
   if (!def) {
@@ -339,7 +340,7 @@ export async function executeCreate(
   // Resolve the site ID for this tenant
   let siteId: string
   try {
-    siteId = await getTenantSiteId(tenantId, token)
+    siteId = await getTenantSiteId(tenantId, token, explicitSiteId)
   } catch (e) {
     return Response.json(
       { error: `Failed to resolve site: ${(e as Error).message}` },

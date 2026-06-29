@@ -194,26 +194,42 @@ export const seed = async ({
 
   payload.logger.info(`— Seeding contact form...`)
 
-  const contactForm = await payload.create({
-    collection: 'forms',
+  // Resolve the apir-tayo site for tenant scoping
+  const siteResult = await payload.find({
+    collection: 'sites',
+    where: { slug: { equals: 'apir-tayo' } },
     depth: 0,
-    data: contactFormData,
   })
+  const apirTayoSite = siteResult.docs[0]
+
+  const contactForm = apirTayoSite
+    ? await payload.create({
+        collection: 'forms',
+        depth: 0,
+        data: contactFormData(apirTayoSite.id),
+      })
+    : (payload.logger.warn('⚠️ apir-tayo site not found — skipping contact form seed'), null)
 
   payload.logger.info(`— Seeding pages...`)
 
-  const [_, contactPage] = await Promise.all([
-    payload.create({
+  const homePage = await payload.create({
+    collection: 'pages',
+    depth: 0,
+    data: home({ heroImage: imageHomeDoc, metaImage: image2Doc }),
+  })
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let contactPage: any
+
+  if (contactForm) {
+    contactPage = await payload.create({
       collection: 'pages',
       depth: 0,
-      data: home({ heroImage: imageHomeDoc, metaImage: image2Doc }),
-    }),
-    payload.create({
-      collection: 'pages',
-      depth: 0,
-      data: contactPageData({ contactForm: contactForm }),
-    }),
-  ])
+      data: contactPageData({ contactForm }),
+    })
+  } else {
+    payload.logger.warn('⚠️ Skipping contact page seed — contact form was not created')
+  }
 
   payload.logger.info(`— Seeding globals...`)
 
@@ -229,16 +245,20 @@ export const seed = async ({
               url: '/posts',
             },
           },
-          {
-            link: {
-              type: 'reference',
-              label: 'Contact',
-              reference: {
-                relationTo: 'pages',
-                value: contactPage.id,
-              },
-            },
-          },
+          ...(contactPage
+            ? [
+                {
+                  link: {
+                    type: 'reference' as const,
+                    label: 'Contact',
+                    reference: {
+                      relationTo: 'pages' as const,
+                      value: contactPage.id,
+                    },
+                  },
+                },
+              ]
+            : []),
         ],
       },
     }),

@@ -172,20 +172,41 @@ export async function fetchTenantRecords(
   collection: 'faqs' | 'testimonials' | 'portfolio-items',
   tenantId: string,
   token: string,
+  siteId?: string,
 ): Promise<SelectionRecord[] | null> {
   const baseUrl = getServerURL()
 
   try {
-    // Step 1: get all sites for this tenant
-    const sitesRes = await fetch(
-      `${baseUrl}/api/sites?where[tenant][equals]=${tenantId}&limit=100`,
-      { headers: { Authorization: `Bearer ${token}` } },
-    )
-    if (!sitesRes.ok) return null
+    let siteIds: string[]
 
-    const sitesData = await sitesRes.json()
-    const siteIds: string[] = (sitesData?.docs ?? []).map((s: { id: string }) => s.id)
-    if (siteIds.length === 0) return []
+    if (siteId) {
+      // --- Single-site path: validate ownership, then scope to one site ---
+      const siteRes = await fetch(`${baseUrl}/api/sites/${siteId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      if (!siteRes.ok) return null
+
+      const siteData = await siteRes.json()
+      const siteTenant =
+        typeof siteData?.tenant === 'string'
+          ? siteData.tenant
+          : (siteData?.tenant as Record<string, unknown>)?.id
+
+      if (siteTenant !== tenantId) return null
+
+      siteIds = [siteId]
+    } else {
+      // --- All-sites path: backward-compatible multi-site query -----------
+      const sitesRes = await fetch(
+        `${baseUrl}/api/sites?where[tenant][equals]=${tenantId}&limit=100`,
+        { headers: { Authorization: `Bearer ${token}` } },
+      )
+      if (!sitesRes.ok) return null
+
+      const sitesData = await sitesRes.json()
+      siteIds = (sitesData?.docs ?? []).map((s: { id: string }) => s.id)
+      if (siteIds.length === 0) return []
+    }
 
     // Step 2: query the collection scoped to those sites
     const siteFilter = siteIds.map((id) => `[in]=${id}`).join('&where[site]')

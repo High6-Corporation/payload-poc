@@ -20,13 +20,14 @@ export async function handleList(
   parsed: ParsedAction,
   tenantId: string,
   token: string,
+  siteId?: string,
 ): Promise<Response> {
   const listCollection = LIST_COLLECTION[parsed.action]
   if (!listCollection) {
     return Response.json({ error: `Unknown list action: ${parsed.action}` }, { status: 400 })
   }
 
-  const records = await fetchTenantRecords(listCollection, tenantId, token)
+  const records = await fetchTenantRecords(listCollection, tenantId, token, siteId)
 
   if (records === null) {
     return Response.json({ error: 'Failed to fetch records' }, { status: 500 })

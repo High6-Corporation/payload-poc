@@ -16,8 +16,9 @@ export async function handleTestimonials(
   token: string,
   confirmed: boolean,
   proposal?: ProposalPayload,
+  siteId?: string,
 ): Promise<Response> {
-  return handleTextUpdate(parsed, tenantId, token, confirmed, proposal)
+  return handleTextUpdate(parsed, tenantId, token, confirmed, proposal, siteId)
 }
 
 /**
@@ -29,6 +30,7 @@ export async function handleCreateTestimonial(
   token: string,
   confirmed: boolean,
   proposal?: Record<string, unknown>,
+  siteId?: string,
 ): Promise<Response> {
   if (confirmed) {
     if (!proposal) {
@@ -37,7 +39,7 @@ export async function handleCreateTestimonial(
         { status: 400 },
       )
     }
-    return executeCreate('add_testimonial', proposal, tenantId, token)
+    return executeCreate('add_testimonial', proposal, tenantId, token, siteId)
   }
 
   const resp = initCreateFlow('add_testimonial', parsed.fields)

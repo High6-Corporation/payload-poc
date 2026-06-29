@@ -16,6 +16,7 @@ export async function handleImages(
   token: string,
   confirmed: boolean,
   proposal?: ProposalPayload,
+  siteId?: string,
 ): Promise<Response> {
   // =========================================================================
   // EXECUTE PATH
@@ -98,7 +99,7 @@ export async function handleImages(
   if (!record) {
     // ID lookup failed — try resolving by name via tenant records list
     const listCollection = parsed.collection as 'testimonials' | 'portfolio-items'
-    const records = await fetchTenantRecords(listCollection, tenantId, token)
+    const records = await fetchTenantRecords(listCollection, tenantId, token, siteId)
     if (records && records.length > 0) {
       const search = parsed.id!.toLowerCase()
       const exact = records.filter((r) => r.label.toLowerCase() === search)

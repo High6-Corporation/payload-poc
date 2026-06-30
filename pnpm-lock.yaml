@@ -14,6 +14,9 @@ importers:
       '@payloadcms/db-mongodb':
         specifier: 3.85.1
         version: 3.85.1(payload@3.85.1(graphql@16.14.2)(typescript@5.7.3))
+      '@payloadcms/email-nodemailer':
+        specifier: 3.85.1
+        version: 3.85.1(payload@3.85.1(graphql@16.14.2)(typescript@5.7.3))
       '@payloadcms/live-preview-react':
         specifier: 3.85.1
         version: 3.85.1(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
@@ -1429,6 +1432,12 @@ packages:
 
   '@payloadcms/db-mongodb@3.85.1':
     resolution: {integrity: sha512-gQfQqOBb+HkyAbAW/ZNtYdxJASsMQJDb46aEodQMcL6Z1lSoQ5Gg8vi6IpIgBeJiAbmoe9A+xdZR/F1Xoj12kQ==}
+    peerDependencies:
+      payload: 3.85.1
+
+  '@payloadcms/email-nodemailer@3.85.1':
+    resolution: {integrity: sha512-YC+9lMVrxC4rRocDDtooaLglFbI4Kd81QUa3wR4/ko4aVsd1CP1cZEKEbu1aJyB7XFeT+O7/eUPFDHin6+tslQ==}
+    engines: {node: ^18.20.2 || >=20.9.0}
     peerDependencies:
       payload: 3.85.1
 
@@ -4025,6 +4034,10 @@ packages:
     resolution: {integrity: sha512-Uzmd6LXpouKo8EUK68IjH4+E01w/hXyV3R3g/geCJo+rXLNfh1xucB+LOzYEOQPSiUK3h/xZf0cQGcSsmyL2Og==}
     engines: {node: '>=18'}
 
+  nodemailer@8.0.11:
+    resolution: {integrity: sha512-nrO/pDAUKl+wXX+lx16tDLbnm0fW6sK/x8mgohaCpg+CdCEl482bD4tCuAZk2DyliruiNTIZxRCoWkDqJEnAiA==}
+    engines: {node: '>=6.0.0'}
+
   normalize-path@3.0.0:
     resolution: {integrity: sha512-6eZs5Ls3WtCisHWp9S2GUy8dqkpGi4BVSz3GaqiE6ezub0512ESztXUwUB6C6IKbQkY2Pnb/mD4WYojCRwcwLA==}
     engines: {node: '>=0.10.0'}
@@ -6314,6 +6327,11 @@ snapshots:
       - snappy
       - socks
       - supports-color
+
+  '@payloadcms/email-nodemailer@3.85.1(payload@3.85.1(graphql@16.14.2)(typescript@5.7.3))':
+    dependencies:
+      nodemailer: 8.0.11
+      payload: 3.85.1(graphql@16.14.2)(typescript@5.7.3)
 
   '@payloadcms/graphql@3.85.1(graphql@16.14.2)(payload@3.85.1(graphql@16.14.2)(typescript@5.7.3))(typescript@5.7.3)':
     dependencies:
@@ -9238,6 +9256,8 @@ snapshots:
       semver: 6.3.1
 
   node-releases@2.0.47: {}
+
+  nodemailer@8.0.11: {}
 
   normalize-path@3.0.0: {}
 

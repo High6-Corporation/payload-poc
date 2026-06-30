@@ -1,4 +1,5 @@
 import { mongooseAdapter } from '@payloadcms/db-mongodb'
+import { nodemailerAdapter } from '@payloadcms/email-nodemailer'
 import sharp from 'sharp'
 import path from 'path'
 import { APIError, buildConfig, PayloadRequest } from 'payload'
@@ -71,6 +72,18 @@ export default buildConfig({
   editor: defaultLexical,
   db: mongooseAdapter({
     url: process.env.DATABASE_URL || '',
+  }),
+  email: nodemailerAdapter({
+    defaultFromAddress: process.env.SMTP2GO_FROM_EMAIL || '',
+    defaultFromName: 'High6',
+    transportOptions: {
+      host: process.env.SMTP2GO_HOST,
+      port: Number(process.env.SMTP2GO_PORT),
+      auth: {
+        user: process.env.SMTP2GO_USERNAME,
+        pass: process.env.SMTP2GO_PASSWORD,
+      },
+    },
   }),
   collections: [
     Tenants,

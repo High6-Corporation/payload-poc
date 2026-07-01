@@ -22,6 +22,10 @@ import { HorizontalRuleFeatureClient as HorizontalRuleFeatureClient_e70f5e05f09f
 import { BlocksFeatureClient as BlocksFeatureClient_e70f5e05f09f93e00b997edb1ef0c864 } from '@payloadcms/richtext-lexical/client'
 import { FolderTableCell as FolderTableCell_f9c02e79a4aed9a3924487c0cd4cafb1 } from '@payloadcms/next/rsc'
 import { FolderField as FolderField_f9c02e79a4aed9a3924487c0cd4cafb1 } from '@payloadcms/next/rsc'
+import { FieldBuilderDescription as FieldBuilderDescription_87451853b5e4dda4506551573af35521 } from '@/components/FieldBuilderDescription'
+import { FieldBuilder as FieldBuilder_1c50948e29b4615cfbffb2573cce95b9 } from '@/components/FieldBuilder'
+import { EntryDataDescription as EntryDataDescription_2c018cd122faced52f94e104735f68e5 } from '@/components/EntryDataDescription'
+import { EntryDataField as EntryDataField_3a617193da43b7aa3baaf2653a7fd787 } from '@/components/EntryDataField'
 import { LinkToDoc as LinkToDoc_aead06e4cbf6b2620c5c51c9ab283634 } from '@payloadcms/plugin-search/client'
 import { ReindexButton as ReindexButton_aead06e4cbf6b2620c5c51c9ab283634 } from '@payloadcms/plugin-search/client'
 import { FolderTypeField as FolderTypeField_2b8867833a34864a02ddf429b0728a40 } from '@payloadcms/next/client'
@@ -62,6 +66,10 @@ export const importMap = {
   "@payloadcms/richtext-lexical/client#BlocksFeatureClient": BlocksFeatureClient_e70f5e05f09f93e00b997edb1ef0c864,
   "@payloadcms/next/rsc#FolderTableCell": FolderTableCell_f9c02e79a4aed9a3924487c0cd4cafb1,
   "@payloadcms/next/rsc#FolderField": FolderField_f9c02e79a4aed9a3924487c0cd4cafb1,
+  "@/components/FieldBuilderDescription#FieldBuilderDescription": FieldBuilderDescription_87451853b5e4dda4506551573af35521,
+  "@/components/FieldBuilder#FieldBuilder": FieldBuilder_1c50948e29b4615cfbffb2573cce95b9,
+  "@/components/EntryDataDescription#EntryDataDescription": EntryDataDescription_2c018cd122faced52f94e104735f68e5,
+  "@/components/EntryDataField#EntryDataField": EntryDataField_3a617193da43b7aa3baaf2653a7fd787,
   "@payloadcms/plugin-search/client#LinkToDoc": LinkToDoc_aead06e4cbf6b2620c5c51c9ab283634,
   "@payloadcms/plugin-search/client#ReindexButton": ReindexButton_aead06e4cbf6b2620c5c51c9ab283634,
   "@payloadcms/next/client#FolderTypeField": FolderTypeField_2b8867833a34864a02ddf429b0728a40,

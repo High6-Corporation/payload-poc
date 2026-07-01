@@ -81,6 +81,8 @@ export interface Config {
     'portfolio-items': PortfolioItem;
     'pricing-plans': PricingPlan;
     'site-settings': SiteSetting;
+    'custom-collections': CustomCollection;
+    'custom-collection-entries': CustomCollectionEntry;
     'agent-audit-log': AgentAuditLog;
     redirects: Redirect;
     forms: Form;
@@ -112,6 +114,8 @@ export interface Config {
     'portfolio-items': PortfolioItemsSelect<false> | PortfolioItemsSelect<true>;
     'pricing-plans': PricingPlansSelect<false> | PricingPlansSelect<true>;
     'site-settings': SiteSettingsSelect<false> | SiteSettingsSelect<true>;
+    'custom-collections': CustomCollectionsSelect<false> | CustomCollectionsSelect<true>;
+    'custom-collection-entries': CustomCollectionEntriesSelect<false> | CustomCollectionEntriesSelect<true>;
     'agent-audit-log': AgentAuditLogSelect<false> | AgentAuditLogSelect<true>;
     redirects: RedirectsSelect<false> | RedirectsSelect<true>;
     forms: FormsSelect<false> | FormsSelect<true>;
@@ -1005,6 +1009,65 @@ export interface SiteSetting {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "custom-collections".
+ */
+export interface CustomCollection {
+  id: string;
+  tenant?: (string | null) | Tenant;
+  site: string | Site;
+  /**
+   * A human-readable name for this collection (e.g. "Team Members", "Office Locations", "Service Plans").
+   */
+  name: string;
+  /**
+   * When enabled, the slug will auto-generate from the title field on save and autosave.
+   */
+  generateSlug?: boolean | null;
+  slug: string;
+  /**
+   * Define the fields for this custom collection using the visual builder below. No JSON required.
+   */
+  fields:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "custom-collection-entries".
+ */
+export interface CustomCollectionEntry {
+  id: string;
+  tenant?: (string | null) | Tenant;
+  site: string | Site;
+  /**
+   * The Custom Collection this entry belongs to — its schema defines the expected shape of the data below.
+   */
+  parentCollection: string | CustomCollection;
+  /**
+   * The content for this entry. Select a Parent Collection first — fields load automatically from its schema.
+   */
+  data:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "agent-audit-log".
  */
 export interface AgentAuditLog {
@@ -1263,6 +1326,14 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'site-settings';
         value: string | SiteSetting;
+      } | null)
+    | ({
+        relationTo: 'custom-collections';
+        value: string | CustomCollection;
+      } | null)
+    | ({
+        relationTo: 'custom-collection-entries';
+        value: string | CustomCollectionEntry;
       } | null)
     | ({
         relationTo: 'agent-audit-log';
@@ -1812,6 +1883,32 @@ export interface SiteSettingsSelect<T extends boolean = true> {
               id?: T;
             };
       };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "custom-collections_select".
+ */
+export interface CustomCollectionsSelect<T extends boolean = true> {
+  tenant?: T;
+  site?: T;
+  name?: T;
+  generateSlug?: T;
+  slug?: T;
+  fields?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "custom-collection-entries_select".
+ */
+export interface CustomCollectionEntriesSelect<T extends boolean = true> {
+  tenant?: T;
+  site?: T;
+  parentCollection?: T;
+  data?: T;
   updatedAt?: T;
   createdAt?: T;
 }

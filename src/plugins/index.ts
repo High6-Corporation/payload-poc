@@ -147,7 +147,8 @@ export const plugins: Plugin[] = [
           async ({ data, req }) => {
             try {
               const forwardedFor = req.headers.get('x-forwarded-for')
-              const ip = forwardedFor?.split(',')[0]?.trim() || req.headers.get('x-real-ip') || undefined
+              const ip =
+                forwardedFor?.split(',')[0]?.trim() || req.headers.get('x-real-ip') || undefined
 
               const userAgent = req.headers.get('user-agent') || undefined
 
@@ -231,6 +232,8 @@ export const plugins: Plugin[] = [
       categories: {},
       forms: {},
       'form-submissions': {},
+      'custom-collections': {},
+      'custom-collection-entries': {},
     },
     userHasAccessToAllTenants: () => true,
     useTenantsListFilter: false,

@@ -7,6 +7,8 @@ import { fileURLToPath } from 'url'
 
 import { AgentAuditLog } from './collections/AgentAuditLog'
 import { Categories } from './collections/Categories'
+import { CustomCollectionEntries } from './collections/CustomCollectionEntries'
+import { CustomCollections } from './collections/CustomCollections'
 import { FAQs } from './collections/FAQs'
 import { Media } from './collections/Media'
 import { Pages } from './collections/Pages'
@@ -99,6 +101,8 @@ export default buildConfig({
     PortfolioItems,
     PricingPlans,
     SiteSettings,
+    CustomCollections,
+    CustomCollectionEntries,
     AgentAuditLog,
   ],
   cors: [getServerSideURL(), 'http://localhost:3001', 'http://localhost:3002'].filter(Boolean),

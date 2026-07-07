@@ -1,7 +1,12 @@
 import type { CollectionConfig } from 'payload'
 
+import { FixedToolbarFeature, lexicalEditor } from '@payloadcms/richtext-lexical'
 import { anyone } from '../access/anyone'
 import { authenticated } from '../access/authenticated'
+
+const richtextEditor = lexicalEditor({
+  features: ({ rootFeatures }) => [...rootFeatures, FixedToolbarFeature()],
+})
 
 export const SiteSettings: CollectionConfig = {
   slug: 'site-settings',
@@ -34,11 +39,13 @@ export const SiteSettings: CollectionConfig = {
           fields: [
             {
               name: 'heroHeadline',
-              type: 'text',
+              type: 'richText',
+              editor: richtextEditor,
             },
             {
               name: 'heroSubheadline',
-              type: 'text',
+              type: 'richText',
+              editor: richtextEditor,
             },
           ],
         },
@@ -48,11 +55,13 @@ export const SiteSettings: CollectionConfig = {
           fields: [
             {
               name: 'whyOnePageTitle',
-              type: 'text',
+              type: 'richText',
+              editor: richtextEditor,
             },
             {
               name: 'whyOnePageParagraph',
-              type: 'textarea',
+              type: 'richText',
+              editor: richtextEditor,
             },
           ],
         },
@@ -62,11 +71,13 @@ export const SiteSettings: CollectionConfig = {
           fields: [
             {
               name: 'howItWorksTitle',
-              type: 'text',
+              type: 'richText',
+              editor: richtextEditor,
             },
             {
               name: 'howItWorksParagraph',
-              type: 'textarea',
+              type: 'richText',
+              editor: richtextEditor,
             },
           ],
         },
@@ -76,11 +87,13 @@ export const SiteSettings: CollectionConfig = {
           fields: [
             {
               name: 'trustSectionTitle',
-              type: 'text',
+              type: 'richText',
+              editor: richtextEditor,
             },
             {
               name: 'trustSectionParagraph',
-              type: 'textarea',
+              type: 'richText',
+              editor: richtextEditor,
             },
           ],
         },
@@ -90,11 +103,13 @@ export const SiteSettings: CollectionConfig = {
           fields: [
             {
               name: 'ctaTitle',
-              type: 'text',
+              type: 'richText',
+              editor: richtextEditor,
             },
             {
               name: 'ctaParagraph',
-              type: 'textarea',
+              type: 'richText',
+              editor: richtextEditor,
             },
             {
               name: 'ctaButtonText',

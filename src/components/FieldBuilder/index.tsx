@@ -37,6 +37,11 @@ const SUGGESTED_TYPES = [
   { value: 'richtext', label: 'Rich Text' },
   { value: 'number', label: 'Number' },
   { value: 'media', label: 'Media', tooltip: 'Stores a Payload media document ID' },
+  {
+    value: 'category',
+    label: 'Category',
+    tooltip: 'Stores an array of Payload category document IDs',
+  },
   { value: 'url', label: 'URL' },
   { value: 'toggle', label: 'Toggle' },
 ] as const
@@ -1018,6 +1023,18 @@ export const FieldBuilder: React.FC<FieldBuilderProps> = (props) => {
                   Stores a Payload media document ID — resolves through Supabase S3 automatically.
                 </span>
               )}
+              {draft.type === 'category' && (
+                <span
+                  style={{
+                    fontSize: '11px',
+                    color: C.elevation500,
+                    lineHeight: '1.4',
+                    marginTop: '2px',
+                  }}
+                >
+                  Stores an array of Payload category document IDs. Supports multiple selection.
+                </span>
+              )}
             </div>
             <div style={S.formGroup}>
               <div style={{ ...S.formToggle, paddingTop: '22px' }}>
@@ -1064,7 +1081,7 @@ export const FieldBuilder: React.FC<FieldBuilderProps> = (props) => {
             </button>
           </div>
 
-          {/* Media note for form context */}
+          {/* Media + Category notes for form context */}
           <div style={S.callout}>
             <strong style={{ color: C.elevation800 }}>Media fields:</strong> When type is{' '}
             <code
@@ -1081,6 +1098,24 @@ export const FieldBuilder: React.FC<FieldBuilderProps> = (props) => {
               media
             </code>
             , the stored value should be a Payload media document ID — not a raw URL.
+          </div>
+          <div style={S.callout}>
+            <strong style={{ color: C.elevation800 }}>Category fields:</strong> When type is{' '}
+            <code
+              style={{
+                fontFamily: 'monospace',
+                backgroundColor: C.elevation100,
+                padding: '1px 5px',
+                borderRadius: '3px',
+                fontSize: '12px',
+                color: C.elevation800,
+                fontWeight: 600,
+              }}
+            >
+              category
+            </code>
+            , the stored value should be an array of Payload category document IDs — not category
+            names. Supports selecting multiple categories.
           </div>
         </div>
       )}

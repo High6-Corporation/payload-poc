@@ -468,6 +468,57 @@ const S = {
     color: C.error500,
     lineHeight: '18px',
   },
+
+  // ---- Category chips ----
+
+  chipList: {
+    display: 'flex',
+    flexWrap: 'wrap' as const,
+    gap: '6px',
+    marginBottom: '8px',
+  },
+  chip: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '4px',
+    padding: '4px 8px 4px 10px',
+    backgroundColor: C.elevation100,
+    borderWidth: '1px',
+    borderStyle: 'solid',
+    borderColor: C.elevation200,
+    borderRadius: '16px',
+    fontSize: '12px',
+    lineHeight: '18px',
+    color: C.elevation800,
+    fontWeight: 500,
+    transition: 'border-color 150ms, box-shadow 150ms',
+  },
+  chipLabel: {
+    maxWidth: '200px',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap' as const,
+  },
+  chipRemove: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '20px',
+    height: '20px',
+    padding: '0',
+    backgroundColor: 'transparent',
+    borderWidth: '1px',
+    borderStyle: 'solid',
+    borderColor: 'transparent',
+    borderRadius: '50%',
+    cursor: 'pointer',
+    color: C.elevation400,
+    fontSize: '10px',
+    lineHeight: '1',
+    flexShrink: 0,
+    transition: 'color 150ms, background-color 150ms, border-color 150ms',
+    outline: 'none' as const,
+  },
 }
 
 // ---------------------------------------------------------------------------
@@ -603,6 +654,22 @@ const XCircleIcon: React.FC<{ size?: number }> = ({ size = 14 }) => (
     <circle cx="12" cy="12" r="10" />
     <line x1="15" y1="9" x2="9" y2="15" />
     <line x1="9" y1="9" x2="15" y2="15" />
+  </svg>
+)
+
+const TagIcon: React.FC<{ size?: number }> = ({ size = 14 }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" />
+    <line x1="7" y1="7" x2="7.01" y2="7" />
   </svg>
 )
 
@@ -941,6 +1008,140 @@ const MediaPicker: React.FC<FieldInputProps> = ({ field, value, onChange, readOn
   )
 }
 
+const CategoryPicker: React.FC<FieldInputProps> = ({ field, value, onChange, readOnly }) => {
+  // Normalize value to string[] — category stores an array of Payload category document IDs
+  const categoryIds: string[] = useMemo(() => {
+    if (Array.isArray(value))
+      return value.filter((v): v is string => typeof v === 'string' && v.length > 0)
+    return []
+  }, [value])
+
+  // ---- ListDrawer for browsing categories ----
+
+  const [ListDrawer, , drawerCtx] = useListDrawer({
+    collectionSlugs: ['categories'],
+  })
+
+  // ---- Category name lookup (id → title) ----
+
+  const [categoryNames, setCategoryNames] = useState<Record<string, string>>({})
+  const [namesLoading, setNamesLoading] = useState(false)
+
+  useEffect(() => {
+    if (categoryIds.length === 0) {
+      setCategoryNames({})
+      return
+    }
+
+    let cancelled = false
+    setNamesLoading(true)
+
+    // Fetch all selected categories in parallel (same pattern as MediaPicker's single fetch)
+    Promise.all(
+      categoryIds.map((id) =>
+        fetch(`/api/categories/${id}?depth=0`, { credentials: 'include' })
+          .then((res) => (res.ok ? res.json() : null))
+          .catch(() => null),
+      ),
+    ).then((docs) => {
+      if (cancelled) return
+      const names: Record<string, string> = {}
+      docs.forEach((doc, i) => {
+        names[categoryIds[i]] = (doc?.title as string) || categoryIds[i]
+      })
+      setCategoryNames(names)
+      setNamesLoading(false)
+    })
+
+    return () => {
+      cancelled = true
+    }
+  }, [categoryIds])
+
+  // ---- Handlers ----
+
+  const handleSelect = useCallback(
+    ({ doc }: { doc: Record<string, unknown>; docID: string }) => {
+      const id = (doc?.id as string) ?? ''
+      if (id && !categoryIds.includes(id)) {
+        onChange([...categoryIds, id])
+      }
+      drawerCtx.closeDrawer()
+    },
+    [categoryIds, onChange, drawerCtx],
+  )
+
+  const handleRemove = useCallback(
+    (id: string) => {
+      onChange(categoryIds.filter((cid) => cid !== id))
+    },
+    [categoryIds, onChange],
+  )
+
+  // ---- Render ----
+
+  const hasSelection = categoryIds.length > 0
+
+  return (
+    <div style={S.fieldGroup}>
+      {/* ListDrawer — rendered here so its context is within the component tree */}
+      <ListDrawer onSelect={handleSelect} />
+
+      {/* Selected category chips */}
+      {hasSelection && (
+        <div style={S.chipList}>
+          {categoryIds.map((id) => (
+            <div key={id} style={S.chip} title={categoryNames[id] || id}>
+              <span style={S.chipLabel}>
+                {namesLoading && !categoryNames[id] ? 'Loading…' : categoryNames[id] || id}
+              </span>
+              {!readOnly && (
+                <button
+                  type="button"
+                  style={S.chipRemove}
+                  onClick={() => handleRemove(id)}
+                  title={`Remove ${categoryNames[id] || id}`}
+                  aria-label={`Remove ${categoryNames[id] || id}`}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.color = C.error500
+                    e.currentTarget.style.backgroundColor = C.error50
+                    e.currentTarget.style.borderColor = C.error200
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.color = C.elevation400
+                    e.currentTarget.style.backgroundColor = 'transparent'
+                    e.currentTarget.style.borderColor = 'transparent'
+                  }}
+                  onFocus={(e) => {
+                    e.currentTarget.style.boxShadow = `0 0 0 2px ${C.elevation800}`
+                  }}
+                  onBlur={(e) => {
+                    e.currentTarget.style.boxShadow = 'none'
+                  }}
+                >
+                  <XCircleIcon size={12} />
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Add Category button */}
+      {!readOnly && (
+        <button
+          type="button"
+          style={{ ...S.btnSecondary, alignSelf: 'flex-start' }}
+          onClick={() => drawerCtx.openDrawer()}
+        >
+          <TagIcon size={14} />
+          {hasSelection ? 'Add Category' : 'Select Categories'}
+        </button>
+      )}
+    </div>
+  )
+}
+
 const FallbackInput: React.FC<FieldInputProps> = ({ field, value, onChange, readOnly }) => (
   <div style={S.fieldGroup}>
     <input
@@ -970,6 +1171,8 @@ function getInputComponent(type: string): React.FC<FieldInputProps> {
       return RichtextInput
     case 'media':
       return MediaPicker
+    case 'category':
+      return CategoryPicker
     default:
       return FallbackInput
   }

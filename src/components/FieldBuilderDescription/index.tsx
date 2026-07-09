@@ -7,6 +7,7 @@ const FIELD_TYPES = [
   { type: 'richtext', desc: 'Rich text content' },
   { type: 'number', desc: 'Numeric value' },
   { type: 'media', desc: 'Reference to a Media document (store the document ID)' },
+  { type: 'category', desc: 'Reference to Categories (stores an array of category document IDs)' },
   { type: 'url', desc: 'Web address' },
   { type: 'toggle', desc: 'True/false switch' },
 ] as const
@@ -23,10 +24,11 @@ const REQUIRED_FIELDS = [
 ] as const
 
 const EXAMPLE_JSON = `[
-  { "name": "full-name",  "type": "text",     "required": true,  "label": "Full Name" },
-  { "name": "bio",        "type": "richtext",  "required": false, "label": "Biography" },
-  { "name": "headshot",   "type": "media",     "required": false, "label": "Headshot" },
-  { "name": "is-active",  "type": "toggle",    "required": false, "label": "Currently Active" }
+  { "name": "full-name",  "type": "text",      "required": true,  "label": "Full Name" },
+  { "name": "bio",        "type": "richtext",   "required": false, "label": "Biography" },
+  { "name": "headshot",   "type": "media",      "required": false, "label": "Headshot" },
+  { "name": "category",   "type": "category",   "required": false, "label": "Category" },
+  { "name": "is-active",  "type": "toggle",     "required": false, "label": "Currently Active" }
 ]`
 
 const S = {
@@ -146,13 +148,20 @@ export const FieldBuilderDescription: React.FC = () => {
         <pre style={S.preBlock}>{EXAMPLE_JSON}</pre>
       </div>
 
-      {/* Media note */}
+      {/* Media + Category notes */}
       <div style={S.callout}>
-        <strong style={{ color: 'var(--theme-elevation-800)' }}>Media fields:</strong> When a field type is{' '}
-        <code style={S.code}>media</code>
+        <strong style={{ color: 'var(--theme-elevation-800)' }}>Media fields:</strong> When a field
+        type is <code style={S.code}>media</code>
         {', '}
         the stored value should be a Payload media document ID — not a raw URL. This ensures images
         resolve correctly through the existing Supabase S3 setup.
+      </div>
+      <div style={S.callout}>
+        <strong style={{ color: 'var(--theme-elevation-800)' }}>Category fields:</strong> When a
+        field type is <code style={S.code}>category</code>
+        {', '}
+        the stored value should be an array of Payload category document IDs — not category names.
+        This ensures the correct parent/child hierarchy from the nested-docs plugin is preserved.
       </div>
     </div>
   )

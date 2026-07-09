@@ -11,6 +11,11 @@ const TYPE_MAPPINGS = [
     mapsTo: 'a Payload media document ID (string)',
     example: '"661f8b5d5d8a123456789abc"',
   },
+  {
+    type: 'category',
+    mapsTo: 'an array of Payload category document IDs',
+    example: '["661f8b5d5d8a123456789abc", "661f8b5d5d8a123456789def"]',
+  },
   { type: 'url', mapsTo: 'a URL string', example: '"https://example.com"' },
   { type: 'toggle', mapsTo: 'true or false', example: null },
 ] as const
@@ -19,6 +24,7 @@ const EXAMPLE_JSON = `{
   "full-name": "Jane Doe",
   "bio": { "root": { "type": "root", "children": [...] } },
   "headshot": "661f8b5d5d8a123456789abc",
+  "category": ["661f8b5d5d8a123456789abc", "661f8b5d5d8a123456789def"],
   "is-active": true
 }`
 
@@ -126,16 +132,25 @@ export const EntryDataDescription: React.FC = () => {
           }}
         >
           With fields <code style={S.code}>full-name</code>, <code style={S.code}>bio</code>,{' '}
-          <code style={S.code}>headshot</code>, <code style={S.code}>is-active</code>:
+          <code style={S.code}>headshot</code>, <code style={S.code}>category</code>,{' '}
+          <code style={S.code}>is-active</code>:
         </span>
         <pre style={S.preBlock}>{EXAMPLE_JSON}</pre>
       </div>
 
-      {/* Media note */}
+      {/* Media + Category notes */}
       <div style={S.callout}>
-        <strong style={{ color: 'var(--theme-elevation-800)' }}>Important — media fields:</strong> Store the Payload
-        media document ID, not a raw URL. The media collection is already connected to Supabase S3 —
-        the ID resolves to the correct URL automatically.
+        <strong style={{ color: 'var(--theme-elevation-800)' }}>Important — media fields:</strong>{' '}
+        Store the Payload media document ID, not a raw URL. The media collection is already
+        connected to Supabase S3 — the ID resolves to the correct URL automatically.
+      </div>
+      <div style={S.callout}>
+        <strong style={{ color: 'var(--theme-elevation-800)' }}>
+          Important — category fields:
+        </strong>{' '}
+        Store an array of Payload category document IDs, not category names. Categories are
+        hierarchical via the nested-docs plugin — storing IDs preserves the full parent/child chain
+        for each category.
       </div>
     </div>
   )

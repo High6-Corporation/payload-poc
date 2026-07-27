@@ -139,21 +139,31 @@ export const plugins: Plugin[] = [
             return data
           },
           // CleanTalk anti-spam hook for form-submissions
-          // Headers expected: x-forwarded-for, user-agent
-          // As of 2026-06-29: apir-tayo does NOT proxy form submissions to Payload
-          // (contact form uses Gravity Forms). Direct submissions to Payload's API
-          // will carry these headers naturally. When apir-tayo migrates to Payload
-          // form-submissions, the proxy route MUST forward these headers.
+          //
+          // Uses real client IP/UA/referrer when provided via clientInfo
+          // (forwarded by apir-tayo's server action), falling back to the
+          // incoming request headers for direct API calls.
           async ({ data, req }) => {
             try {
-              const forwardedFor = req.headers.get('x-forwarded-for')
-              const ip =
-                forwardedFor?.split(',')[0]?.trim() || req.headers.get('x-real-ip') || undefined
+              // Prefer forwarded client info (real visitor) over request headers
+              // (which would be the proxy/VPS IP for server-action-originated calls).
+              const clientIp =
+                data.clientInfo?.ip ||
+                req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
+                req.headers.get('x-real-ip') ||
+                undefined
 
-              const userAgent = req.headers.get('user-agent') || undefined
+              const clientUserAgent =
+                data.clientInfo?.userAgent || req.headers.get('user-agent') || undefined
 
-              // Fail open: missing both headers → skip check
-              if (!ip && !userAgent) {
+              const clientReferrer =
+                data.clientInfo?.referrer ||
+                req.headers.get('referer') ||
+                req.headers.get('referrer') ||
+                undefined
+
+              // Fail open: no IP to score → skip check
+              if (!clientIp) {
                 return data
               }
 
@@ -171,8 +181,12 @@ export const plugins: Plugin[] = [
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                   auth_key: process.env.CLEANTALK_API_KEY,
-                  sender_ip: ip,
+                  sender_ip: clientIp,
                   sender_email: email || undefined,
+                  sender_info: JSON.stringify({
+                    REFFERRER: clientReferrer || '',
+                    USER_AGENT: clientUserAgent || '',
+                  }),
                   js_on: 1,
                   submit_time: 0,
                   message: JSON.stringify(data.submissionData),

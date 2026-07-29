@@ -17,10 +17,15 @@ export const CustomCollectionEntries: CollectionConfig = {
   },
   admin: {
     group: 'Custom Content',
-    useAsTitle: 'id',
-    defaultColumns: ['parentCollection', 'id', 'updatedAt'],
+    useAsTitle: 'title',
+    defaultColumns: ['title', 'parentCollection', 'updatedAt'],
   },
   fields: [
+    {
+      name: 'title',
+      type: 'text',
+      label: 'Title',
+    },
     {
       name: 'site',
       type: 'relationship',

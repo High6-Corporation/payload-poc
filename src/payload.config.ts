@@ -2,11 +2,12 @@ import { mongooseAdapter } from '@payloadcms/db-mongodb'
 import { nodemailerAdapter } from '@payloadcms/email-nodemailer'
 import sharp from 'sharp'
 import path from 'path'
-import { APIError, buildConfig, PayloadRequest } from 'payload'
+import { APIError, buildConfig, EmailAdapter, PayloadRequest } from 'payload'
 import { fileURLToPath } from 'url'
 
 import { AgentAuditLog } from './collections/AgentAuditLog'
 import { Categories } from './collections/Categories'
+import { EmailLogs } from './collections/EmailLogs'
 import { CustomCollectionEntries } from './collections/CustomCollectionEntries'
 import { CustomCollections } from './collections/CustomCollections'
 import { FAQs } from './collections/FAQs'
@@ -26,9 +27,90 @@ import { Header } from './Header/config'
 import { plugins } from './plugins'
 import { defaultLexical } from '@/fields/defaultLexical'
 import { getServerSideURL } from './utilities/getURL'
+import { normalizeTo } from '@/email/loggingAdapter'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
+
+/**
+ * Email adapter that delegates to `nodemailerAdapter` and logs every send
+ * attempt — success or failure — to the `email-logs` collection.
+ *
+ * Wrapped in an IIFE because `nodemailerAdapter` is async (returns a
+ * Promise), so the real adapter is constructed once at module init and the
+ * result — a sync `EmailAdapter` factory — is what the config uses.
+ *
+ * Defined inline in payload.config.ts because Turbopack externalizes the
+ * ESM `@payloadcms/email-nodemailer` package in a way that breaks both
+ * static and dynamic imports from non-entry-point modules. The static
+ * import here works correctly.
+ *
+ * - Log-write failures are silently swallowed — they never block or
+ *   change the outcome of the real email send.
+ * - Existing SMTP2go transport config is unchanged.
+ */
+const loggingEmailAdapter = (async (): Promise<EmailAdapter> => {
+  const adapterFn = await nodemailerAdapter({
+    defaultFromAddress: process.env.SMTP2GO_FROM_EMAIL || '',
+    defaultFromName: 'High6',
+    transportOptions: {
+      host: process.env.SMTP2GO_HOST,
+      port: Number(process.env.SMTP2GO_PORT),
+      auth: {
+        user: process.env.SMTP2GO_USERNAME,
+        pass: process.env.SMTP2GO_PASSWORD,
+      },
+    },
+  })
+  // adapterFn is () => { name, defaultFromAddress, defaultFromName, sendEmail };
+  // cast required — the .d.ts types it as EmailAdapter which expects ({ payload }),
+  // but the runtime implementation takes no arguments.
+  const real = (adapterFn as () => ReturnType<typeof adapterFn>)()
+
+  return ({ payload }) => ({
+    ...real,
+
+    sendEmail: async (message: Parameters<typeof real.sendEmail>[0]) => {
+      const logBase = {
+        to: normalizeTo(message.to),
+        subject: message.subject ?? '',
+        sentAt: new Date().toISOString(),
+      }
+
+      try {
+        const result = await real.sendEmail(message)
+
+        try {
+          await payload.create({
+            collection: 'email-logs',
+            data: { ...logBase, status: 'success' },
+            overrideAccess: true,
+          })
+        } catch {
+          // Swallow logging failures
+        }
+
+        return result
+      } catch (err) {
+        try {
+          await payload.create({
+            collection: 'email-logs',
+            data: {
+              ...logBase,
+              status: 'error',
+              errorMessage: err instanceof Error ? err.message : String(err),
+            },
+            overrideAccess: true,
+          })
+        } catch {
+          // Swallow logging failures
+        }
+
+        throw err
+      }
+    },
+  })
+})()
 
 export default buildConfig({
   admin: {
@@ -75,18 +157,7 @@ export default buildConfig({
   db: mongooseAdapter({
     url: process.env.DATABASE_URL || '',
   }),
-  email: nodemailerAdapter({
-    defaultFromAddress: process.env.SMTP2GO_FROM_EMAIL || '',
-    defaultFromName: 'High6',
-    transportOptions: {
-      host: process.env.SMTP2GO_HOST,
-      port: Number(process.env.SMTP2GO_PORT),
-      auth: {
-        user: process.env.SMTP2GO_USERNAME,
-        pass: process.env.SMTP2GO_PASSWORD,
-      },
-    },
-  }),
+  email: loggingEmailAdapter,
   collections: [
     Tenants,
     PortalClients,
@@ -104,6 +175,7 @@ export default buildConfig({
     CustomCollections,
     CustomCollectionEntries,
     AgentAuditLog,
+    EmailLogs,
   ],
   cors: [getServerSideURL(), 'http://localhost:3001', 'http://localhost:3002'].filter(Boolean),
   globals: [Header, Footer],

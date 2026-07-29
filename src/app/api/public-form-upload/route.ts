@@ -115,6 +115,70 @@ export async function POST(request: Request) {
     )
   }
 
+  // ── Resolve site from form (same pattern as form-submissions beforeChange hook) ──
+
+  const rawSite = (form as Record<string, unknown>).site
+  const siteId =
+    typeof rawSite === 'string' ? rawSite : ((rawSite as { id?: string } | null)?.id ?? undefined)
+
+  // ── Fetch site name for folder and title ──
+
+  let siteName = 'Unknown Site'
+  if (siteId) {
+    try {
+      const site = await payload.findByID({ collection: 'sites', id: siteId, depth: 0 })
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      siteName = (
+        typeof (site as any).name === 'string' ? (site as any).name : 'Unknown Site'
+      ) as string
+    } catch {
+      // Fail open — site name is cosmetic, folder won't be created but media still succeeds
+    }
+  }
+
+  // ── Find or create per-site folder (idempotent) ──
+
+  let folderId: string | undefined
+  if (siteId) {
+    try {
+      const existingFolders = await payload.find({
+        collection: 'payload-folders',
+        where: {
+          and: [{ name: { equals: siteName } }, { folderType: { contains: 'media' } }],
+        },
+        depth: 0,
+        limit: 1,
+        overrideAccess: true,
+      })
+
+      if (existingFolders.docs.length > 0) {
+        folderId = existingFolders.docs[0].id as string
+      } else {
+        const newFolder = await payload.create({
+          collection: 'payload-folders',
+          data: {
+            name: siteName,
+            folderType: ['media'],
+          },
+          overrideAccess: true,
+        })
+        folderId = newFolder.id as string
+      }
+    } catch (err) {
+      // Fail open — folder assignment is best-effort, never block the upload
+      payload.logger.warn({ err }, '[public-form-upload] folder find-or-create failed')
+    }
+  }
+
+  // ── Build auto-generated title (populated only at creation time) ──
+
+  const today = new Date().toISOString().split('T')[0]
+  const formTitle =
+    typeof (form as Record<string, unknown>).title === 'string'
+      ? (form as Record<string, unknown>).title
+      : 'Form'
+  const autoTitle = `${formTitle} upload — ${today}`
+
   // ── Create media document ──
 
   try {
@@ -123,6 +187,10 @@ export async function POST(request: Request) {
       data: {
         tenant: (form.tenant as string) ?? undefined,
         prefix: (form.tenant as string) ?? undefined,
+        site: siteId ?? undefined,
+        source: 'form-submission',
+        title: autoTitle,
+        folder: folderId ?? undefined,
       },
       file: {
         name: file.name,

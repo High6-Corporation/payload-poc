@@ -28,7 +28,19 @@ export const Media: CollectionConfig = {
     read: anyone,
     update: authenticated,
   },
+  admin: {
+    useAsTitle: 'title',
+    defaultColumns: ['filename', 'title', 'site', 'source', 'createdAt'],
+  },
   fields: [
+    {
+      name: 'title',
+      type: 'text',
+      admin: {
+        description:
+          'Auto-generated for form submissions; can be overridden manually. Used as the display label in lists and relationship selects.',
+      },
+    },
     {
       name: 'alt',
       type: 'text',
@@ -42,6 +54,26 @@ export const Media: CollectionConfig = {
           return [...rootFeatures, FixedToolbarFeature(), InlineToolbarFeature()]
         },
       }),
+    },
+    {
+      name: 'site',
+      type: 'relationship',
+      relationTo: 'sites',
+      admin: {
+        description:
+          'The site this file belongs to. Auto-populated for form-submission uploads; manual for admin uploads.',
+      },
+    },
+    {
+      name: 'source',
+      type: 'select',
+      options: [
+        { label: 'Form Submission', value: 'form-submission' },
+        { label: 'Admin Upload', value: 'admin-upload' },
+      ],
+      admin: {
+        description: 'How this file entered the system.',
+      },
     },
     {
       name: 'prefix',

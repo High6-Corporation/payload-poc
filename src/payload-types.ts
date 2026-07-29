@@ -380,6 +380,10 @@ export interface Post {
 export interface Media {
   id: string;
   tenant?: (string | null) | Tenant;
+  /**
+   * Auto-generated for form submissions; can be overridden manually. Used as the display label in lists and relationship selects.
+   */
+  title?: string | null;
   alt?: string | null;
   caption?: {
     root: {
@@ -396,6 +400,14 @@ export interface Media {
     };
     [k: string]: unknown;
   } | null;
+  /**
+   * The site this file belongs to. Auto-populated for form-submission uploads; manual for admin uploads.
+   */
+  site?: (string | null) | Site;
+  /**
+   * How this file entered the system.
+   */
+  source?: ('form-submission' | 'admin-upload') | null;
   prefix?: string | null;
   folder?: (string | null) | FolderInterface;
   updatedAt: string;
@@ -1846,8 +1858,11 @@ export interface PostsSelect<T extends boolean = true> {
  */
 export interface MediaSelect<T extends boolean = true> {
   tenant?: T;
+  title?: T;
   alt?: T;
   caption?: T;
+  site?: T;
+  source?: T;
   prefix?: T;
   folder?: T;
   updatedAt?: T;

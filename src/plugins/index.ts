@@ -81,10 +81,7 @@ export const plugins: Plugin[] = [
       // OR a populated relationship object `{ id: "..." }` — Payload's hook
       // data varies depending on whether the relationship was resolved.
       const raw = (data as Record<string, unknown>)?.site
-      const siteId =
-        typeof raw === 'string'
-          ? raw
-          : (raw as { id?: string } | null)?.id
+      const siteId = typeof raw === 'string' ? raw : (raw as { id?: string } | null)?.id
       if (!siteId) return emails
       return emails.map((email) => ({
         ...email,
@@ -172,6 +169,22 @@ export const plugins: Plugin[] = [
             position: 'sidebar',
           },
         }
+
+        // Inject RowLabel and custom Field component for submissionUploads.
+        // RowLabel: shows upload field name (e.g. "resume") instead of "Submission Upload 01".
+        // Field: replaces the tiny default thumbnail with a larger preview + "View full size" link.
+        const uploadsField = defaultFields.find(
+          (f) => 'name' in f && f.type === 'array' && f.name === 'submissionUploads',
+        ) as ArrayField | undefined
+        if (uploadsField) {
+          uploadsField.admin ??= {}
+          uploadsField.admin.components = {
+            ...uploadsField.admin.components,
+            RowLabel: '@/components/SubmissionUploadRowLabel#SubmissionUploadRowLabel',
+            Field: '@/components/SubmissionUploadField#SubmissionUploadField',
+          }
+        }
+
         return [siteField, ...defaultFields]
       },
       hooks: {

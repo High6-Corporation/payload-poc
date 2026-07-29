@@ -22,3 +22,4 @@ node_modules/
 /playwright/.cache/
 .env*
 graphify-out
+.playwright/

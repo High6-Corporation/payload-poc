@@ -101,13 +101,16 @@ export const plugins: Plugin[] = [
 
         const modifiedFields = defaultFields.map((field) => {
           if ('name' in field && field.name === 'title') {
-            const titleField = field as { hooks?: Record<string, unknown> }
+            // TypeScript: Field union doesn't narrow to { hooks } after name check.
+            // Safe — the plugin's title field is always a text field with hook support.
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const f = field as any
             return {
               ...field,
               hooks: {
-                ...(titleField.hooks || {}),
+                ...(f.hooks || {}),
                 beforeDuplicate: [
-                  ...(titleField.hooks?.beforeDuplicate || []),
+                  ...((f.hooks?.beforeDuplicate as unknown[]) || []),
                   ({ value }: { value?: string }) => (value ? `${value} (Copy)` : value),
                 ],
               },

@@ -12,11 +12,20 @@ export const EmailLogs: CollectionConfig = {
   },
   admin: {
     useAsTitle: 'subject',
-    defaultColumns: ['status', 'to', 'subject', 'sentAt'],
+    defaultColumns: ['status', 'site', 'to', 'subject', 'sentAt'],
     group: 'Tenant Management',
   },
   defaultSort: '-sentAt',
   fields: [
+    {
+      name: 'site',
+      type: 'relationship',
+      relationTo: 'sites',
+      admin: {
+        description:
+          'The site this email is associated with, when known. Null for system/auth emails that lack site context.',
+      },
+    },
     {
       name: 'status',
       type: 'select',

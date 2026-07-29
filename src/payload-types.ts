@@ -1271,6 +1271,10 @@ export interface AgentAuditLog {
  */
 export interface EmailLog {
   id: string;
+  /**
+   * The site this email is associated with, when known. Null for system/auth emails that lack site context.
+   */
+  site?: (string | null) | Site;
   status: 'success' | 'error';
   to?: string | null;
   subject?: string | null;
@@ -2152,6 +2156,7 @@ export interface AgentAuditLogSelect<T extends boolean = true> {
  * via the `definition` "email-logs_select".
  */
 export interface EmailLogsSelect<T extends boolean = true> {
+  site?: T;
   status?: T;
   to?: T;
   subject?: T;

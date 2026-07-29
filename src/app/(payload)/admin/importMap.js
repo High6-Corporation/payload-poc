@@ -26,6 +26,7 @@ import { FieldBuilderDescription as FieldBuilderDescription_87451853b5e4dda45065
 import { FieldBuilder as FieldBuilder_1c50948e29b4615cfbffb2573cce95b9 } from '@/components/FieldBuilder'
 import { EntryDataDescription as EntryDataDescription_2c018cd122faced52f94e104735f68e5 } from '@/components/EntryDataDescription'
 import { EntryDataField as EntryDataField_3a617193da43b7aa3baaf2653a7fd787 } from '@/components/EntryDataField'
+import { EmailRowLabel as EmailRowLabel_6d7a2c8576dd95e3d573447d4a41d982 } from '@/components/EmailRowLabel'
 import { LinkToDoc as LinkToDoc_aead06e4cbf6b2620c5c51c9ab283634 } from '@payloadcms/plugin-search/client'
 import { ReindexButton as ReindexButton_aead06e4cbf6b2620c5c51c9ab283634 } from '@payloadcms/plugin-search/client'
 import { FolderTypeField as FolderTypeField_2b8867833a34864a02ddf429b0728a40 } from '@payloadcms/next/client'
@@ -70,6 +71,7 @@ export const importMap = {
   "@/components/FieldBuilder#FieldBuilder": FieldBuilder_1c50948e29b4615cfbffb2573cce95b9,
   "@/components/EntryDataDescription#EntryDataDescription": EntryDataDescription_2c018cd122faced52f94e104735f68e5,
   "@/components/EntryDataField#EntryDataField": EntryDataField_3a617193da43b7aa3baaf2653a7fd787,
+  "@/components/EmailRowLabel#EmailRowLabel": EmailRowLabel_6d7a2c8576dd95e3d573447d4a41d982,
   "@payloadcms/plugin-search/client#LinkToDoc": LinkToDoc_aead06e4cbf6b2620c5c51c9ab283634,
   "@payloadcms/plugin-search/client#ReindexButton": ReindexButton_aead06e4cbf6b2620c5c51c9ab283634,
   "@payloadcms/next/client#FolderTypeField": FolderTypeField_2b8867833a34864a02ddf429b0728a40,

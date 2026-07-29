@@ -833,6 +833,33 @@ export interface Form {
             blockName?: string | null;
             blockType: 'textarea';
           }
+        | {
+            name: string;
+            label?: string | null;
+            /**
+             * Select which upload collection to store files in
+             */
+            uploadCollection: 'media';
+            /**
+             * Restrict allowed file types (e.g., image/*, application/pdf). Leave empty to allow all types.
+             */
+            mimeTypes?:
+              | {
+                  mimeType: string;
+                  id?: string | null;
+                }[]
+              | null;
+            width?: number | null;
+            /**
+             * Maximum file size in bytes. Leave empty for no limit.
+             */
+            maxFileSize?: number | null;
+            required?: boolean | null;
+            multiple?: boolean | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'upload';
+          }
       )[]
     | null;
   submitButtonLabel?: string | null;
@@ -1144,6 +1171,18 @@ export interface SiteSetting {
         }[]
       | null;
   };
+  meta?: {
+    title?: string | null;
+    /**
+     * Maximum upload file size: 12MB. Recommended file size for images is <500KB.
+     */
+    image?: (string | null) | Media;
+    description?: string | null;
+    /**
+     * Comma-separated keywords this page targets for SEO (e.g. "web design, agency, philippines").
+     */
+    focusKeyword?: string | null;
+  };
   updatedAt: string;
   createdAt: string;
 }
@@ -1186,6 +1225,7 @@ export interface CustomCollection {
 export interface CustomCollectionEntry {
   id: string;
   tenant?: (string | null) | Tenant;
+  title?: string | null;
   site: string | Site;
   /**
    * The Custom Collection this entry belongs to — its schema defines the expected shape of the data below.
@@ -1262,6 +1302,16 @@ export interface FormSubmission {
     | {
         field: string;
         value: string;
+        id?: string | null;
+      }[]
+    | null;
+  submissionUploads?:
+    | {
+        field: string;
+        value: {
+          relationTo: 'media';
+          value: string | Media;
+        }[];
         id?: string | null;
       }[]
     | null;
@@ -2023,6 +2073,14 @@ export interface SiteSettingsSelect<T extends boolean = true> {
               id?: T;
             };
       };
+  meta?:
+    | T
+    | {
+        title?: T;
+        image?: T;
+        description?: T;
+        focusKeyword?: T;
+      };
   updatedAt?: T;
   createdAt?: T;
 }
@@ -2046,6 +2104,7 @@ export interface CustomCollectionsSelect<T extends boolean = true> {
  */
 export interface CustomCollectionEntriesSelect<T extends boolean = true> {
   tenant?: T;
+  title?: T;
   site?: T;
   parentCollection?: T;
   data?: T;
@@ -2195,6 +2254,25 @@ export interface FormsSelect<T extends boolean = true> {
               id?: T;
               blockName?: T;
             };
+        upload?:
+          | T
+          | {
+              name?: T;
+              label?: T;
+              uploadCollection?: T;
+              mimeTypes?:
+                | T
+                | {
+                    mimeType?: T;
+                    id?: T;
+                  };
+              width?: T;
+              maxFileSize?: T;
+              required?: T;
+              multiple?: T;
+              id?: T;
+              blockName?: T;
+            };
       };
   submitButtonLabel?: T;
   confirmationType?: T;
@@ -2228,6 +2306,13 @@ export interface FormSubmissionsSelect<T extends boolean = true> {
   site?: T;
   form?: T;
   submissionData?:
+    | T
+    | {
+        field?: T;
+        value?: T;
+        id?: T;
+      };
+  submissionUploads?:
     | T
     | {
         field?: T;

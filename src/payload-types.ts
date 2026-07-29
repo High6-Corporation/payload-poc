@@ -84,6 +84,7 @@ export interface Config {
     'custom-collections': CustomCollection;
     'custom-collection-entries': CustomCollectionEntry;
     'agent-audit-log': AgentAuditLog;
+    'email-logs': EmailLog;
     redirects: Redirect;
     forms: Form;
     'form-submissions': FormSubmission;
@@ -117,6 +118,7 @@ export interface Config {
     'custom-collections': CustomCollectionsSelect<false> | CustomCollectionsSelect<true>;
     'custom-collection-entries': CustomCollectionEntriesSelect<false> | CustomCollectionEntriesSelect<true>;
     'agent-audit-log': AgentAuditLogSelect<false> | AgentAuditLogSelect<true>;
+    'email-logs': EmailLogsSelect<false> | EmailLogsSelect<true>;
     redirects: RedirectsSelect<false> | RedirectsSelect<true>;
     forms: FormsSelect<false> | FormsSelect<true>;
     'form-submissions': FormSubmissionsSelect<false> | FormSubmissionsSelect<true>;
@@ -1265,6 +1267,20 @@ export interface AgentAuditLog {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "email-logs".
+ */
+export interface EmailLog {
+  id: string;
+  status: 'success' | 'error';
+  to?: string | null;
+  subject?: string | null;
+  errorMessage?: string | null;
+  sentAt?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "redirects".
  */
 export interface Redirect {
@@ -1528,6 +1544,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'agent-audit-log';
         value: string | AgentAuditLog;
+      } | null)
+    | ({
+        relationTo: 'email-logs';
+        value: string | EmailLog;
       } | null)
     | ({
         relationTo: 'redirects';
@@ -2124,6 +2144,19 @@ export interface AgentAuditLogSelect<T extends boolean = true> {
   previousValue?: T;
   newValue?: T;
   confirmedAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "email-logs_select".
+ */
+export interface EmailLogsSelect<T extends boolean = true> {
+  status?: T;
+  to?: T;
+  subject?: T;
+  errorMessage?: T;
+  sentAt?: T;
   updatedAt?: T;
   createdAt?: T;
 }

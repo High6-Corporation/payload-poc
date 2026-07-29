@@ -101,14 +101,14 @@ export const plugins: Plugin[] = [
 
         const modifiedFields = defaultFields.map((field) => {
           if ('name' in field && field.name === 'title') {
+            const titleField = field as { hooks?: Record<string, unknown> }
             return {
               ...field,
               hooks: {
-                ...(field.hooks || {}),
+                ...(titleField.hooks || {}),
                 beforeDuplicate: [
-                  ...(field.hooks?.beforeDuplicate || []),
-                  ({ value }: { value?: string }) =>
-                    value ? `${value} (Copy)` : value,
+                  ...(titleField.hooks?.beforeDuplicate || []),
+                  ({ value }: { value?: string }) => (value ? `${value} (Copy)` : value),
                 ],
               },
             }

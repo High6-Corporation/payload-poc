@@ -16,6 +16,11 @@ const TYPE_MAPPINGS = [
     mapsTo: 'an array of Payload category document IDs',
     example: '["661f8b5d5d8a123456789abc", "661f8b5d5d8a123456789def"]',
   },
+  {
+    type: 'gallery',
+    mapsTo: 'an array of Payload media document IDs',
+    example: '["661f8b5d5d8a123456789abc", "661f8b5d5d8a123456789def"]',
+  },
   { type: 'url', mapsTo: 'a URL string', example: '"https://example.com"' },
   { type: 'toggle', mapsTo: 'true or false', example: null },
 ] as const
@@ -25,6 +30,7 @@ const EXAMPLE_JSON = `{
   "bio": { "root": { "type": "root", "children": [...] } },
   "headshot": "661f8b5d5d8a123456789abc",
   "category": ["661f8b5d5d8a123456789abc", "661f8b5d5d8a123456789def"],
+  "gallery": ["661f8b5d5d8a123456789abc", "661f8b5d5d8a123456789def"],
   "is-active": true
 }`
 
@@ -143,6 +149,9 @@ export const EntryDataDescription: React.FC = () => {
         <strong style={{ color: 'var(--theme-elevation-800)' }}>Important — media fields:</strong>{' '}
         Store the Payload media document ID, not a raw URL. The media collection is already
         connected to Supabase S3 — the ID resolves to the correct URL automatically.
+      </div>
+      <div style={S.callout}>
+        <strong style={{ color: 'var(--theme-elevation-800)' }}>Important — gallery fields:</strong> Store an array of Payload media document IDs, not raw URLs. Select multiple images from the Media Library to build a gallery — each image is stored as a separate document ID in the array.
       </div>
       <div style={S.callout}>
         <strong style={{ color: 'var(--theme-elevation-800)' }}>

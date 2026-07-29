@@ -42,6 +42,11 @@ const SUGGESTED_TYPES = [
     label: 'Category',
     tooltip: 'Stores an array of Payload category document IDs',
   },
+  {
+    value: 'gallery',
+    label: 'Gallery',
+    tooltip: 'Stores an array of Payload media document IDs',
+  },
   { value: 'url', label: 'URL' },
   { value: 'toggle', label: 'Toggle' },
 ] as const
@@ -1098,6 +1103,24 @@ export const FieldBuilder: React.FC<FieldBuilderProps> = (props) => {
               media
             </code>
             , the stored value should be a Payload media document ID — not a raw URL.
+          </div>
+          <div style={S.callout}>
+            <strong style={{ color: C.elevation800 }}>Gallery fields:</strong> When type is{" "}
+            <code
+              style={{
+                fontFamily: 'monospace',
+                backgroundColor: C.elevation100,
+                padding: '1px 5px',
+                borderRadius: '3px',
+                fontSize: '12px',
+                color: C.elevation800,
+                fontWeight: 600,
+              }}
+            >
+              gallery
+            </code>
+            , the stored value should be an array of Payload media document IDs — not raw URLs.
+            Select multiple images from the Media Library to build a gallery.
           </div>
           <div style={S.callout}>
             <strong style={{ color: C.elevation800 }}>Category fields:</strong> When type is{' '}

@@ -1142,6 +1142,192 @@ const CategoryPicker: React.FC<FieldInputProps> = ({ field, value, onChange, rea
   )
 }
 
+const GalleryPicker: React.FC<FieldInputProps> = ({ field, value, onChange, readOnly }) => {
+  // Normalize value to string[] — gallery stores an array of Payload media document IDs
+  const mediaIds: string[] = useMemo(() => {
+    if (Array.isArray(value))
+      return value.filter((v): v is string => typeof v === 'string' && v.length > 0)
+    return []
+  }, [value])
+
+  // ---- ListDrawer for browsing media ----
+
+  const [ListDrawer, , drawerCtx] = useListDrawer({
+    collectionSlugs: ['media'],
+  })
+
+  // ---- Media doc fetch for thumbnail previews ----
+
+  const [mediaDocs, setMediaDocs] = useState<Record<string, Record<string, unknown> | null>>({})
+  const [docsLoading, setDocsLoading] = useState(false)
+
+  useEffect(() => {
+    if (mediaIds.length === 0) {
+      setMediaDocs({})
+      return
+    }
+
+    let cancelled = false
+    setDocsLoading(true)
+
+    Promise.all(
+      mediaIds.map((id) =>
+        fetch(`/api/media/${id}?depth=0`, { credentials: 'include' })
+          .then((res) => (res.ok ? res.json() : null))
+          .catch(() => null),
+      ),
+    ).then((docs) => {
+      if (cancelled) return
+      const byId: Record<string, Record<string, unknown> | null> = {}
+      mediaIds.forEach((id, i) => {
+        byId[id] = docs[i]
+      })
+      setMediaDocs(byId)
+      setDocsLoading(false)
+    })
+
+    return () => {
+      cancelled = true
+    }
+  }, [mediaIds])
+
+  // ---- Handlers ----
+
+  const handleSelect = useCallback(
+    ({ doc }: { doc: Record<string, unknown>; docID: string }) => {
+      const id = (doc?.id as string) ?? ''
+      if (id && !mediaIds.includes(id)) {
+        onChange([...mediaIds, id])
+      }
+      drawerCtx.closeDrawer()
+    },
+    [mediaIds, onChange, drawerCtx],
+  )
+
+  const handleRemove = useCallback(
+    (id: string) => {
+      onChange(mediaIds.filter((mid) => mid !== id))
+    },
+    [mediaIds, onChange],
+  )
+
+  // ---- Render helpers ----
+
+  const getThumbnail = (doc: Record<string, unknown> | null | undefined): string | null => {
+    if (!doc) return null
+    const sizes = doc.sizes as Record<string, { url?: string }> | undefined
+    return (
+      (doc.thumbnailURL as string) ||
+      (doc.url as string) ||
+      sizes?.thumbnail?.url ||
+      null
+    )
+  }
+
+  const getFilename = (doc: Record<string, unknown> | null | undefined, id: string): string =>
+    (doc?.filename as string) || id
+
+  // ---- Render ----
+
+  const hasSelection = mediaIds.length > 0
+
+  return (
+    <div style={S.fieldGroup}>
+      {/* ListDrawer — rendered here so its context is within the component tree */}
+      <ListDrawer allowCreate onSelect={handleSelect} />
+
+      {/* Selected media thumbnail chips */}
+      {hasSelection && (
+        <div style={S.chipList}>
+          {mediaIds.map((id) => {
+            const doc = mediaDocs[id]
+            const thumbUrl = getThumbnail(doc)
+            const filename = getFilename(doc, id)
+            const isImage = doc?.mimeType ? (doc.mimeType as string).startsWith('image/') : false
+
+            return (
+              <div key={id} style={S.chip} title={filename}>
+                {/* Thumbnail or placeholder */}
+                <span
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: '28px',
+                    height: '28px',
+                    borderRadius: '4px',
+                    overflow: 'hidden',
+                    backgroundColor: C.elevation150,
+                    flexShrink: 0,
+                  }}
+                >
+                  {docsLoading && !doc ? (
+                    <LoaderIcon size={14} />
+                  ) : thumbUrl && isImage ? (
+                    <img
+                      src={thumbUrl}
+                      alt={filename}
+                      style={{
+                        width: '28px',
+                        height: '28px',
+                        objectFit: 'cover',
+                      }}
+                    />
+                  ) : (
+                    <ImageIcon size={14} />
+                  )}
+                </span>
+                <span style={S.chipLabel}>
+                  {docsLoading && !doc ? 'Loading…' : filename}
+                </span>
+                {!readOnly && (
+                  <button
+                    type="button"
+                    style={S.chipRemove}
+                    onClick={() => handleRemove(id)}
+                    title={`Remove ${filename}`}
+                    aria-label={`Remove ${filename}`}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.color = C.error500
+                      e.currentTarget.style.backgroundColor = C.error50
+                      e.currentTarget.style.borderColor = C.error200
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.color = C.elevation400
+                      e.currentTarget.style.backgroundColor = 'transparent'
+                      e.currentTarget.style.borderColor = 'transparent'
+                    }}
+                    onFocus={(e) => {
+                      e.currentTarget.style.boxShadow = `0 0 0 2px ${C.elevation800}`
+                    }}
+                    onBlur={(e) => {
+                      e.currentTarget.style.boxShadow = 'none'
+                    }}
+                  >
+                    <XCircleIcon size={12} />
+                  </button>
+                )}
+              </div>
+            )
+          })}
+        </div>
+      )}
+
+      {/* Add Media button */}
+      {!readOnly && (
+        <button
+          type="button"
+          style={{ ...S.btnSecondary, alignSelf: 'flex-start' }}
+          onClick={() => drawerCtx.openDrawer()}
+        >
+          <ImageIcon size={14} />
+          {hasSelection ? 'Add Image' : 'Select Images'}
+        </button>
+      )}
+    </div>
+  )
+}
+
 const FallbackInput: React.FC<FieldInputProps> = ({ field, value, onChange, readOnly }) => (
   <div style={S.fieldGroup}>
     <input
@@ -1173,6 +1359,8 @@ function getInputComponent(type: string): React.FC<FieldInputProps> {
       return MediaPicker
     case 'category':
       return CategoryPicker
+    case 'gallery':
+      return GalleryPicker
     default:
       return FallbackInput
   }

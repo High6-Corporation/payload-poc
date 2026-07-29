@@ -8,6 +8,7 @@ const FIELD_TYPES = [
   { type: 'number', desc: 'Numeric value' },
   { type: 'media', desc: 'Reference to a Media document (store the document ID)' },
   { type: 'category', desc: 'Reference to Categories (stores an array of category document IDs)' },
+  { type: 'gallery', desc: 'Multi-select Media documents (stores an array of media document IDs)' },
   { type: 'url', desc: 'Web address' },
   { type: 'toggle', desc: 'True/false switch' },
 ] as const
@@ -155,6 +156,9 @@ export const FieldBuilderDescription: React.FC = () => {
         {', '}
         the stored value should be a Payload media document ID — not a raw URL. This ensures images
         resolve correctly through the existing Supabase S3 setup.
+      </div>
+      <div style={S.callout}>
+        <strong style={{ color: 'var(--theme-elevation-800)' }}>Gallery fields:</strong> When a field type is <code style={S.code}>gallery</code>, the stored value should be an array of Payload media document IDs — not raw URLs. Select multiple images from the Media Library to build a gallery.
       </div>
       <div style={S.callout}>
         <strong style={{ color: 'var(--theme-elevation-800)' }}>Category fields:</strong> When a

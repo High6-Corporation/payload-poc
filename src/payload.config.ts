@@ -71,9 +71,15 @@ const loggingEmailAdapter = (async (): Promise<EmailAdapter> => {
     ...real,
 
     sendEmail: async (message: Parameters<typeof real.sendEmail>[0]) => {
+      // site is injected by the form-builder plugin's beforeEmail hook;
+      // auth/system emails won't have it — that's fine, the field is optional.
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const siteId = (message as any).site as string | undefined
+
       const logBase = {
         to: normalizeTo(message.to),
         subject: message.subject ?? '',
+        site: siteId || undefined,
         sentAt: new Date().toISOString(),
       }
 

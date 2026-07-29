@@ -73,6 +73,25 @@ export const plugins: Plugin[] = [
       upload: true,
     },
     uploadCollections: ['media'],
+    // Inject the submission's site ID into each outgoing email so the
+    // logging adapter can record which site triggered the send. Without
+    // this, email-logs rows have no site — unworkable at scale.
+    beforeEmail: (emails, { data }) => {
+      // `data.site` can be a plain ID string (set by the beforeChange hook)
+      // OR a populated relationship object `{ id: "..." }` — Payload's hook
+      // data varies depending on whether the relationship was resolved.
+      const raw = (data as Record<string, unknown>)?.site
+      const siteId =
+        typeof raw === 'string'
+          ? raw
+          : (raw as { id?: string } | null)?.id
+      if (!siteId) return emails
+      return emails.map((email) => ({
+        ...email,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        site: siteId as any,
+      }))
+    },
     formOverrides: {
       fields: ({ defaultFields }) => {
         const siteField: Field = {

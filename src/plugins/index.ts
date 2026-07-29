@@ -5,7 +5,7 @@ import { redirectsPlugin } from '@payloadcms/plugin-redirects'
 import { seoPlugin } from '@payloadcms/plugin-seo'
 import { searchPlugin } from '@payloadcms/plugin-search'
 import { s3Storage } from '@payloadcms/storage-s3'
-import { Field, Plugin, ValidationError } from 'payload'
+import { ArrayField, Field, Plugin, ValidationError } from 'payload'
 import type { Config } from '@/payload-types'
 import { revalidateRedirects } from '@/hooks/revalidateRedirects'
 import { GenerateTitle, GenerateURL } from '@payloadcms/plugin-seo/types'
@@ -70,7 +70,9 @@ export const plugins: Plugin[] = [
   formBuilderPlugin({
     fields: {
       payment: false,
+      upload: true,
     },
+    uploadCollections: ['media'],
     formOverrides: {
       fields: ({ defaultFields }) => {
         const siteField: Field = {
@@ -83,7 +85,40 @@ export const plugins: Plugin[] = [
           },
         }
 
+        // Mutate the emails array field in place so the plugin reference
+        // picks up the RowLabel override (GitHub Discussion #15612).
+        // A spread+return creates a new object the plugin ignores.
+        const emailsField = defaultFields.find(
+          (f) => 'name' in f && f.type === 'array' && f.name === 'emails',
+        ) as ArrayField | undefined
+        if (emailsField) {
+          emailsField.admin ??= {}
+          emailsField.admin.components = {
+            ...emailsField.admin.components,
+            RowLabel: '@/components/EmailRowLabel#EmailRowLabel',
+          }
+        }
+
         const modifiedFields = defaultFields.map((field) => {
+          if ('name' in field && field.name === 'title') {
+            return {
+              ...field,
+              hooks: {
+                ...(field.hooks || {}),
+                beforeDuplicate: [
+                  ...(field.hooks?.beforeDuplicate || []),
+                  ({ value }: { value?: string }) =>
+                    value ? `${value} (Copy)` : value,
+                ],
+              },
+            }
+          }
+
+          // Pass through emails — mutated in place above (see GitHub #15612)
+          if ('name' in field && field.type === 'array' && field.name === 'emails') {
+            return field
+          }
+
           if ('name' in field && field.name === 'confirmationMessage') {
             return {
               ...field,

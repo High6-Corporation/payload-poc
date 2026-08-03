@@ -1,6 +1,7 @@
 'use client'
 
 import React from 'react'
+import { useDocumentDrawer } from '@payloadcms/ui'
 
 interface SubmissionItem {
   field?: string
@@ -12,15 +13,21 @@ interface SubmissionItem {
  *
  * Instead of showing the array item count ("6 Submission Data"), extracts
  * an email or name from the submitted fields and renders that as the
- * identifying value.
- *
- * Falls back to the array item count if neither is found.
+ * identifying value.  Clicking the summary opens the full submission in
+ * a document drawer (which renders the existing `SubmissionDataField`
+ * read-only label→value table).
  */
 export const SubmissionDataCell: React.FC<{
   rowData?: Record<string, unknown>
   cellData?: SubmissionItem[]
 }> = ({ rowData }) => {
   const items = (rowData?.submissionData as SubmissionItem[]) ?? []
+  const docId = (rowData?.id as string | number) ?? ''
+
+  const [DocumentDrawer, DocumentDrawerToggler] = useDocumentDrawer({
+    collectionSlug: 'form-submissions',
+    id: docId,
+  })
 
   let email: string | undefined
   let name: string | undefined
@@ -47,8 +54,26 @@ export const SubmissionDataCell: React.FC<{
     if (email && name) break
   }
 
-  if (email) return <span>{email}</span>
-  if (name) return <span>{name}</span>
+  const summary = email || name || `${items.length} fields`
 
-  return <span>{items.length} fields</span>
+  return (
+    <>
+      <DocumentDrawerToggler
+        collectionSlug="form-submissions"
+        id={docId}
+        style={{
+          cursor: 'pointer',
+          color: 'var(--theme-elevation-800)',
+          textDecoration: 'none',
+          background: 'none',
+          border: 'none',
+          padding: 0,
+          font: 'inherit',
+        }}
+      >
+        {summary}
+      </DocumentDrawerToggler>
+      <DocumentDrawer collectionSlug="form-submissions" id={docId} />
+    </>
+  )
 }

@@ -22,7 +22,7 @@ export const SubmissionDataCell: React.FC<{
   cellData?: SubmissionItem[]
 }> = ({ rowData }) => {
   const items = (rowData?.submissionData as SubmissionItem[]) ?? []
-  const docId = (rowData?.id as string | number) ?? ''
+  const docId = rowData?.id != null ? String(rowData.id) : undefined
 
   const [DocumentDrawer, DocumentDrawerToggler] = useDocumentDrawer({
     collectionSlug: 'form-submissions',

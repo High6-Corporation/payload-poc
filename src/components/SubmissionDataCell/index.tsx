@@ -59,8 +59,6 @@ export const SubmissionDataCell: React.FC<{
   return (
     <>
       <DocumentDrawerToggler
-        collectionSlug="form-submissions"
-        id={docId}
         style={{
           cursor: 'pointer',
           color: 'var(--theme-elevation-800)',
@@ -73,7 +71,7 @@ export const SubmissionDataCell: React.FC<{
       >
         {summary}
       </DocumentDrawerToggler>
-      <DocumentDrawer collectionSlug="form-submissions" id={docId} />
+      <DocumentDrawer />
     </>
   )
 }

@@ -1,4 +1,5 @@
 import { formBuilderPlugin } from '@payloadcms/plugin-form-builder'
+import { importExportPlugin } from '@payloadcms/plugin-import-export'
 import { multiTenantPlugin } from '@payloadcms/plugin-multi-tenant'
 import { nestedDocsPlugin } from '@payloadcms/plugin-nested-docs'
 import { redirectsPlugin } from '@payloadcms/plugin-redirects'
@@ -14,6 +15,62 @@ import { searchFields } from '@/search/fieldOverrides'
 import { beforeSyncWithSearch } from '@/search/beforeSync'
 import { Page, Post } from '@/payload-types'
 import { getServerSideURL } from '@/utilities/getURL'
+
+// ---------------------------------------------------------------------------
+// Export flattening: submissionData → human-readable CSV/JSON columns
+// ---------------------------------------------------------------------------
+
+const flattenSubmissionData = (row: Record<string, unknown>, format: string) => {
+  const newRow = { ...row }
+
+  if (format === 'csv') {
+    // CSV: submissionData array is flattened by the export plugin as
+    //   submissionData_0_field, submissionData_0_value, submissionData_0_id,
+    //   submissionData_1_field, submissionData_1_value, submissionData_1_id, ...
+    // Pair field→value and emit one column per field name.
+    const indexFields: Record<string, string> = {} // index → fieldName
+    for (const key of Object.keys(newRow)) {
+      const match = key.match(/^submissionData_(\d+)_(field|value)$/)
+      if (match) {
+        const idx = match[1]
+        const prop = match[2]
+        if (prop === 'field') {
+          indexFields[idx] = String(newRow[key] ?? '')
+        } else if (prop === 'value') {
+          const fieldName = indexFields[idx]
+          if (fieldName) {
+            newRow[fieldName] = newRow[key]
+          }
+        }
+      }
+    }
+  }
+
+  // JSON: submissionData is a nested array, no special handling needed
+  // (it stays as-is in JSON exports)
+
+  // Strip all submissionData / submissionUploads internal array keys
+  const keysToDelete: string[] = []
+  for (const key of Object.keys(newRow)) {
+    if (key.startsWith('submissionData_') || key.startsWith('submissionUploads_')) {
+      keysToDelete.push(key)
+    }
+  }
+  for (const key of keysToDelete) {
+    delete newRow[key]
+  }
+  delete newRow.submissionData
+  delete newRow.submissionUploads
+
+  // Drop internal columns
+  delete newRow.id
+  delete newRow.tenant
+  delete newRow.site
+  delete newRow.form
+  delete newRow.updatedAt
+
+  return newRow
+}
 
 const generateTitle: GenerateTitle<Post | Page> = ({ doc }) => {
   return doc?.title ? `${doc.title} | Payload Website Template` : 'Payload Website Template'
@@ -159,6 +216,9 @@ export const plugins: Plugin[] = [
       },
     },
     formSubmissionOverrides: {
+      admin: {
+        defaultColumns: ['submissionData', 'createdAt', 'tenant'],
+      },
       fields: ({ defaultFields }) => {
         const siteField: Field = {
           name: 'site',
@@ -182,6 +242,30 @@ export const plugins: Plugin[] = [
             ...uploadsField.admin.components,
             RowLabel: '@/components/SubmissionUploadRowLabel#SubmissionUploadRowLabel',
             Field: '@/components/SubmissionUploadField#SubmissionUploadField',
+          }
+        }
+
+        // Replace the default array editor for submissionData with a read-only
+        // label → value table so non-technical readers can understand submissions
+        // without seeing the internal form-builder field/array structure.
+        const submissionDataField = defaultFields.find(
+          (f) => 'name' in f && f.type === 'array' && f.name === 'submissionData',
+        ) as ArrayField | undefined
+        if (submissionDataField) {
+          submissionDataField.admin ??= {}
+          submissionDataField.admin.components = {
+            ...submissionDataField.admin.components,
+            Field: '@/components/SubmissionDataField#SubmissionDataField',
+            Cell: '@/components/SubmissionDataCell#SubmissionDataCell',
+          }
+        }
+
+        // Hide these default fields from the list view — only submissionSummary,
+        // createdAt, and tenant columns are needed.
+        for (const f of defaultFields) {
+          if ('name' in f && (f.name === 'form' || f.name === 'submissionUploads')) {
+            ;(f as { admin?: Record<string, unknown> }).admin ??= {}
+            ;(f as { admin: Record<string, unknown> }).admin.disableListColumn = true
           }
         }
 
@@ -306,6 +390,37 @@ export const plugins: Plugin[] = [
         return [...defaultFields, ...searchFields]
       },
     },
+  }),
+  importExportPlugin({
+    collections: [
+      {
+        slug: 'form-submissions',
+        export: {
+          disableJobsQueue: true,
+          format: 'csv', // default to CSV; user can switch to JSON in UI
+          hooks: {
+            before: async ({ data, format }) => {
+              return data.map((row) => flattenSubmissionData(row, format))
+            },
+          },
+          overrideCollection: ({ collection }) => ({
+            ...collection,
+            access: {
+              ...collection.access,
+              read: ({ req: { user } }) => {
+                // Must be logged in — matches form-submissions default read access.
+                // Tenant scoping is enforced at export time by the form-submissions
+                // collection's multi-tenant access control (the export queries
+                // form-submissions, which already applies tenant filtering).
+                if (!user) return false
+                return true
+              },
+            },
+          }),
+        },
+        import: false,
+      },
+    ],
   }),
   multiTenantPlugin<Config>({
     cleanupAfterTenantDelete: false,

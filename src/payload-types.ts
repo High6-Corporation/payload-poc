@@ -212,6 +212,39 @@ export interface Tenant {
    */
   generateSlug?: boolean | null;
   slug: string;
+  /**
+   * Default site for this tenant. Used as fallback when no site cookie is set.
+   */
+  defaultSite?: (string | null) | Site;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "sites".
+ */
+export interface Site {
+  id: string;
+  name: string;
+  /**
+   * When enabled, the slug will auto-generate from the title field on save and autosave.
+   */
+  generateSlug?: boolean | null;
+  slug: string;
+  url: string;
+  tenant: string | Tenant;
+  /**
+   * BLACKLIST — collections listed here are DISABLED for this site. Everything else is enabled by default. Custom Collections are auto-enabled on creation (they start absent from this list). Built-in collection slugs are prefixed with "builtin:".
+   */
+  disabledCollections?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -240,23 +273,6 @@ export interface PortalClient {
     | null;
   password?: string | null;
   collection: 'portal-clients';
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "sites".
- */
-export interface Site {
-  id: string;
-  name: string;
-  /**
-   * When enabled, the slug will auto-generate from the title field on save and autosave.
-   */
-  generateSlug?: boolean | null;
-  slug: string;
-  url: string;
-  tenant: string | Tenant;
-  updatedAt: string;
-  createdAt: string;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -544,6 +560,10 @@ export interface Category {
 export interface User {
   id: string;
   name?: string | null;
+  /**
+   * super-admin sees all tenants. tenant-admin is scoped to the tenants assigned below.
+   */
+  roles?: ('super-admin' | 'tenant-admin')[] | null;
   tenants?:
     | {
         tenant: string | Tenant;
@@ -1431,7 +1451,10 @@ export interface Export {
 export interface Import {
   id: string;
   collectionSlug: string;
-  importMode?: ('create' | 'update' | 'upsert') | null;
+  /**
+   * Entries are always created as new. Duplicates are rejected.
+   */
+  importMode?: 'create' | null;
   matchField?: string | null;
   status?: ('pending' | 'completed' | 'partial' | 'failed') | null;
   summary?: {
@@ -1449,6 +1472,10 @@ export interface Import {
       | boolean
       | null;
   };
+  /**
+   * All entries in the uploaded file will be added to this collection. Leave blank to use the "Collection" column from the CSV instead.
+   */
+  targetCollection?: (string | null) | CustomCollection;
   updatedAt: string;
   createdAt: string;
   url?: string | null;
@@ -1725,6 +1752,7 @@ export interface TenantsSelect<T extends boolean = true> {
   name?: T;
   generateSlug?: T;
   slug?: T;
+  defaultSite?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -1761,6 +1789,7 @@ export interface SitesSelect<T extends boolean = true> {
   slug?: T;
   url?: T;
   tenant?: T;
+  disabledCollections?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -2058,6 +2087,7 @@ export interface CategoriesSelect<T extends boolean = true> {
  */
 export interface UsersSelect<T extends boolean = true> {
   name?: T;
+  roles?: T;
   tenants?:
     | T
     | {
@@ -2528,6 +2558,7 @@ export interface ImportsSelect<T extends boolean = true> {
         issues?: T;
         issueDetails?: T;
       };
+  targetCollection?: T;
   updatedAt?: T;
   createdAt?: T;
   url?: T;

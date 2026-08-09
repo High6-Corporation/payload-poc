@@ -38,5 +38,21 @@ export const Sites: CollectionConfig = {
         position: 'sidebar',
       },
     },
+    {
+      name: 'disabledCollections',
+      type: 'json',
+      defaultValue: [],
+      admin: {
+        description:
+          'BLACKLIST — collections listed here are DISABLED for this site. ' +
+          'Everything else is enabled by default. Custom Collections are ' +
+          'auto-enabled on creation (they start absent from this list). ' +
+          'Built-in collection slugs are prefixed with "builtin:".',
+        position: 'sidebar',
+        components: {
+          Field: '@/components/EnabledCollectionsToggle#EnabledCollectionsToggle',
+        },
+      },
+    },
   ],
 }

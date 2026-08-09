@@ -1,5 +1,6 @@
 import { SlugField as SlugField_2b8867833a34864a02ddf429b0728a40 } from '@payloadcms/next/client'
 import { WatchTenantCollection as WatchTenantCollection_1d0591e3cf4f332c83a86da13a0de59a } from '@payloadcms/plugin-multi-tenant/client'
+import { EnabledCollectionsToggle as EnabledCollectionsToggle_a6788310b35687a757be5b93f0a1bf6d } from '@/components/EnabledCollectionsToggle'
 import { TenantField as TenantField_1d0591e3cf4f332c83a86da13a0de59a } from '@payloadcms/plugin-multi-tenant/client'
 import { RscEntryLexicalCell as RscEntryLexicalCell_44fe37237e0ebf4470c9990d8cb7b07e } from '@payloadcms/richtext-lexical/rsc'
 import { RscEntryLexicalField as RscEntryLexicalField_44fe37237e0ebf4470c9990d8cb7b07e } from '@payloadcms/richtext-lexical/rsc'
@@ -26,12 +27,14 @@ import { FieldBuilderDescription as FieldBuilderDescription_87451853b5e4dda45065
 import { FieldBuilder as FieldBuilder_1c50948e29b4615cfbffb2573cce95b9 } from '@/components/FieldBuilder'
 import { EntryDataDescription as EntryDataDescription_2c018cd122faced52f94e104735f68e5 } from '@/components/EntryDataDescription'
 import { EntryDataField as EntryDataField_3a617193da43b7aa3baaf2653a7fd787 } from '@/components/EntryDataField'
+import { ImportHistory as ImportHistory_507b01a05cea6ed685123cb5a1aa5d38 } from '@/components/ImportHistory'
+import { ExportListMenuItem as ExportListMenuItem_cdf7e044479f899a31f804427d568b36 } from '@payloadcms/plugin-import-export/rsc'
+import { ImportListMenuItem as ImportListMenuItem_cdf7e044479f899a31f804427d568b36 } from '@payloadcms/plugin-import-export/rsc'
 import { EmailRowLabel as EmailRowLabel_6d7a2c8576dd95e3d573447d4a41d982 } from '@/components/EmailRowLabel'
 import { SubmissionDataCell as SubmissionDataCell_cdd3ae03201e328fee2da4f3474109b3 } from '@/components/SubmissionDataCell'
 import { SubmissionDataField as SubmissionDataField_9cb0cf96bfebf55b2a660742046aa08e } from '@/components/SubmissionDataField'
 import { SubmissionUploadField as SubmissionUploadField_c0c6b6654161a23f763fc1b5222a3057 } from '@/components/SubmissionUploadField'
 import { SubmissionUploadRowLabel as SubmissionUploadRowLabel_28bd5b484acf88e2d7c605a1d6d158c7 } from '@/components/SubmissionUploadRowLabel'
-import { ExportListMenuItem as ExportListMenuItem_cdf7e044479f899a31f804427d568b36 } from '@payloadcms/plugin-import-export/rsc'
 import { LinkToDoc as LinkToDoc_aead06e4cbf6b2620c5c51c9ab283634 } from '@payloadcms/plugin-search/client'
 import { ReindexButton as ReindexButton_aead06e4cbf6b2620c5c51c9ab283634 } from '@payloadcms/plugin-search/client'
 import { FormatField as FormatField_cdf7e044479f899a31f804427d568b36 } from '@payloadcms/plugin-import-export/rsc'
@@ -54,6 +57,7 @@ import { default as default_1a7510af427896d367a49dbf838d2de6 } from '@/component
 import { default as default_8a7ab0eb7ab5c511aba12e68480bfe5e } from '@/components/BeforeLogin'
 import { TenantSelector as TenantSelector_d6d5f193a167989e2ee7d14202901e62 } from '@payloadcms/plugin-multi-tenant/rsc'
 import { default as default_8c892067b9a54d9600542ae3b3df7f7d } from '@/components/SidebarOrderFix'
+import { default as default_a0ccc677d43ecbd9427f5215c6230c2c } from '@/components/SiteSwitcher'
 import { S3ClientUploadHandler as S3ClientUploadHandler_f97aa6c64367fa259c5bc0567239ef24 } from '@payloadcms/storage-s3/client'
 import { ImportExportProvider as ImportExportProvider_cdf7e044479f899a31f804427d568b36 } from '@payloadcms/plugin-import-export/rsc'
 import { TenantSelectionProvider as TenantSelectionProvider_d6d5f193a167989e2ee7d14202901e62 } from '@payloadcms/plugin-multi-tenant/rsc'
@@ -63,6 +67,7 @@ import { CollectionCards as CollectionCards_f9c02e79a4aed9a3924487c0cd4cafb1 } f
 export const importMap = {
   "@payloadcms/next/client#SlugField": SlugField_2b8867833a34864a02ddf429b0728a40,
   "@payloadcms/plugin-multi-tenant/client#WatchTenantCollection": WatchTenantCollection_1d0591e3cf4f332c83a86da13a0de59a,
+  "@/components/EnabledCollectionsToggle#EnabledCollectionsToggle": EnabledCollectionsToggle_a6788310b35687a757be5b93f0a1bf6d,
   "@payloadcms/plugin-multi-tenant/client#TenantField": TenantField_1d0591e3cf4f332c83a86da13a0de59a,
   "@payloadcms/richtext-lexical/rsc#RscEntryLexicalCell": RscEntryLexicalCell_44fe37237e0ebf4470c9990d8cb7b07e,
   "@payloadcms/richtext-lexical/rsc#RscEntryLexicalField": RscEntryLexicalField_44fe37237e0ebf4470c9990d8cb7b07e,
@@ -89,12 +94,14 @@ export const importMap = {
   "@/components/FieldBuilder#FieldBuilder": FieldBuilder_1c50948e29b4615cfbffb2573cce95b9,
   "@/components/EntryDataDescription#EntryDataDescription": EntryDataDescription_2c018cd122faced52f94e104735f68e5,
   "@/components/EntryDataField#EntryDataField": EntryDataField_3a617193da43b7aa3baaf2653a7fd787,
+  "@/components/ImportHistory#ImportHistory": ImportHistory_507b01a05cea6ed685123cb5a1aa5d38,
+  "@payloadcms/plugin-import-export/rsc#ExportListMenuItem": ExportListMenuItem_cdf7e044479f899a31f804427d568b36,
+  "@payloadcms/plugin-import-export/rsc#ImportListMenuItem": ImportListMenuItem_cdf7e044479f899a31f804427d568b36,
   "@/components/EmailRowLabel#EmailRowLabel": EmailRowLabel_6d7a2c8576dd95e3d573447d4a41d982,
   "@/components/SubmissionDataCell#SubmissionDataCell": SubmissionDataCell_cdd3ae03201e328fee2da4f3474109b3,
   "@/components/SubmissionDataField#SubmissionDataField": SubmissionDataField_9cb0cf96bfebf55b2a660742046aa08e,
   "@/components/SubmissionUploadField#SubmissionUploadField": SubmissionUploadField_c0c6b6654161a23f763fc1b5222a3057,
   "@/components/SubmissionUploadRowLabel#SubmissionUploadRowLabel": SubmissionUploadRowLabel_28bd5b484acf88e2d7c605a1d6d158c7,
-  "@payloadcms/plugin-import-export/rsc#ExportListMenuItem": ExportListMenuItem_cdf7e044479f899a31f804427d568b36,
   "@payloadcms/plugin-search/client#LinkToDoc": LinkToDoc_aead06e4cbf6b2620c5c51c9ab283634,
   "@payloadcms/plugin-search/client#ReindexButton": ReindexButton_aead06e4cbf6b2620c5c51c9ab283634,
   "@payloadcms/plugin-import-export/rsc#FormatField": FormatField_cdf7e044479f899a31f804427d568b36,
@@ -117,6 +124,7 @@ export const importMap = {
   "@/components/BeforeLogin#default": default_8a7ab0eb7ab5c511aba12e68480bfe5e,
   "@payloadcms/plugin-multi-tenant/rsc#TenantSelector": TenantSelector_d6d5f193a167989e2ee7d14202901e62,
   "@/components/SidebarOrderFix#default": default_8c892067b9a54d9600542ae3b3df7f7d,
+  "@/components/SiteSwitcher#default": default_a0ccc677d43ecbd9427f5215c6230c2c,
   "@payloadcms/storage-s3/client#S3ClientUploadHandler": S3ClientUploadHandler_f97aa6c64367fa259c5bc0567239ef24,
   "@payloadcms/plugin-import-export/rsc#ImportExportProvider": ImportExportProvider_cdf7e044479f899a31f804427d568b36,
   "@payloadcms/plugin-multi-tenant/rsc#TenantSelectionProvider": TenantSelectionProvider_d6d5f193a167989e2ee7d14202901e62,

@@ -200,19 +200,31 @@ const SiteFilteredNav: React.FC = () => {
 
   // ---- Dynamic custom collections for the active site ----
 
-  const [customCollections, setCustomCollections] = useState<CustomCollectionSummary[]>([])
-  const [disabledIds, setDisabledIds] = useState<string[]>([])
-  const [tenantDisabledIds, setTenantDisabledIds] = useState<string[]>([])
-  const [siteReady, setSiteReady] = useState(false)
-  const [tenantDataLoaded, setTenantDataLoaded] = useState(false)
-
   const tenantId = getCookie('payload-tenant')
   const siteId = getCookie('payload-site')
+
+  // Seed tenantDisabledIds from sessionStorage so navigations don't flash
+  // unfiltered collections.  Keyed by tenantId so switching tenants
+  // invalidates naturally.
+  const tenantCacheKey = tenantId ? `tenant_disabled_${tenantId}` : null
+  const cachedTenantDisabled = (() => {
+    if (!tenantCacheKey) return []
+    try {
+      const raw = sessionStorage.getItem(tenantCacheKey)
+      return raw ? JSON.parse(raw) : []
+    } catch {
+      return []
+    }
+  })()
+
+  const [customCollections, setCustomCollections] = useState<CustomCollectionSummary[]>([])
+  const [disabledIds, setDisabledIds] = useState<string[]>([])
+  const [tenantDisabledIds, setTenantDisabledIds] = useState<string[]>(cachedTenantDisabled)
+  const [siteReady, setSiteReady] = useState(false)
 
   useEffect(() => {
     if (!siteId || !tenantId) {
       setSiteReady(false)
-      setTenantDataLoaded(false)
       setCustomCollections([])
       setDisabledIds([])
       setTenantDisabledIds([])
@@ -258,11 +270,21 @@ const SiteFilteredNav: React.FC = () => {
             const tenantDisabled: string[] = Array.isArray(tenantData.disabledCollections)
               ? tenantData.disabledCollections
               : []
-            if (!cancelled) setTenantDisabledIds(tenantDisabled)
+            if (!cancelled) {
+              setTenantDisabledIds(tenantDisabled)
+              // Persist so remounts (nav clicks) read the correct value instantly
+              try {
+                sessionStorage.setItem(
+                  `tenant_disabled_${tenantId!}`,
+                  JSON.stringify(tenantDisabled),
+                )
+              } catch {
+                /* quota exceeded — non-critical */
+              }
+            }
           }
-          if (!cancelled) setTenantDataLoaded(true)
         } catch {
-          if (!cancelled) setTenantDataLoaded(true)
+          /* tenant fetch is non-critical */
         }
       } catch (err) {
         console.error('[SiteFilteredNav] Failed to load site data:', err)
@@ -270,7 +292,6 @@ const SiteFilteredNav: React.FC = () => {
           setCustomCollections([])
           setDisabledIds([])
           setSiteReady(false)
-          setTenantDataLoaded(false)
         }
       }
     }
@@ -381,22 +402,20 @@ const SiteFilteredNav: React.FC = () => {
         <span className="nav__link-label">Dashboard</span>
       </Link>
 
-      {/* Collection groups — deferred until tenant data loads to avoid
-          flash of unfiltered (disabled) collections on first render */}
-      {tenantDataLoaded &&
-        groupedCollections.map(([groupName, cols]) => (
-          <NavGroup key={groupName} label={groupName}>
-            {cols.map((col) => (
-              <Link
-                className="nav__link"
-                key={col.slug}
-                href={`${adminRoute}/collections/${col.slug}`}
-              >
-                <span className="nav__link-label">{colLabel(col)}</span>
-              </Link>
-            ))}
-          </NavGroup>
-        ))}
+      {/* Collection groups */}
+      {groupedCollections.map(([groupName, cols]) => (
+        <NavGroup key={groupName} label={groupName}>
+          {cols.map((col) => (
+            <Link
+              className="nav__link"
+              key={col.slug}
+              href={`${adminRoute}/collections/${col.slug}`}
+            >
+              <span className="nav__link-label">{colLabel(col)}</span>
+            </Link>
+          ))}
+        </NavGroup>
+      ))}
 
       {/* Globals */}
       {visibleGlobals.length > 0 && (

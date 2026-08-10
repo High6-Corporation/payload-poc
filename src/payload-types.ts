@@ -1429,6 +1429,7 @@ export interface Search {
  */
 export interface Export {
   id: string;
+  tenant?: (string | null) | Tenant;
   name?: string | null;
   format: 'csv' | 'json';
   limit?: number | null;
@@ -1466,6 +1467,7 @@ export interface Export {
  */
 export interface Import {
   id: string;
+  tenant?: (string | null) | Tenant;
   collectionSlug: string;
   /**
    * Entries are always created as new. Duplicates are rejected.
@@ -1489,9 +1491,10 @@ export interface Import {
       | null;
   };
   /**
-   * All entries in the uploaded file will be added to this collection. Leave blank to use the "Collection" column from the CSV instead.
+   * Select the Custom Collection to import entries into.
    */
-  targetCollection?: (string | null) | CustomCollection;
+  targetCollection: string | CustomCollection;
+  uploadedBy?: (string | null) | User;
   updatedAt: string;
   createdAt: string;
   url?: string | null;
@@ -2535,6 +2538,7 @@ export interface SearchSelect<T extends boolean = true> {
  * via the `definition` "exports_select".
  */
 export interface ExportsSelect<T extends boolean = true> {
+  tenant?: T;
   name?: T;
   format?: T;
   limit?: T;
@@ -2563,6 +2567,7 @@ export interface ExportsSelect<T extends boolean = true> {
  * via the `definition` "imports_select".
  */
 export interface ImportsSelect<T extends boolean = true> {
+  tenant?: T;
   collectionSlug?: T;
   importMode?: T;
   matchField?: T;
@@ -2577,6 +2582,7 @@ export interface ImportsSelect<T extends boolean = true> {
         issueDetails?: T;
       };
   targetCollection?: T;
+  uploadedBy?: T;
   updatedAt?: T;
   createdAt?: T;
   url?: T;

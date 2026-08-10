@@ -14,7 +14,7 @@ function getUserTenantIds(user: any): string[] {
       // t.tenant may be a populated object { id, name, ... } or a plain ID string
       const tv = t.tenant
       if (typeof tv === 'object' && tv !== null && tv.id) return tv.id
-      return tv || t.id || String(t)
+      return tv || t.id || undefined
     })
     .filter(Boolean)
 }

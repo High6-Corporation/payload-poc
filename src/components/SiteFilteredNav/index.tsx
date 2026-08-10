@@ -204,6 +204,7 @@ const SiteFilteredNav: React.FC = () => {
   const [disabledIds, setDisabledIds] = useState<string[]>([])
   const [tenantDisabledIds, setTenantDisabledIds] = useState<string[]>([])
   const [siteReady, setSiteReady] = useState(false)
+  const [tenantDataLoaded, setTenantDataLoaded] = useState(false)
 
   const tenantId = getCookie('payload-tenant')
   const siteId = getCookie('payload-site')
@@ -211,8 +212,10 @@ const SiteFilteredNav: React.FC = () => {
   useEffect(() => {
     if (!siteId || !tenantId) {
       setSiteReady(false)
+      setTenantDataLoaded(false)
       setCustomCollections([])
       setDisabledIds([])
+      setTenantDisabledIds([])
       return
     }
 
@@ -255,10 +258,11 @@ const SiteFilteredNav: React.FC = () => {
             const tenantDisabled: string[] = Array.isArray(tenantData.disabledCollections)
               ? tenantData.disabledCollections
               : []
-            setTenantDisabledIds(tenantDisabled)
+            if (!cancelled) setTenantDisabledIds(tenantDisabled)
           }
+          if (!cancelled) setTenantDataLoaded(true)
         } catch {
-          /* tenant fetch is non-critical — standard collections stay visible on failure */
+          if (!cancelled) setTenantDataLoaded(true)
         }
       } catch (err) {
         console.error('[SiteFilteredNav] Failed to load site data:', err)
@@ -266,6 +270,7 @@ const SiteFilteredNav: React.FC = () => {
           setCustomCollections([])
           setDisabledIds([])
           setSiteReady(false)
+          setTenantDataLoaded(false)
         }
       }
     }
@@ -376,20 +381,22 @@ const SiteFilteredNav: React.FC = () => {
         <span className="nav__link-label">Dashboard</span>
       </Link>
 
-      {/* Collection groups */}
-      {groupedCollections.map(([groupName, cols]) => (
-        <NavGroup key={groupName} label={groupName}>
-          {cols.map((col) => (
-            <Link
-              className="nav__link"
-              key={col.slug}
-              href={`${adminRoute}/collections/${col.slug}`}
-            >
-              <span className="nav__link-label">{colLabel(col)}</span>
-            </Link>
-          ))}
-        </NavGroup>
-      ))}
+      {/* Collection groups — deferred until tenant data loads to avoid
+          flash of unfiltered (disabled) collections on first render */}
+      {tenantDataLoaded &&
+        groupedCollections.map(([groupName, cols]) => (
+          <NavGroup key={groupName} label={groupName}>
+            {cols.map((col) => (
+              <Link
+                className="nav__link"
+                key={col.slug}
+                href={`${adminRoute}/collections/${col.slug}`}
+              >
+                <span className="nav__link-label">{colLabel(col)}</span>
+              </Link>
+            ))}
+          </NavGroup>
+        ))}
 
       {/* Globals */}
       {visibleGlobals.length > 0 && (

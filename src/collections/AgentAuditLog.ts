@@ -1,12 +1,13 @@
 import type { CollectionConfig } from 'payload'
 
 import { authenticated } from '../access/authenticated'
+import { tenantReadAccess } from '@/access/tenantScoped'
 
 export const AgentAuditLog: CollectionConfig = {
   slug: 'agent-audit-log',
   access: {
     create: authenticated,
-    read: authenticated,
+    read: tenantReadAccess,
     update: () => false,
     delete: () => false,
   },

@@ -128,6 +128,13 @@ export default buildConfig({
       beforeDashboard: ['@/components/BeforeDashboard'],
       Nav: '@/components/SiteFilteredNav',
     },
+    // Override Payload's default dashboard layout which includes a
+    // "collections" widget that renders EVERY collection unfiltered
+    // (duplicating the sidebar nav in the main content area).
+    dashboard: {
+      defaultLayout: [],
+      widgets: [],
+    },
     importMap: {
       baseDir: path.resolve(dirname),
     },

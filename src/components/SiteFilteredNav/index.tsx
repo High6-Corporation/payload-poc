@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useCallback, useEffect, useState } from 'react'
-import { Link, SelectInput, useConfig, useAuth } from '@payloadcms/ui'
+import { ChevronIcon, Link, SelectInput, useConfig, useAuth } from '@payloadcms/ui'
 import { getCookie } from '@/utilities/admin-cookies'
 import SiteSwitcher from '@/components/SiteSwitcher'
 import { useTenantSelection } from '@payloadcms/plugin-multi-tenant/client'
@@ -125,21 +125,7 @@ const NavGroup: React.FC<{
         type="button"
       >
         <div className="nav-group__label">{label}</div>
-        <div className="nav-group__indicator">
-          <svg
-            className="nav-group__indicator"
-            height="100%"
-            viewBox="0 0 20 20"
-            width="100%"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              className="stroke"
-              d={collapsed ? 'M8 14L12 10L8 6' : 'M6 8L10 12L14 8'}
-              strokeLinecap="square"
-            />
-          </svg>
-        </div>
+        <ChevronIcon className="nav-group__indicator" direction={collapsed ? undefined : 'up'} />
       </button>
       <div className="nav-group__content" style={{ display: collapsed ? 'none' : 'block' }}>
         {children}
@@ -189,9 +175,8 @@ const TenantSelector: React.FC = () => {
   if (options.length <= 1) return null
 
   return (
-    <div style={{ padding: '0.5rem 0.75rem' }}>
+    <div style={{ padding: '0.5rem 0' }}>
       <SelectInput
-        label="Tenant"
         name="siteFilteredNavTenant"
         onChange={onChange}
         options={options}
@@ -336,74 +321,81 @@ const SiteFilteredNav: React.FC = () => {
   // ---- Render ----
 
   return (
-    <nav className="nav__wrap">
-      {/* Tenant Selector (from multi-tenant plugin — was admin.components.beforeNav) */}
-      <TenantSelector />
+    <div className="nav">
+      <div className="nav__scroll">
+        <nav className="nav__wrap">
+          {/* Tenant Selector (from multi-tenant plugin — was admin.components.beforeNav) */}
+          <TenantSelector />
 
-      {/* Dashboard */}
-      <Link className="nav__link" href={adminRoute}>
-        <span className="nav__link-label">Dashboard</span>
-      </Link>
+          {/* Dashboard */}
+          <Link className="nav__link" href={adminRoute}>
+            <span className="nav__link-label">Dashboard</span>
+          </Link>
 
-      {/* Collection groups */}
-      {groupedCollections.map(([groupName, cols]) => (
-        <NavGroup key={groupName} label={groupName}>
-          {cols.map((col) => (
-            <Link
-              className="nav__link"
-              key={col.slug}
-              href={`${adminRoute}/collections/${col.slug}`}
-            >
-              <span className="nav__link-label">{colLabel(col)}</span>
-            </Link>
+          {/* Collection groups */}
+          {groupedCollections.map(([groupName, cols]) => (
+            <NavGroup key={groupName} label={groupName}>
+              {cols.map((col) => (
+                <Link
+                  className="nav__link"
+                  key={col.slug}
+                  href={`${adminRoute}/collections/${col.slug}`}
+                >
+                  <span className="nav__link-label">{colLabel(col)}</span>
+                </Link>
+              ))}
+            </NavGroup>
           ))}
-        </NavGroup>
-      ))}
 
-      {/* Globals */}
-      {visibleGlobals.length > 0 && (
-        <NavGroup key="__globals__" label="Globals">
-          {visibleGlobals.map((g) => (
-            <Link className="nav__link" key={g.slug} href={`${adminRoute}/globals/${g.slug}`}>
-              <span className="nav__link-label">{g.label || g.slug}</span>
+          {/* Globals */}
+          {visibleGlobals.length > 0 && (
+            <NavGroup key="__globals__" label="Globals">
+              {visibleGlobals.map((g) => (
+                <Link className="nav__link" key={g.slug} href={`${adminRoute}/globals/${g.slug}`}>
+                  <span className="nav__link-label">{g.label || g.slug}</span>
+                </Link>
+              ))}
+            </NavGroup>
+          )}
+
+          {/* Custom Content (schema management + per-collection entries) */}
+          <NavGroup label="Custom Content">
+            <Link className="nav__link" href={`${adminRoute}/collections/custom-collections`}>
+              <span className="nav__link-label">Custom Collections</span>
             </Link>
-          ))}
-        </NavGroup>
-      )}
+            {/* Per-collection links for this site */}
+            {siteReady &&
+              filteredCustomCollections.map((cc) => (
+                <Link
+                  className="nav__link"
+                  key={cc.id}
+                  href={`${adminRoute}/collections/custom-collection-entries?where%5BparentCollection%5D%5Bequals%5D=${encodeURIComponent(cc.id)}`}
+                >
+                  <span className="nav__link-label">{cc.name}</span>
+                </Link>
+              ))}
+          </NavGroup>
 
-      {/* Custom Content (schema management + per-collection entries) */}
-      <NavGroup label="Custom Content">
-        <Link className="nav__link" href={`${adminRoute}/collections/custom-collections`}>
-          <span className="nav__link-label">Custom Collections</span>
-        </Link>
-        {/* Per-collection links for this site */}
-        {siteReady &&
-          filteredCustomCollections.map((cc) => (
-            <Link
-              className="nav__link"
-              key={cc.id}
-              href={`${adminRoute}/collections/custom-collection-entries?where%5BparentCollection%5D%5Bequals%5D=${encodeURIComponent(cc.id)}`}
-            >
-              <span className="nav__link-label">{cc.name}</span>
+          {/* Browse by Folder */}
+          <Link
+            className="nav__link browse-by-folder-button"
+            href={`${adminRoute}/browse-by-folder`}
+          >
+            <span className="nav__link-label">Browse by Folder</span>
+          </Link>
+
+          {/* Site Switcher (moved from beforeNavLinks) */}
+          <SiteSwitcher />
+
+          {/* Logout */}
+          <div className="nav__controls">
+            <Link className="nav__log-out" href={`${adminRoute}/logout`} aria-label="Log out">
+              <LogoutIcon />
             </Link>
-          ))}
-      </NavGroup>
-
-      {/* Browse by Folder */}
-      <Link className="nav__link browse-by-folder-button" href={`${adminRoute}/browse-by-folder`}>
-        <span className="nav__link-label">Browse by Folder</span>
-      </Link>
-
-      {/* Site Switcher (moved from beforeNavLinks) */}
-      <SiteSwitcher />
-
-      {/* Logout */}
-      <div className="nav__controls">
-        <Link className="nav__log-out" href={`${adminRoute}/logout`} aria-label="Log out">
-          <LogoutIcon />
-        </Link>
+          </div>
+        </nav>
       </div>
-    </nav>
+    </div>
   )
 }
 

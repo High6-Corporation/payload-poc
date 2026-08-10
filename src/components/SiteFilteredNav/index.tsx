@@ -108,33 +108,42 @@ const DEFAULT_ORDER = 10
 // Sub-components
 // ---------------------------------------------------------------------------
 
-/** Collapsible nav group — matches Payload's .nav__group structure. */
 const NavGroup: React.FC<{
   label: string
-  defaultOpen?: boolean
   children: React.ReactNode
-}> = ({ label, defaultOpen = true, children }) => {
-  const [open, setOpen] = useState(defaultOpen)
+}> = ({ label, children }) => {
+  const [collapsed, setCollapsed] = useState(false)
 
   return (
-    <div className="nav__group" id={`nav-group-${label}`}>
-      <button className="nav__group-label" onClick={() => setOpen((prev) => !prev)} type="button">
-        {label}
+    <div className={`nav-group ${collapsed ? 'nav-group--collapsed' : ''}`} id={`nav-group-${label}`}>
+      <button
+        className={`nav-group__toggle nav-group__toggle--${collapsed ? 'collapsed' : 'open'}`}
+        onClick={() => setCollapsed((prev) => !prev)}
+        type="button"
+      >
+        <div className="nav-group__label">{label}</div>
+        <div className="nav-group__indicator">
+          <svg
+            className="nav-group__indicator"
+            height="100%"
+            viewBox="0 0 20 20"
+            width="100%"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              className="stroke"
+              d={collapsed ? 'M8 14L12 10L8 6' : 'M6 8L10 12L14 8'}
+              strokeLinecap="square"
+            />
+          </svg>
+        </div>
       </button>
-      {open && <div className="nav__group-content">{children}</div>}
+      <div className="nav-group__content" style={{ display: collapsed ? 'none' : 'block' }}>
+        {children}
+      </div>
     </div>
   )
 }
-
-/** Individual nav link — matches Payload's .nav__link class. */
-const NavLink: React.FC<{
-  href: string
-  label: string
-}> = ({ href, label }) => (
-  <Link className="nav__link" href={href}>
-    {label}
-  </Link>
-)
 
 // ---------------------------------------------------------------------------
 // Logout icon (inline SVG — same as SidebarOrderFix)
@@ -201,9 +210,7 @@ const SiteFilteredNav: React.FC = () => {
 
   // ---- Dynamic custom collections for the active site ----
 
-  const [customCollections, setCustomCollections] = useState<
-    CustomCollectionSummary[]
-  >([])
+  const [customCollections, setCustomCollections] = useState<CustomCollectionSummary[]>([])
   const [disabledIds, setDisabledIds] = useState<string[]>([])
   const [siteReady, setSiteReady] = useState(false)
 
@@ -229,15 +236,12 @@ const SiteFilteredNav: React.FC = () => {
         )
         if (!ccRes.ok) throw new Error('Failed to fetch custom collections')
         const ccData = await ccRes.json()
-        const collections: CustomCollectionSummary[] = Array.isArray(ccData.docs)
-          ? ccData.docs
-          : []
+        const collections: CustomCollectionSummary[] = Array.isArray(ccData.docs) ? ccData.docs : []
 
         // Fetch site's disabledCollections
-        const siteRes = await fetch(
-          `/api/sites/${encodeURIComponent(siteId!)}?depth=0`,
-          { credentials: 'include' },
-        )
+        const siteRes = await fetch(`/api/sites/${encodeURIComponent(siteId!)}?depth=0`, {
+          credentials: 'include',
+        })
         if (!siteRes.ok) throw new Error('Failed to fetch site')
         const siteData: SiteData = await siteRes.json()
         const disabled: string[] = Array.isArray(siteData.disabledCollections)
@@ -285,11 +289,7 @@ const SiteFilteredNav: React.FC = () => {
       // Skip custom-collections + custom-collection-entries — rendered in the
       // dedicated "Custom Content" group below (schema link always visible,
       // entries replaced by per-collection links)
-      if (
-        col.slug === 'custom-collections' ||
-        col.slug === 'custom-collection-entries'
-      )
-        continue
+      if (col.slug === 'custom-collections' || col.slug === 'custom-collection-entries') continue
 
       // Permission filter — only skip when explicitly denied.
       // Payload's permissions.collections[slug] may have shape { fields: {...} }
@@ -349,7 +349,8 @@ const SiteFilteredNav: React.FC = () => {
         {groupedCollections.map(([groupName, cols]) => (
           <NavGroup key={groupName} label={groupName}>
             {cols.map((col) => (
-              <NavLink
+              <Link
+                className="nav__link"
                 key={col.slug}
                 href={`${adminRoute}/collections/${col.slug}`}
                 label={colLabel(col)}
@@ -362,7 +363,8 @@ const SiteFilteredNav: React.FC = () => {
         {visibleGlobals.length > 0 && (
           <NavGroup key="__globals__" label="Globals">
             {visibleGlobals.map((g) => (
-              <NavLink
+              <Link
+                className="nav__link"
                 key={g.slug}
                 href={`${adminRoute}/globals/${g.slug}`}
                 label={g.label || g.slug}
@@ -373,14 +375,16 @@ const SiteFilteredNav: React.FC = () => {
 
         {/* Custom Content (schema management + per-collection entries) */}
         <NavGroup label="Custom Content">
-          <NavLink
+          <Link
+            className="nav__link"
             href={`${adminRoute}/collections/custom-collections`}
             label="Custom Collections"
           />
           {/* Per-collection links for this site */}
           {siteReady &&
             filteredCustomCollections.map((cc) => (
-              <NavLink
+              <Link
+                className="nav__link"
                 key={cc.id}
                 href={`${adminRoute}/collections/custom-collection-entries?where%5BparentCollection%5D%5Bequals%5D=${encodeURIComponent(cc.id)}`}
                 label={cc.name}

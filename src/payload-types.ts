@@ -216,6 +216,18 @@ export interface Tenant {
    * Default site for this tenant. Used as fallback when no site cookie is set.
    */
   defaultSite?: (string | null) | Site;
+  /**
+   * BLACKLIST — standard collections listed here are DISABLED for this tenant. Everything else is enabled by default. Standard collection slugs are prefixed with "builtin:".
+   */
+  disabledCollections?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -1757,6 +1769,7 @@ export interface TenantsSelect<T extends boolean = true> {
   generateSlug?: T;
   slug?: T;
   defaultSite?: T;
+  disabledCollections?: T;
   updatedAt?: T;
   createdAt?: T;
 }

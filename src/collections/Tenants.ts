@@ -1,6 +1,6 @@
 import type { CollectionConfig } from 'payload'
 
-import { superAdminOnly } from '@/access/tenantScoped'
+import { superAdminOnly, tenantSelfReadAccess } from '@/access/tenantScoped'
 import { slugField } from 'payload'
 
 export const Tenants: CollectionConfig = {
@@ -8,7 +8,7 @@ export const Tenants: CollectionConfig = {
   access: {
     create: superAdminOnly,
     delete: superAdminOnly,
-    read: superAdminOnly,
+    read: tenantSelfReadAccess,
     update: superAdminOnly,
   },
   admin: {
@@ -35,6 +35,21 @@ export const Tenants: CollectionConfig = {
       filterOptions: ({ id }) => {
         if (!id) return true
         return { tenant: { equals: id } }
+      },
+    },
+    {
+      name: 'disabledCollections',
+      type: 'json',
+      defaultValue: [],
+      admin: {
+        description:
+          'BLACKLIST — standard collections listed here are DISABLED for this tenant. ' +
+          'Everything else is enabled by default. Standard collection slugs are ' +
+          'prefixed with "builtin:".',
+        position: 'sidebar',
+        components: {
+          Field: '@/components/EnabledCollectionsToggle#EnabledCollectionsToggle',
+        },
       },
     },
   ],

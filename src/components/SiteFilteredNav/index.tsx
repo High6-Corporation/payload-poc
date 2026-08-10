@@ -202,6 +202,7 @@ const SiteFilteredNav: React.FC = () => {
 
   const [customCollections, setCustomCollections] = useState<CustomCollectionSummary[]>([])
   const [disabledIds, setDisabledIds] = useState<string[]>([])
+  const [tenantDisabledIds, setTenantDisabledIds] = useState<string[]>([])
   const [siteReady, setSiteReady] = useState(false)
 
   const tenantId = getCookie('payload-tenant')
@@ -242,6 +243,25 @@ const SiteFilteredNav: React.FC = () => {
           setCustomCollections(collections)
           setDisabledIds(disabled)
           setSiteReady(true)
+        }
+
+        // Also fetch tenant-level disabledCollections for standard collections
+        try {
+          const tenantRes = await fetch(
+            `/api/tenants/${encodeURIComponent(tenantId!)}?depth=0`,
+            { credentials: 'include' },
+          )
+          if (!cancelled && tenantRes.ok) {
+            const tenantData = await tenantRes.json()
+            const tenantDisabled: string[] = Array.isArray(
+              tenantData.disabledCollections,
+            )
+              ? tenantData.disabledCollections
+              : []
+            setTenantDisabledIds(tenantDisabled)
+          }
+        } catch {
+          /* tenant fetch is non-critical — standard collections stay visible on failure */
         }
       } catch (err) {
         console.error('[SiteFilteredNav] Failed to load site data:', err)
@@ -296,6 +316,14 @@ const SiteFilteredNav: React.FC = () => {
         'agent-audit-log',
       ]
       if (SUPER_ADMIN_ONLY_SLUGS.includes(col.slug) && !isSuperAdmin) continue
+
+      // Filter standard collections against tenant's disabledCollections blacklist.
+      // Custom Collections use the site-level disabledIds filter (handled separately).
+      // Super-admins bypass this filter — they always see all collections.
+      if (!isSuperAdmin) {
+        const builtinKey = `builtin:${col.slug}`
+        if (tenantDisabledIds.includes(builtinKey)) continue
+      }
 
       // Permission filter — only skip when explicitly denied.
       // Payload's permissions.collections[slug] may have shape { fields: {...} }

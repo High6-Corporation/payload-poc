@@ -72,6 +72,22 @@ export const tenantReadAccess: Access = ({ req }: AccessArgs): any => {
   return { tenant: { in: ids } }
 }
 
+/**
+ * Read access for the Tenants collection itself (no self-referential `tenant`
+ * field — a tenant IS the scope). Tenant-admins can only read their own
+ * tenant document by matching on the document's `id`.
+ */
+export const tenantSelfReadAccess: Access = ({ req }: AccessArgs): any => {
+  const user = req.user
+  if (!user) return false
+  if ((user as any).roles?.includes('super-admin')) return true
+
+  const ids = getUserTenantIds(user as any)
+  if (ids.length === 0) return false
+
+  return { id: { in: ids } }
+}
+
 // ---------------------------------------------------------------------------
 // Mutate access: tenant-document ownership guard
 // ---------------------------------------------------------------------------

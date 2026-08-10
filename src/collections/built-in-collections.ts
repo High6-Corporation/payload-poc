@@ -27,4 +27,15 @@ export interface BuiltInCollection {
  *   { slug: 'headers-footers', label: 'Headers & Footers' },
  *   { slug: 'smtp-settings', label: 'SMTP Settings' },
  */
-export const BUILT_IN_COLLECTIONS: BuiltInCollection[] = []
+export const BUILT_IN_COLLECTIONS: BuiltInCollection[] = [
+  { slug: 'pages', label: 'Pages', description: 'Content pages with layout builder and SEO' },
+  { slug: 'posts', label: 'Posts', description: 'Blog posts with categories and authors' },
+  { slug: 'pricing-plans', label: 'Pricing Plans', description: 'Pricing plan cards' },
+  { slug: 'media', label: 'Media', description: 'Image and file uploads' },
+  { slug: 'categories', label: 'Categories', description: 'Post taxonomy categories' },
+  { slug: 'forms', label: 'Forms', description: 'Form builder forms' },
+  { slug: 'form-submissions', label: 'Form Submissions', description: 'Form submission entries' },
+  { slug: 'faqs', label: 'FAQs', description: 'Frequently asked questions' },
+  { slug: 'testimonials', label: 'Testimonials', description: 'Client testimonials' },
+  { slug: 'portfolio-items', label: 'Portfolio Items', description: 'Portfolio project entries' },
+]

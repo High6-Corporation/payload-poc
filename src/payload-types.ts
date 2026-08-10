@@ -333,6 +333,10 @@ export interface Page {
      */
     image?: (string | null) | Media;
     description?: string | null;
+    /**
+     * Comma-separated keywords this page targets for SEO (e.g. "web design, agency, philippines").
+     */
+    focusKeyword?: string | null;
   };
   publishedAt?: string | null;
   /**
@@ -1837,6 +1841,7 @@ export interface PagesSelect<T extends boolean = true> {
         title?: T;
         image?: T;
         description?: T;
+        focusKeyword?: T;
       };
   publishedAt?: T;
   generateSlug?: T;

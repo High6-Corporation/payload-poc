@@ -21,8 +21,9 @@ const getImageURL = (image?: Media | Config['db']['defaultIDType'] | null) => {
 
 export const generateMeta = async (args: {
   doc: Partial<Page> | Partial<Post> | null
+  keywords?: string | null
 }): Promise<Metadata> => {
-  const { doc } = args
+  const { doc, keywords } = args
 
   const ogImage = getImageURL(doc?.meta?.image)
 
@@ -30,8 +31,15 @@ export const generateMeta = async (args: {
     ? doc?.meta?.title + ' | Payload Website Template'
     : 'Payload Website Template'
 
+  // Parse the comma-separated keyword string into a trimmed array, dropping empty entries
+  const keywordList = keywords
+    ?.split(',')
+    .map((keyword) => keyword.trim())
+    .filter(Boolean)
+
   return {
     description: doc?.meta?.description,
+    keywords: keywordList && keywordList.length > 0 ? keywordList : undefined,
     openGraph: mergeOpenGraph({
       description: doc?.meta?.description || '',
       images: ogImage

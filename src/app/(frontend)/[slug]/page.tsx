@@ -123,7 +123,59 @@ export async function generateMetadata({ params: paramsPromise }: Args): Promise
     slug: decodedSlug,
   })
 
-  return generateMeta({ doc: page })
+  // Page-level focus keywords take precedence; fall back to the tenant's
+  // SiteSettings keywords when the page has none set.
+  let keywords: string | null = page?.meta?.focusKeyword ?? null
+  if (!keywords && page?.tenant) {
+    keywords = await resolveSiteSettingsKeywords(page.tenant)
+  }
+
+  return generateMeta({ doc: page, keywords })
+}
+
+/**
+ * Resolve the tenant's SiteSettings focus keywords via the
+ * tenant → sites → site-settings chain.
+ *
+ * `overrideAccess: true` is required because both `sites` and
+ * `site-settings` deny anonymous reads (tenant-scoped access control),
+ * while this metadata is rendered into the public page's
+ * `<meta name="keywords">` and is public by nature.
+ */
+const resolveSiteSettingsKeywords = async (
+  tenant: string | Tenant | null | undefined,
+): Promise<string | null> => {
+  const tenantId = typeof tenant === 'string' ? tenant : tenant?.id
+  if (!tenantId) return null
+
+  const payload = await getPayload({ config: configPromise })
+
+  try {
+    const { docs: sites } = await payload.find({
+      collection: 'sites',
+      where: { tenant: { equals: tenantId } },
+      depth: 0,
+      pagination: false,
+      limit: 1,
+      overrideAccess: true,
+    })
+
+    const site = sites?.[0]
+    if (!site) return null
+
+    const { docs: settings } = await payload.find({
+      collection: 'site-settings',
+      where: { site: { equals: site.id } },
+      depth: 0,
+      pagination: false,
+      limit: 1,
+      overrideAccess: true,
+    })
+
+    return settings?.[0]?.meta?.focusKeyword ?? null
+  } catch {
+    return null
+  }
 }
 
 const queryPageBySlug = cache(async ({ slug }: { slug: string }) => {

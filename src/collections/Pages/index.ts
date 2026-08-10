@@ -106,6 +106,15 @@ export const Pages: CollectionConfig<'pages'> = {
               titlePath: 'meta.title',
               descriptionPath: 'meta.description',
             }),
+            {
+              name: 'focusKeyword',
+              type: 'textarea',
+              label: 'Focus Keywords',
+              admin: {
+                description:
+                  'Comma-separated keywords this page targets for SEO (e.g. "web design, agency, philippines").',
+              },
+            },
           ],
         },
       ],

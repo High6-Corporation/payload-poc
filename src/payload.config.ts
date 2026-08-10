@@ -126,10 +126,7 @@ export default buildConfig({
       },
       beforeLogin: ['@/components/BeforeLogin'],
       beforeDashboard: ['@/components/BeforeDashboard'],
-      // Reorders nav groups so Tenant Management appears above Collections.
-      // Payload's groupNavItems() hardcodes Collections/Globals first — CSS
-      // flexbox order corrects the visual placement.
-      beforeNavLinks: ['@/components/SidebarOrderFix'],
+      Nav: '@/components/SiteFilteredNav',
     },
     importMap: {
       baseDir: path.resolve(dirname),

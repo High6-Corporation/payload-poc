@@ -177,12 +177,12 @@ const TenantSelector: React.FC = () => {
   return (
     <div style={{ padding: '0.5rem 0' }}>
       <SelectInput
+        label="Tenant"
         name="siteFilteredNavTenant"
         onChange={onChange}
         options={options}
         path="setTenant"
         value={selectedTenantID as string | undefined}
-        isClearable={false}
       />
     </div>
   )

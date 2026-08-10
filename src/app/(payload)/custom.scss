@@ -132,4 +132,10 @@
       transition-duration: 0.01ms !important;
     }
   }
+
+  /* ---- Select dropdown — constrain height with scroll ---- */
+  .rs__menu-list {
+    max-height: 240px !important;
+    overflow-y: auto !important;
+  }
 }

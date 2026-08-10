@@ -2,14 +2,15 @@ import type { CollectionConfig } from 'payload'
 
 import { anyone } from '../access/anyone'
 import { authenticated } from '../access/authenticated'
+import { siteTenantReadAccess, siteTenantMutateAccess } from '@/access/tenantScoped'
 
 export const Testimonials: CollectionConfig = {
   slug: 'testimonials',
   access: {
     create: authenticated,
-    delete: authenticated,
-    read: anyone,
-    update: authenticated,
+    delete: siteTenantMutateAccess,
+    read: siteTenantReadAccess,
+    update: siteTenantMutateAccess,
   },
   admin: {
     useAsTitle: 'name',

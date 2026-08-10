@@ -10,6 +10,7 @@ import {
 } from '@payloadcms/plugin-seo/fields'
 import { anyone } from '../access/anyone'
 import { authenticated } from '../access/authenticated'
+import { siteTenantReadAccess, siteTenantMutateAccess } from '@/access/tenantScoped'
 
 const richtextEditor = lexicalEditor({
   features: ({ rootFeatures }) => [...rootFeatures, FixedToolbarFeature()],
@@ -19,9 +20,9 @@ export const SiteSettings: CollectionConfig = {
   slug: 'site-settings',
   access: {
     create: authenticated,
-    delete: authenticated,
-    read: anyone,
-    update: authenticated,
+    delete: siteTenantMutateAccess,
+    read: siteTenantReadAccess,
+    update: siteTenantMutateAccess,
   },
   admin: {
     useAsTitle: 'site',

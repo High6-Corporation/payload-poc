@@ -115,7 +115,10 @@ const NavGroup: React.FC<{
   const [collapsed, setCollapsed] = useState(false)
 
   return (
-    <div className={`nav-group ${collapsed ? 'nav-group--collapsed' : ''}`} id={`nav-group-${label}`}>
+    <div
+      className={`nav-group ${collapsed ? 'nav-group--collapsed' : ''}`}
+      id={`nav-group-${label}`}
+    >
       <button
         className={`nav-group__toggle nav-group__toggle--${collapsed ? 'collapsed' : 'open'}`}
         onClick={() => setCollapsed((prev) => !prev)}
@@ -353,8 +356,9 @@ const SiteFilteredNav: React.FC = () => {
                 className="nav__link"
                 key={col.slug}
                 href={`${adminRoute}/collections/${col.slug}`}
-                label={colLabel(col)}
-              />
+              >
+                {colLabel(col)}
+              </Link>
             ))}
           </NavGroup>
         ))}
@@ -363,23 +367,18 @@ const SiteFilteredNav: React.FC = () => {
         {visibleGlobals.length > 0 && (
           <NavGroup key="__globals__" label="Globals">
             {visibleGlobals.map((g) => (
-              <Link
-                className="nav__link"
-                key={g.slug}
-                href={`${adminRoute}/globals/${g.slug}`}
-                label={g.label || g.slug}
-              />
+              <Link className="nav__link" key={g.slug} href={`${adminRoute}/globals/${g.slug}`}>
+                {g.label || g.slug}
+              </Link>
             ))}
           </NavGroup>
         )}
 
         {/* Custom Content (schema management + per-collection entries) */}
         <NavGroup label="Custom Content">
-          <Link
-            className="nav__link"
-            href={`${adminRoute}/collections/custom-collections`}
-            label="Custom Collections"
-          />
+          <Link className="nav__link" href={`${adminRoute}/collections/custom-collections`}>
+            Custom Collections
+          </Link>
           {/* Per-collection links for this site */}
           {siteReady &&
             filteredCustomCollections.map((cc) => (
@@ -387,8 +386,9 @@ const SiteFilteredNav: React.FC = () => {
                 className="nav__link"
                 key={cc.id}
                 href={`${adminRoute}/collections/custom-collection-entries?where%5BparentCollection%5D%5Bequals%5D=${encodeURIComponent(cc.id)}`}
-                label={cc.name}
-              />
+              >
+                {cc.name}
+              </Link>
             ))}
         </NavGroup>
 

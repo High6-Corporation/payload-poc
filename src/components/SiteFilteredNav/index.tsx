@@ -291,9 +291,12 @@ const SiteFilteredNav: React.FC = () => {
       )
         continue
 
-      // Permission filter (superset of DefaultNav's visibleEntities)
-      const perm = (permissions as any)?.collections?.[col.slug]
-      if (perm && !perm?.read?.permission) continue
+      // Permission filter — only skip when explicitly denied.
+      // Payload's permissions.collections[slug] may have shape { fields: {...} }
+      // (for collections the user CAN access) rather than { read: { permission: true } }
+      // for super-admin. Check for explicit denial (false), not missing shape (undefined).
+      const colPerm = (permissions as any)?.collections?.[col.slug]
+      if (colPerm?.read?.permission === false) continue
 
       const group = typeof col.admin?.group === 'string' ? col.admin.group : 'Collections'
       if (!groups.has(group)) groups.set(group, [])
@@ -312,8 +315,9 @@ const SiteFilteredNav: React.FC = () => {
 
   const visibleGlobals = React.useMemo(() => {
     return ((config.globals || []) as ClientGlobal[]).filter((g) => {
-      const perm = (permissions as any)?.globals?.[g.slug]
-      return !perm || perm?.read?.permission !== false
+      // Only filter when explicitly denied — same logic as collections filter
+      const globalPerm = (permissions as any)?.globals?.[g.slug]
+      return globalPerm?.read?.permission !== false
     })
   }, [config.globals, permissions])
 

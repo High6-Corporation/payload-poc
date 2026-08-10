@@ -17,11 +17,31 @@ interface QuickAction {
   href: string
 }
 
+interface QuickAction {
+  label: string
+  href: string
+  /** Collection slug used for disabled-collection filtering (tenant-level: builtin:<slug>) */
+  collectionSlug?: string
+}
+
 const quickActions: QuickAction[] = [
-  { label: 'Add FAQ', href: '/admin/collections/faqs/create' },
-  { label: 'Add Testimonial', href: '/admin/collections/testimonials/create' },
-  { label: 'View Forms', href: '/admin/collections/forms' },
-  { label: 'View Form Submissions', href: '/admin/collections/form-submissions' },
+  { label: 'Add FAQ', href: '/admin/collections/faqs/create', collectionSlug: 'faqs' },
+  {
+    label: 'Add Testimonial',
+    href: '/admin/collections/testimonials/create',
+    collectionSlug: 'testimonials',
+  },
+  {
+    label: 'Add Portfolio Item',
+    href: '/admin/collections/portfolio-items/create',
+    collectionSlug: 'portfolio-items',
+  },
+  { label: 'View Forms', href: '/admin/collections/forms', collectionSlug: 'forms' },
+  {
+    label: 'View Form Submissions',
+    href: '/admin/collections/form-submissions',
+    collectionSlug: 'form-submissions',
+  },
 ]
 
 // ── Stat card ──────────────────────────────────────────────
@@ -79,7 +99,7 @@ const BeforeDashboard: React.FC = () => {
     }
   }, [])
 
-  // Fetch active site's disabledCollections for quick-action filtering
+  // Fetch active site + tenant disabledCollections for quick-action filtering
   useEffect(() => {
     const siteId = getCookie('payload-site')
     const tenantId = getCookie('payload-tenant')
@@ -91,27 +111,41 @@ const BeforeDashboard: React.FC = () => {
 
     let cancelled = false
 
-    async function loadSite() {
+    async function load() {
       try {
-        const res = await fetch(
-          `/api/sites/${encodeURIComponent(siteId!)}?depth=0`,
-          { credentials: 'include' },
-        )
-        if (!res.ok) return
-        const data = await res.json()
+        // Site-level disabled (custom collections)
+        const siteRes = await fetch(`/api/sites/${encodeURIComponent(siteId!)}?depth=0`, {
+          credentials: 'include',
+        })
+        let siteDisabled: string[] = []
+        if (siteRes.ok) {
+          const data = await siteRes.json()
+          siteDisabled = Array.isArray(data.disabledCollections) ? data.disabledCollections : []
+        }
+
+        // Tenant-level disabled (standard collections)
+        let tenantDisabled: string[] = []
+        try {
+          const tenantRes = await fetch(`/api/tenants/${encodeURIComponent(tenantId!)}?depth=0`, {
+            credentials: 'include',
+          })
+          if (tenantRes.ok) {
+            const data = await tenantRes.json()
+            tenantDisabled = Array.isArray(data.disabledCollections) ? data.disabledCollections : []
+          }
+        } catch {
+          /* tenant fetch is non-critical */
+        }
+
         if (!cancelled) {
-          setDisabledIds(
-            Array.isArray(data.disabledCollections)
-              ? data.disabledCollections
-              : [],
-          )
+          setDisabledIds([...siteDisabled, ...tenantDisabled])
         }
       } catch {
         // Silently fail — quick-action filtering is non-critical
       }
     }
 
-    loadSite()
+    load()
 
     return () => {
       cancelled = true
@@ -158,26 +192,15 @@ const BeforeDashboard: React.FC = () => {
         <div className={`${baseClass}__actions`}>
           {quickActions
             .filter((action) => {
-              // Currently all quick actions target standard collections
-              // (faqs, testimonials, forms, form-submissions) — none are
-              // Custom Collections. The disabledIds check is wired for when
-              // Custom Collection quick actions are added. Today it's a
-              // no-op (never filters anything).
-              //
-              // A Custom Collection quick action would have href like:
-              // /admin/collections/custom-collection-entries/create?parentCollection=<ccId>
-              // and the filter would check if <ccId> is in disabledIds.
-              return true
+              if (!action.collectionSlug) return true
+              const builtinKey = `builtin:${action.collectionSlug}`
+              return !disabledIds.includes(builtinKey)
             })
             .map((action) => (
-            <a
-              key={action.href}
-              href={action.href}
-              className={`${baseClass}__action-link`}
-            >
-              {action.label}
-            </a>
-          ))}
+              <a key={action.href} href={action.href} className={`${baseClass}__action-link`}>
+                {action.label}
+              </a>
+            ))}
         </div>
       </div>
     </div>

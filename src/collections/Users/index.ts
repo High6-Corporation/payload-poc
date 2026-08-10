@@ -17,7 +17,7 @@ const superAdminOnlyField: FieldAccess = ({ req: { user } }) => {
 export const Users: CollectionConfig = {
   slug: 'users',
   access: {
-    admin: superAdminOnly,
+    admin: authenticated,
     create: superAdminOnly,
     delete: superAdminOnly,
     read: authenticated,

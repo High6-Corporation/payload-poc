@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useLayoutEffect, useState } from 'react'
 import { ChevronIcon, Link, SelectInput, useConfig, useAuth } from '@payloadcms/ui'
 import { getCookie } from '@/utilities/admin-cookies'
 import SiteSwitcher from '@/components/SiteSwitcher'
@@ -203,24 +203,27 @@ const SiteFilteredNav: React.FC = () => {
   const tenantId = getCookie('payload-tenant')
   const siteId = getCookie('payload-site')
 
-  // Seed tenantDisabledIds from sessionStorage so navigations don't flash
-  // unfiltered collections.  Keyed by tenantId so switching tenants
-  // invalidates naturally.
+  // Seed tenantDisabledIds from sessionStorage so client-side navigations
+  // don't flash unfiltered collections.  Keyed by tenantId so switching
+  // tenants invalidates naturally.
   const tenantCacheKey = tenantId ? `tenant_disabled_${tenantId}` : null
-  const cachedTenantDisabled = (() => {
-    if (!tenantCacheKey) return []
-    try {
-      const raw = sessionStorage.getItem(tenantCacheKey)
-      return raw ? JSON.parse(raw) : []
-    } catch {
-      return []
-    }
-  })()
 
   const [customCollections, setCustomCollections] = useState<CustomCollectionSummary[]>([])
   const [disabledIds, setDisabledIds] = useState<string[]>([])
-  const [tenantDisabledIds, setTenantDisabledIds] = useState<string[]>(cachedTenantDisabled)
+  const [tenantDisabledIds, setTenantDisabledIds] = useState<string[]>([])
   const [siteReady, setSiteReady] = useState(false)
+
+  // Seed from sessionStorage synchronously before paint — avoids hydration
+  // mismatch (server always renders []) and prevents flash on client navs.
+  useLayoutEffect(() => {
+    if (!tenantCacheKey) return
+    try {
+      const raw = sessionStorage.getItem(tenantCacheKey)
+      if (raw) setTenantDisabledIds(JSON.parse(raw))
+    } catch {
+      /* non-critical */
+    }
+  }, [tenantCacheKey])
 
   useEffect(() => {
     if (!siteId || !tenantId) {

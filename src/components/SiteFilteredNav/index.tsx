@@ -1,9 +1,10 @@
 'use client'
 
-import React, { useEffect, useState } from 'react'
-import { Link, useConfig, useAuth } from '@payloadcms/ui'
+import React, { useCallback, useEffect, useState } from 'react'
+import { Link, SelectInput, useConfig, useAuth } from '@payloadcms/ui'
 import { getCookie } from '@/utilities/admin-cookies'
 import SiteSwitcher from '@/components/SiteSwitcher'
+import { useTenantSelection } from '@payloadcms/plugin-multi-tenant/client'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -157,6 +158,40 @@ const LogoutIcon: React.FC = () => (
 )
 
 // ---------------------------------------------------------------------------
+// Tenant Selector (from multi-tenant plugin — replaces admin.components.beforeNav
+// which is dropped when a custom Nav component is set)
+// ---------------------------------------------------------------------------
+
+const TenantSelector: React.FC = () => {
+  const { options, selectedTenantID, setTenant } = useTenantSelection()
+
+  const onChange = useCallback(
+    (option: unknown) => {
+      if (option && typeof option === 'object' && 'value' in option) {
+        setTenant({ id: (option as { value: string }).value, refresh: true })
+      }
+    },
+    [setTenant],
+  )
+
+  if (options.length <= 1) return null
+
+  return (
+    <div style={{ padding: '0.5rem 0.75rem' }}>
+      <SelectInput
+        label="Tenant"
+        name="siteFilteredNavTenant"
+        onChange={onChange}
+        options={options}
+        path="setTenant"
+        value={selectedTenantID as string | undefined}
+        isClearable={false}
+      />
+    </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
 // Main component
 // ---------------------------------------------------------------------------
 
@@ -296,6 +331,9 @@ const SiteFilteredNav: React.FC = () => {
   return (
     <nav>
       <div className="nav__wrap" style={S.navWrap}>
+        {/* Tenant Selector (from multi-tenant plugin — was admin.components.beforeNav) */}
+        <TenantSelector />
+
         {/* Dashboard */}
         <Link className="nav__link" href={adminRoute} style={S.dashboardLink}>
           Dashboard

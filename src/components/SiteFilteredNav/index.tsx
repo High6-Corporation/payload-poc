@@ -336,81 +336,72 @@ const SiteFilteredNav: React.FC = () => {
   // ---- Render ----
 
   return (
-    <nav>
-      <div className="nav__wrap" style={S.navWrap}>
-        {/* Tenant Selector (from multi-tenant plugin — was admin.components.beforeNav) */}
-        <TenantSelector />
+    <nav className="nav__wrap">
+      {/* Tenant Selector (from multi-tenant plugin — was admin.components.beforeNav) */}
+      <TenantSelector />
 
-        {/* Dashboard */}
-        <Link className="nav__link" href={adminRoute} style={S.dashboardLink}>
-          Dashboard
-        </Link>
+      {/* Dashboard */}
+      <Link className="nav__link" href={adminRoute}>
+        <span className="nav__link-label">Dashboard</span>
+      </Link>
 
-        <div style={S.separator} />
-
-        {/* Collection groups */}
-        {groupedCollections.map(([groupName, cols]) => (
-          <NavGroup key={groupName} label={groupName}>
-            {cols.map((col) => (
-              <Link
-                className="nav__link"
-                key={col.slug}
-                href={`${adminRoute}/collections/${col.slug}`}
-              >
-                {colLabel(col)}
-              </Link>
-            ))}
-          </NavGroup>
-        ))}
-
-        {/* Globals */}
-        {visibleGlobals.length > 0 && (
-          <NavGroup key="__globals__" label="Globals">
-            {visibleGlobals.map((g) => (
-              <Link className="nav__link" key={g.slug} href={`${adminRoute}/globals/${g.slug}`}>
-                {g.label || g.slug}
-              </Link>
-            ))}
-          </NavGroup>
-        )}
-
-        {/* Custom Content (schema management + per-collection entries) */}
-        <NavGroup label="Custom Content">
-          <Link className="nav__link" href={`${adminRoute}/collections/custom-collections`}>
-            Custom Collections
-          </Link>
-          {/* Per-collection links for this site */}
-          {siteReady &&
-            filteredCustomCollections.map((cc) => (
-              <Link
-                className="nav__link"
-                key={cc.id}
-                href={`${adminRoute}/collections/custom-collection-entries?where%5BparentCollection%5D%5Bequals%5D=${encodeURIComponent(cc.id)}`}
-              >
-                {cc.name}
-              </Link>
-            ))}
+      {/* Collection groups */}
+      {groupedCollections.map(([groupName, cols]) => (
+        <NavGroup key={groupName} label={groupName}>
+          {cols.map((col) => (
+            <Link
+              className="nav__link"
+              key={col.slug}
+              href={`${adminRoute}/collections/${col.slug}`}
+            >
+              <span className="nav__link-label">{colLabel(col)}</span>
+            </Link>
+          ))}
         </NavGroup>
+      ))}
 
-        {/* Browse by Folder */}
-        <Link className="nav__link browse-by-folder-button" href={`${adminRoute}/browse-by-folder`}>
-          Browse by Folder
+      {/* Globals */}
+      {visibleGlobals.length > 0 && (
+        <NavGroup key="__globals__" label="Globals">
+          {visibleGlobals.map((g) => (
+            <Link className="nav__link" key={g.slug} href={`${adminRoute}/globals/${g.slug}`}>
+              <span className="nav__link-label">{g.label || g.slug}</span>
+            </Link>
+          ))}
+        </NavGroup>
+      )}
+
+      {/* Custom Content (schema management + per-collection entries) */}
+      <NavGroup label="Custom Content">
+        <Link className="nav__link" href={`${adminRoute}/collections/custom-collections`}>
+          <span className="nav__link-label">Custom Collections</span>
         </Link>
+        {/* Per-collection links for this site */}
+        {siteReady &&
+          filteredCustomCollections.map((cc) => (
+            <Link
+              className="nav__link"
+              key={cc.id}
+              href={`${adminRoute}/collections/custom-collection-entries?where%5BparentCollection%5D%5Bequals%5D=${encodeURIComponent(cc.id)}`}
+            >
+              <span className="nav__link-label">{cc.name}</span>
+            </Link>
+          ))}
+      </NavGroup>
 
-        {/* Site Switcher (moved from beforeNavLinks) */}
-        <SiteSwitcher />
+      {/* Browse by Folder */}
+      <Link className="nav__link browse-by-folder-button" href={`${adminRoute}/browse-by-folder`}>
+        <span className="nav__link-label">Browse by Folder</span>
+      </Link>
 
-        {/* Logout */}
-        <div className="nav__controls" style={S.logoutWrap}>
-          <Link
-            className="nav__log-out"
-            href={`${adminRoute}/logout`}
-            aria-label="Log out"
-            style={S.logoutLink}
-          >
-            <LogoutIcon />
-          </Link>
-        </div>
+      {/* Site Switcher (moved from beforeNavLinks) */}
+      <SiteSwitcher />
+
+      {/* Logout */}
+      <div className="nav__controls">
+        <Link className="nav__log-out" href={`${adminRoute}/logout`} aria-label="Log out">
+          <LogoutIcon />
+        </Link>
       </div>
     </nav>
   )

@@ -139,13 +139,8 @@
     overflow-y: scroll !important;
   }
 
-  /* ---- Dashboard: hide empty-state UI (replaced by AfterDashboard) ---- */
+  /* Hide Payload's default empty-dashboard text (replaced by AfterDashboard) */
   .modular-dashboard__empty {
-    display: none !important;
-  }
-
-  /* Hide "Edit Dashboard" / "Reset Layout" step-nav items */
-  .step-nav__item:has([id*="dashboard"]) {
     display: none !important;
   }
 }

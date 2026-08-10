@@ -1,15 +1,15 @@
 import type { CollectionConfig } from 'payload'
 
-import { superAdminOnly, tenantReadAccess } from '@/access/tenantScoped'
+import { tenantReadAccess, tenantMutateAccess } from '@/access/tenantScoped'
 import { slugField } from 'payload'
 
 export const Sites: CollectionConfig = {
   slug: 'sites',
   access: {
-    create: superAdminOnly,
-    delete: superAdminOnly,
+    create: tenantMutateAccess,
+    delete: tenantMutateAccess,
     read: tenantReadAccess,
-    update: superAdminOnly,
+    update: tenantMutateAccess,
   },
   admin: {
     useAsTitle: 'name',

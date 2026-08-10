@@ -281,8 +281,8 @@ const SiteFilteredNav: React.FC = () => {
       // and custom-collections (rendered in manual Custom Content group)
       if (col.slug === 'custom-collections' || col.slug === 'custom-collection-entries') continue
 
-      // Skip admin-hidden collections (Payload internals like payload-jobs, etc.)
-      if (col.admin?.hidden === true) continue
+      // Skip Payload internal/system collections (payload-jobs, payload-kv, etc.)
+      if (col.slug.startsWith('payload-')) continue
 
       // Permission filter — only skip when explicitly denied.
       // Payload's permissions.collections[slug] may have shape { fields: {...} }

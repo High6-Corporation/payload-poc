@@ -335,7 +335,7 @@ const SiteFilteredNav: React.FC = () => {
       // Hard-restrict sensitive admin collections to super-admin only.
       // These must NEVER be visible to a tenant-admin — hard role check, not a
       // toggle, no exceptions.
-      const SUPER_ADMIN_ONLY_SLUGS = ['tenants', 'portal-clients', 'agent-audit-log']
+      const SUPER_ADMIN_ONLY_SLUGS = ['tenants', 'users', 'portal-clients', 'agent-audit-log']
       if (SUPER_ADMIN_ONLY_SLUGS.includes(col.slug) && !isSuperAdmin) continue
 
       // Filter standard collections against tenant's disabledCollections blacklist.

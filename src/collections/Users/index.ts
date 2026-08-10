@@ -17,7 +17,7 @@ const superAdminOnlyField: FieldAccess = ({ req: { user } }) => {
 export const Users: CollectionConfig = {
   slug: 'users',
   access: {
-    admin: authenticated,
+    admin: superAdminOnly,
     create: superAdminOnly,
     delete: superAdminOnly,
     read: authenticated,
@@ -26,6 +26,7 @@ export const Users: CollectionConfig = {
   admin: {
     defaultColumns: ['name', 'email'],
     useAsTitle: 'name',
+    group: 'Tenant Management',
   },
   auth: true,
   fields: [

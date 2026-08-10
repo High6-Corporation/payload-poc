@@ -134,13 +134,10 @@
   }
 
   /* ---- Select dropdown — constrain height with scroll ---- */
-  .rs__menu {
-    max-height: 260px;
-    overflow: hidden;
-
-    > div {
-      max-height: 260px !important;
-      overflow-y: auto !important;
-    }
+  /* react-select v5 uses emotion (CSS-in-JS) for menu-list styles;
+     !important + high specificity is needed to override. */
+  .rs__menu-list {
+    max-height: 200px !important;
+    overflow-y: scroll !important;
   }
 }

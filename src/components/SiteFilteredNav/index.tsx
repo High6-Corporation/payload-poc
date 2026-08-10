@@ -324,8 +324,8 @@ const SiteFilteredNav: React.FC = () => {
     <nav
       className="nav__wrap"
       style={{
-        backgroundColor: 'var(--theme-elevation-0)',
-        color: 'var(--theme-text)',
+        backgroundColor: '#0a0e1a',
+        color: 'rgba(255, 255, 255, 0.85)',
         padding: '0 0.75rem',
       }}
     >

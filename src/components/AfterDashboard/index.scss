@@ -1,0 +1,27 @@
+.after-dashboard {
+  margin-top: 1.5rem;
+
+  &__card {
+    text-align: center;
+    padding: 2rem 1.5rem;
+    background: var(--theme-elevation-50);
+    border: 1px dashed var(--theme-elevation-150);
+    border-radius: 8px;
+  }
+
+  &__title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--theme-elevation-800);
+    margin: 0 0 0.5rem;
+  }
+
+  &__text {
+    font-size: 0.875rem;
+    color: var(--theme-elevation-500);
+    margin: 0;
+    max-width: 420px;
+    margin-inline: auto;
+    font-style: italic;
+  }
+}

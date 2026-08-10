@@ -126,6 +126,7 @@ export default buildConfig({
       },
       beforeLogin: ['@/components/BeforeLogin'],
       beforeDashboard: ['@/components/BeforeDashboard'],
+      afterDashboard: ['@/components/AfterDashboard'],
       Nav: '@/components/SiteFilteredNav',
     },
     // Show the default "collections" dashboard widget for super-admins

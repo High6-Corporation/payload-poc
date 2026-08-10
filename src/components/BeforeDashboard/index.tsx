@@ -207,13 +207,6 @@ const BeforeDashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* ── Coming soon ─────────────────────────────────── */}
-      <div className={`${baseClass}__card`} style={{ textAlign: 'center', opacity: 0.65 }}>
-        <p style={{ margin: 0, fontSize: '14px', fontStyle: 'italic' }}>
-          More dashboard improvements coming soon — analytics, recent activity, and at-a-glance
-          content summaries.
-        </p>
-      </div>
     </div>
   )
 }

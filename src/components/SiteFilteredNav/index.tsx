@@ -398,11 +398,21 @@ const SiteFilteredNav: React.FC = () => {
       <SiteSwitcher />
 
       {/* Logout */}
-      <div className="nav__controls">
-        <Link className="nav__log-out" href={`${adminRoute}/logout`} aria-label="Log out">
-          <LogoutIcon />
-        </Link>
-      </div>
+      <Link
+        className="nav__log-out"
+        href={`${adminRoute}/logout`}
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.5rem',
+          padding: '0.5rem 0',
+          color: 'inherit',
+          textDecoration: 'none',
+        }}
+      >
+        <LogoutIcon />
+        <span>Log out</span>
+      </Link>
     </nav>
   )
 }

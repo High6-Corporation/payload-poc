@@ -13,7 +13,7 @@ import { useTenantSelection } from '@payloadcms/plugin-multi-tenant/client'
 /** Payload collection shape from ClientConfig (subset we use). */
 interface ClientCollection {
   slug: string
-  admin?: { group?: string | false }
+  admin?: { group?: string | false; hidden?: boolean }
   labels?: { plural?: string; singular?: string }
 }
 
@@ -277,7 +277,12 @@ const SiteFilteredNav: React.FC = () => {
       // Skip custom-collections + custom-collection-entries — rendered in the
       // dedicated "Custom Content" group below (schema link always visible,
       // entries replaced by per-collection links)
+      // Skip custom-collection-entries (replaced by per-collection links)
+      // and custom-collections (rendered in manual Custom Content group)
       if (col.slug === 'custom-collections' || col.slug === 'custom-collection-entries') continue
+
+      // Skip admin-hidden collections (Payload internals like payload-jobs, etc.)
+      if (col.admin?.hidden === true) continue
 
       // Permission filter — only skip when explicitly denied.
       // Payload's permissions.collections[slug] may have shape { fields: {...} }
@@ -330,7 +335,7 @@ const SiteFilteredNav: React.FC = () => {
         overflowY: 'auto',
         position: 'sticky',
         top: 0,
-        padding: '0 0.75rem',
+        padding: '3rem 0.75rem 0',
       }}
     >
       {/* Tenant Selector (from multi-tenant plugin — was admin.components.beforeNav) */}

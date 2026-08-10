@@ -1,7 +1,9 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { Link, useConfig, useAuth } from '@payloadcms/ui'
+import { getCookie } from '@/utilities/admin-cookies'
+import SiteSwitcher from '@/components/SiteSwitcher'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -18,6 +20,18 @@ interface ClientCollection {
 interface ClientGlobal {
   slug: string
   label?: string
+}
+
+/** Custom collection summary — subset of the custom-collections doc we need. */
+interface CustomCollectionSummary {
+  id: string
+  name: string
+  slug: string
+}
+
+/** Site doc subset — the disabledCollections blacklist. */
+interface SiteData {
+  disabledCollections: string[]
 }
 
 // ---------------------------------------------------------------------------
@@ -150,6 +164,80 @@ const SiteFilteredNav: React.FC = () => {
   const { config } = useConfig()
   const { permissions } = useAuth()
 
+  // ---- Dynamic custom collections for the active site ----
+
+  const [customCollections, setCustomCollections] = useState<
+    CustomCollectionSummary[]
+  >([])
+  const [disabledIds, setDisabledIds] = useState<string[]>([])
+  const [siteReady, setSiteReady] = useState(false)
+
+  const tenantId = getCookie('payload-tenant')
+  const siteId = getCookie('payload-site')
+
+  useEffect(() => {
+    if (!siteId || !tenantId) {
+      setSiteReady(false)
+      setCustomCollections([])
+      setDisabledIds([])
+      return
+    }
+
+    let cancelled = false
+
+    async function loadSiteData() {
+      try {
+        // Fetch custom collections for the active site
+        const ccRes = await fetch(
+          `/api/custom-collections?where[site][equals]=${encodeURIComponent(siteId!)}&limit=0`,
+          { credentials: 'include' },
+        )
+        if (!ccRes.ok) throw new Error('Failed to fetch custom collections')
+        const ccData = await ccRes.json()
+        const collections: CustomCollectionSummary[] = Array.isArray(ccData.docs)
+          ? ccData.docs
+          : []
+
+        // Fetch site's disabledCollections
+        const siteRes = await fetch(
+          `/api/sites/${encodeURIComponent(siteId!)}?depth=0`,
+          { credentials: 'include' },
+        )
+        if (!siteRes.ok) throw new Error('Failed to fetch site')
+        const siteData: SiteData = await siteRes.json()
+        const disabled: string[] = Array.isArray(siteData.disabledCollections)
+          ? siteData.disabledCollections
+          : []
+
+        if (!cancelled) {
+          setCustomCollections(collections)
+          setDisabledIds(disabled)
+          setSiteReady(true)
+        }
+      } catch (err) {
+        console.error('[SiteFilteredNav] Failed to load site data:', err)
+        if (!cancelled) {
+          setCustomCollections([])
+          setDisabledIds([])
+          setSiteReady(false)
+        }
+      }
+    }
+
+    loadSiteData()
+
+    return () => {
+      cancelled = true
+    }
+  }, [siteId, tenantId])
+
+  // ---- Filtered per-collection links ----
+
+  const filteredCustomCollections = React.useMemo(() => {
+    if (!siteReady) return []
+    return customCollections.filter((cc) => !disabledIds.includes(cc.id))
+  }, [customCollections, disabledIds, siteReady])
+
   const adminRoute = config.routes?.admin || '/admin'
 
   // ---- Group collections by admin.group, applying permission filter ----
@@ -159,8 +247,14 @@ const SiteFilteredNav: React.FC = () => {
     const allCollections = (config.collections || []) as ClientCollection[]
 
     for (const col of allCollections) {
-      // Skip custom-collection-entries — replaced by per-collection links
-      if (col.slug === 'custom-collection-entries') continue
+      // Skip custom-collections + custom-collection-entries — rendered in the
+      // dedicated "Custom Content" group below (schema link always visible,
+      // entries replaced by per-collection links)
+      if (
+        col.slug === 'custom-collections' ||
+        col.slug === 'custom-collection-entries'
+      )
+        continue
 
       // Permission filter (superset of DefaultNav's visibleEntities)
       const perm = (permissions as any)?.collections?.[col.slug]
@@ -235,10 +329,30 @@ const SiteFilteredNav: React.FC = () => {
           </NavGroup>
         )}
 
+        {/* Custom Content (schema management + per-collection entries) */}
+        <NavGroup label="Custom Content">
+          <NavLink
+            href={`${adminRoute}/collections/custom-collections`}
+            label="Custom Collections"
+          />
+          {/* Per-collection links for this site */}
+          {siteReady &&
+            filteredCustomCollections.map((cc) => (
+              <NavLink
+                key={cc.id}
+                href={`${adminRoute}/collections/custom-collection-entries?where%5BparentCollection%5D%5Bequals%5D=${encodeURIComponent(cc.id)}`}
+                label={cc.name}
+              />
+            ))}
+        </NavGroup>
+
         {/* Browse by Folder */}
         <Link className="nav__link browse-by-folder-button" href={`${adminRoute}/browse-by-folder`}>
           Browse by Folder
         </Link>
+
+        {/* Site Switcher (moved from beforeNavLinks) */}
+        <SiteSwitcher />
 
         {/* Logout */}
         <div className="nav__controls" style={S.logoutWrap}>

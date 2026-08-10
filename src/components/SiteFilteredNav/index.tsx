@@ -326,6 +326,10 @@ const SiteFilteredNav: React.FC = () => {
       style={{
         backgroundColor: '#0a0e1a',
         color: 'rgba(255, 255, 255, 0.85)',
+        height: '100vh',
+        overflowY: 'auto',
+        position: 'sticky',
+        top: 0,
         padding: '0 0.75rem',
       }}
     >

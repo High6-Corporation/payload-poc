@@ -2,6 +2,8 @@
 
 import React, { useEffect, useState } from 'react'
 
+import { getCookie } from '@/utilities/admin-cookies'
+
 import type { DashboardResponse } from '@/app/(payload)/api/dashboard/route'
 
 import './index.scss'
@@ -37,6 +39,7 @@ const BeforeDashboard: React.FC = () => {
   const [data, setData] = useState<DashboardResponse | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [disabledIds, setDisabledIds] = useState<string[]>([])
 
   useEffect(() => {
     let cancelled = false
@@ -70,6 +73,45 @@ const BeforeDashboard: React.FC = () => {
     }
 
     fetchData()
+
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  // Fetch active site's disabledCollections for quick-action filtering
+  useEffect(() => {
+    const siteId = getCookie('payload-site')
+    const tenantId = getCookie('payload-tenant')
+
+    if (!siteId || !tenantId) {
+      setDisabledIds([])
+      return
+    }
+
+    let cancelled = false
+
+    async function loadSite() {
+      try {
+        const res = await fetch(
+          `/api/sites/${encodeURIComponent(siteId!)}?depth=0`,
+          { credentials: 'include' },
+        )
+        if (!res.ok) return
+        const data = await res.json()
+        if (!cancelled) {
+          setDisabledIds(
+            Array.isArray(data.disabledCollections)
+              ? data.disabledCollections
+              : [],
+          )
+        }
+      } catch {
+        // Silently fail — quick-action filtering is non-critical
+      }
+    }
+
+    loadSite()
 
     return () => {
       cancelled = true
@@ -114,7 +156,20 @@ const BeforeDashboard: React.FC = () => {
       <div className={`${baseClass}__card`}>
         <h2 className={`${baseClass}__section-title`}>Quick Actions</h2>
         <div className={`${baseClass}__actions`}>
-          {quickActions.map((action) => (
+          {quickActions
+            .filter((action) => {
+              // Currently all quick actions target standard collections
+              // (faqs, testimonials, forms, form-submissions) — none are
+              // Custom Collections. The disabledIds check is wired for when
+              // Custom Collection quick actions are added. Today it's a
+              // no-op (never filters anything).
+              //
+              // A Custom Collection quick action would have href like:
+              // /admin/collections/custom-collection-entries/create?parentCollection=<ccId>
+              // and the filter would check if <ccId> is in disabledIds.
+              return true
+            })
+            .map((action) => (
             <a
               key={action.href}
               href={action.href}

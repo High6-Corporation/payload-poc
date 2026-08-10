@@ -334,7 +334,7 @@ const SiteFilteredNav: React.FC = () => {
         minHeight: '100vh',
         position: 'sticky',
         top: 0,
-        padding: '4rem 1.25rem 0',
+        padding: '4rem 1.25rem 2rem',
       }}
     >
       {/* Tenant Selector (from multi-tenant plugin — was admin.components.beforeNav) */}

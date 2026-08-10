@@ -1,16 +1,15 @@
 import type { CollectionConfig } from 'payload'
 
-import { authenticated } from '../access/authenticated'
-import { tenantReadAccess, tenantMutateAccess } from '@/access/tenantScoped'
+import { superAdminOnly } from '@/access/tenantScoped'
 
 export const PortalClients: CollectionConfig = {
   slug: 'portal-clients',
   access: {
-    admin: authenticated,
-    create: authenticated,
-    delete: tenantMutateAccess,
-    read: tenantReadAccess,
-    update: tenantMutateAccess,
+    admin: superAdminOnly,
+    create: superAdminOnly,
+    delete: superAdminOnly,
+    read: superAdminOnly,
+    update: superAdminOnly,
   },
   admin: {
     useAsTitle: 'email',

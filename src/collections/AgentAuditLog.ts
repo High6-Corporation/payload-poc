@@ -1,15 +1,14 @@
 import type { CollectionConfig } from 'payload'
 
-import { authenticated } from '../access/authenticated'
-import { tenantReadAccess } from '@/access/tenantScoped'
+import { superAdminOnly } from '@/access/tenantScoped'
 
 export const AgentAuditLog: CollectionConfig = {
   slug: 'agent-audit-log',
   access: {
-    create: authenticated,
-    read: tenantReadAccess,
-    update: () => false,
-    delete: () => false,
+    create: superAdminOnly,
+    read: superAdminOnly,
+    update: superAdminOnly,
+    delete: superAdminOnly,
   },
   admin: {
     useAsTitle: 'action',

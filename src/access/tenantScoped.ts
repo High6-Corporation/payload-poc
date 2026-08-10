@@ -1,5 +1,22 @@
 import type { Access, AccessArgs } from 'payload'
 
+// ---------------------------------------------------------------------------
+// Super-admin only — hard block for sensitive collections
+// ---------------------------------------------------------------------------
+
+/**
+ * Access control that gates a collection/operation entirely to super-admin users.
+ * Non-super-admins (including tenant-admins) are denied with false.
+ */
+export const superAdminOnly: Access = ({ req: { user } }) => {
+  if (!user) return false
+  return (user as any).roles?.includes('super-admin') ?? false
+}
+
+// ---------------------------------------------------------------------------
+// Tenant-scoped access
+// ---------------------------------------------------------------------------
+
 /**
  * Resolve the current user's assigned tenant IDs.
  *

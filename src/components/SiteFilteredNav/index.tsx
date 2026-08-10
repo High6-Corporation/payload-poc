@@ -194,7 +194,9 @@ const TenantSelector: React.FC = () => {
 
 const SiteFilteredNav: React.FC = () => {
   const { config } = useConfig()
-  const { permissions } = useAuth()
+  const { permissions, user } = useAuth()
+
+  const isSuperAdmin = (user as any)?.roles?.includes('super-admin') ?? false
 
   // ---- Dynamic custom collections for the active site ----
 
@@ -283,6 +285,17 @@ const SiteFilteredNav: React.FC = () => {
 
       // Skip Payload internal/system collections (payload-jobs, payload-kv, etc.)
       if (col.slug.startsWith('payload-')) continue
+
+      // Hard-restrict sensitive admin collections to super-admin only.
+      // These must NEVER be visible to a tenant-admin — hard role check, not a
+      // toggle, no exceptions.
+      const SUPER_ADMIN_ONLY_SLUGS = [
+        'tenants',
+        'sites',
+        'portal-clients',
+        'agent-audit-log',
+      ]
+      if (SUPER_ADMIN_ONLY_SLUGS.includes(col.slug) && !isSuperAdmin) continue
 
       // Permission filter — only skip when explicitly denied.
       // Payload's permissions.collections[slug] may have shape { fields: {...} }

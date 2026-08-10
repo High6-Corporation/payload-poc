@@ -333,7 +333,7 @@ const SiteFilteredNav: React.FC = () => {
       const orderB = GROUP_ORDER[b[0]] ?? DEFAULT_ORDER
       return orderA - orderB
     })
-  }, [config.collections, permissions])
+  }, [config.collections, permissions, tenantDisabledIds, isSuperAdmin])
 
   // ---- Globals ----
 

@@ -15,16 +15,14 @@ const baseClass = 'before-dashboard'
 interface QuickAction {
   label: string
   href: string
-}
-
-interface QuickAction {
-  label: string
-  href: string
   /** Collection slug used for disabled-collection filtering (tenant-level: builtin:<slug>) */
   collectionSlug?: string
 }
 
 const quickActions: QuickAction[] = [
+  { label: 'Create Page', href: '/admin/collections/pages/create', collectionSlug: 'pages' },
+  { label: 'Write Post', href: '/admin/collections/posts/create', collectionSlug: 'posts' },
+  { label: 'Upload Media', href: '/admin/collections/media/create', collectionSlug: 'media' },
   { label: 'Add FAQ', href: '/admin/collections/faqs/create', collectionSlug: 'faqs' },
   {
     label: 'Add Testimonial',
@@ -35,6 +33,11 @@ const quickActions: QuickAction[] = [
     label: 'Add Portfolio Item',
     href: '/admin/collections/portfolio-items/create',
     collectionSlug: 'portfolio-items',
+  },
+  {
+    label: 'Add Pricing Plan',
+    href: '/admin/collections/pricing-plans/create',
+    collectionSlug: 'pricing-plans',
   },
   { label: 'View Forms', href: '/admin/collections/forms', collectionSlug: 'forms' },
   {
@@ -202,6 +205,14 @@ const BeforeDashboard: React.FC = () => {
               </a>
             ))}
         </div>
+      </div>
+
+      {/* ── Coming soon ─────────────────────────────────── */}
+      <div className={`${baseClass}__card`} style={{ textAlign: 'center', opacity: 0.65 }}>
+        <p style={{ margin: 0, fontSize: '14px', fontStyle: 'italic' }}>
+          More dashboard improvements coming soon — analytics, recent activity, and at-a-glance
+          content summaries.
+        </p>
       </div>
     </div>
   )

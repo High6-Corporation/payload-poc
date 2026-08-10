@@ -128,11 +128,17 @@ export default buildConfig({
       beforeDashboard: ['@/components/BeforeDashboard'],
       Nav: '@/components/SiteFilteredNav',
     },
-    // Override Payload's default dashboard layout which includes a
-    // "collections" widget that renders EVERY collection unfiltered
-    // (duplicating the sidebar nav in the main content area).
+    // Show the default "collections" dashboard widget for super-admins
+    // only.  Tenant-admins get an empty dashboard (the BeforeDashboard
+    // component handles their welcome content instead).
     dashboard: {
-      defaultLayout: [],
+      defaultLayout: ({ req }: { req: any }) => {
+        const user = req?.user
+        if (user?.roles?.includes('super-admin')) {
+          return [{ widgetSlug: 'collections', width: 'full' as const }]
+        }
+        return []
+      },
       widgets: [],
     },
     importMap: {

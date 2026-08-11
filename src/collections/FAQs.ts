@@ -1,16 +1,14 @@
 import type { CollectionConfig } from 'payload'
 
-import { anyone } from '../access/anyone'
-import { authenticated } from '../access/authenticated'
-import { siteTenantReadAccess, siteTenantMutateAccess } from '@/access/tenantScoped'
+import { siteTenantEnabledAccess } from '@/access/tenantScoped'
 
 export const FAQs: CollectionConfig = {
   slug: 'faqs',
   access: {
-    create: authenticated,
-    delete: siteTenantMutateAccess,
-    read: siteTenantReadAccess,
-    update: siteTenantMutateAccess,
+    create: siteTenantEnabledAccess('faqs'),
+    delete: siteTenantEnabledAccess('faqs'),
+    read: siteTenantEnabledAccess('faqs'),
+    update: siteTenantEnabledAccess('faqs'),
   },
   admin: {
     useAsTitle: 'question',

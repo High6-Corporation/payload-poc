@@ -249,21 +249,7 @@ const S = {
 // Inline SVG Icons
 // ---------------------------------------------------------------------------
 
-const LoaderIcon: React.FC<{ size?: number }> = ({ size = 16 }) => (
-  <svg
-    width={size}
-    height={size}
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke={C.elevation500}
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    style={{ animation: 'spin 1s linear infinite' }}
-  >
-    <path d="M21 12a9 9 0 1 1-6.219-8.56" />
-  </svg>
-)
+import { LoaderIcon } from '@/components/ui/admin-loading'
 
 const AlertCircleIcon: React.FC<{ size?: number }> = ({ size = 32 }) => (
   <svg
@@ -308,9 +294,7 @@ const LayersIcon: React.FC<{ size?: number }> = ({ size = 32 }) => (
  * showing only built-in collections rather than blocking the entire Sites
  * edit form).
  */
-async function fetchCustomCollections(
-  siteId: string,
-): Promise<CustomCollectionSummary[]> {
+async function fetchCustomCollections(siteId: string): Promise<CustomCollectionSummary[]> {
   try {
     const baseUrl = window.location.origin
     // Payload REST API: query custom-collections filtered by site.
@@ -354,23 +338,27 @@ export const EnabledCollectionsToggle: React.FC<EnabledCollectionsToggleProps> =
     let cancelled = false
     setFetchState('loading')
 
-    fetchCustomCollections(docId as string).then((collections) => {
-      if (cancelled) return
-      // Filter out any IDs that don't match a live collection (handles
-      // deletion edge case — orphaned disabled IDs are simply not shown).
-      const items: ToggleItem[] = collections.map((cc) => ({
-        key: cc.id,
-        label: cc.name,
-        description: `/${cc.slug}`,
-        kind: 'custom' as const,
-      }))
-      setCustomItems(items)
-      setFetchState('loaded')
-    }).catch(() => {
-      if (!cancelled) setFetchState('error')
-    })
+    fetchCustomCollections(docId as string)
+      .then((collections) => {
+        if (cancelled) return
+        // Filter out any IDs that don't match a live collection (handles
+        // deletion edge case — orphaned disabled IDs are simply not shown).
+        const items: ToggleItem[] = collections.map((cc) => ({
+          key: cc.id,
+          label: cc.name,
+          description: `/${cc.slug}`,
+          kind: 'custom' as const,
+        }))
+        setCustomItems(items)
+        setFetchState('loaded')
+      })
+      .catch(() => {
+        if (!cancelled) setFetchState('error')
+      })
 
-    return () => { cancelled = true }
+    return () => {
+      cancelled = true
+    }
   }, [docId])
 
   // ---- Built-in Collections (static registry) ----
@@ -425,9 +413,6 @@ export const EnabledCollectionsToggle: React.FC<EnabledCollectionsToggleProps> =
 
   return (
     <div style={S.wrapper}>
-      {/* Keyframes for spinner */}
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-
       {/* Loading state */}
       {isLoading && (
         <div style={S.loadingRow}>
@@ -453,7 +438,8 @@ export const EnabledCollectionsToggle: React.FC<EnabledCollectionsToggleProps> =
           <LayersIcon size={32} />
           <div style={S.stateHeading}>No collections available</div>
           <div style={S.stateText}>
-            Create a Custom Collection for this site first, or enable built-in collections (coming in a future update).
+            Create a Custom Collection for this site first, or enable built-in collections (coming
+            in a future update).
           </div>
         </div>
       )}
@@ -478,9 +464,7 @@ export const EnabledCollectionsToggle: React.FC<EnabledCollectionsToggleProps> =
                     {/* Info */}
                     <div style={S.toggleRowInfo}>
                       <span style={S.toggleRowLabel}>{item.label}</span>
-                      {item.description && (
-                        <span style={S.toggleRowDesc}>{item.description}</span>
-                      )}
+                      {item.description && <span style={S.toggleRowDesc}>{item.description}</span>}
                       {item.kind === 'built-in' && (
                         <span style={S.toggleRowMeta}>{item.key.replace('builtin:', '')}</span>
                       )}

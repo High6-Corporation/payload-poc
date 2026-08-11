@@ -23,6 +23,7 @@ import { searchFields } from '@/search/fieldOverrides'
 import { beforeSyncWithSearch } from '@/search/beforeSync'
 import { Page, Post } from '@/payload-types'
 import { getServerSideURL } from '@/utilities/getURL'
+import { tenantEnabledAccess } from '@/access/tenantScoped'
 
 // ---------------------------------------------------------------------------
 // Export flattening: submissionData → human-readable CSV/JSON columns
@@ -194,6 +195,12 @@ export const plugins: Plugin[] = [
       }))
     },
     formOverrides: {
+      access: {
+        create: tenantEnabledAccess('forms'),
+        delete: tenantEnabledAccess('forms'),
+        read: tenantEnabledAccess('forms'),
+        update: tenantEnabledAccess('forms'),
+      },
       fields: ({ defaultFields }) => {
         const siteField: Field = {
           name: 'site',
@@ -263,6 +270,12 @@ export const plugins: Plugin[] = [
       },
     },
     formSubmissionOverrides: {
+      access: {
+        create: tenantEnabledAccess('form-submissions'),
+        delete: tenantEnabledAccess('form-submissions'),
+        read: tenantEnabledAccess('form-submissions'),
+        update: tenantEnabledAccess('form-submissions'),
+      },
       admin: {
         defaultColumns: ['submissionData', 'createdAt', 'tenant'],
       },

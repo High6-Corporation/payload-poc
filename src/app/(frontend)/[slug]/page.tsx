@@ -110,7 +110,7 @@ export default async function Page({
       {draft && <LivePreviewListener />}
 
       <RenderHero {...hero} />
-      <RenderBlocks blocks={layout} tenantId={tenantId} />
+      <RenderBlocks blocks={layout ?? []} tenantId={tenantId} />
     </article>
   )
 }

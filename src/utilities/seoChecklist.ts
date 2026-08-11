@@ -79,6 +79,25 @@ function hasKeywordInSlug(slug: string, keyword: string): boolean {
 }
 
 // ---------------------------------------------------------------------------
+// hasBasicSeo — shared "does this page have minimal SEO?" gate.
+// Used by both SeoChecklistPanel and the Pages list SEO Status column.
+// All three fields must be non-empty (after trim) to pass.
+// ---------------------------------------------------------------------------
+
+export interface BasicSeoInput {
+  seoTitle: string | null | undefined
+  metaDescription: string | null | undefined
+  focusKeyword: string | null | undefined
+}
+
+export function hasBasicSeo(input: BasicSeoInput): boolean {
+  const title = (input.seoTitle ?? '').trim()
+  const desc = (input.metaDescription ?? '').trim()
+  const kw = (input.focusKeyword ?? '').trim()
+  return title.length > 0 && desc.length > 0 && kw.length > 0
+}
+
+// ---------------------------------------------------------------------------
 // Public API
 // ---------------------------------------------------------------------------
 

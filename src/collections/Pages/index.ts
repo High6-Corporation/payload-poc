@@ -37,7 +37,7 @@ export const Pages: CollectionConfig<'pages'> = {
     slug: true,
   },
   admin: {
-    defaultColumns: ['title', 'slug', 'updatedAt'],
+    defaultColumns: ['title', 'slug', 'seoStatus', 'updatedAt'],
     livePreview: {
       url: ({ data, req }) =>
         generatePreviewPath({
@@ -73,7 +73,6 @@ export const Pages: CollectionConfig<'pages'> = {
               name: 'layout',
               type: 'blocks',
               blocks: [CallToAction, Content, MediaBlock, Archive, FormBlock],
-              required: true,
               admin: {
                 initCollapsed: true,
               },
@@ -136,6 +135,15 @@ export const Pages: CollectionConfig<'pages'> = {
       },
     },
     slugField(),
+    {
+      name: 'seoStatus',
+      type: 'ui',
+      admin: {
+        components: {
+          Cell: '@/components/SeoStatusCell#SeoStatusCell',
+        },
+      },
+    },
   ],
   hooks: {
     afterChange: [revalidatePage],

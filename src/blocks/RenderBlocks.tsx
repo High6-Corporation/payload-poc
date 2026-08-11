@@ -17,7 +17,7 @@ const blockComponents = {
 }
 
 export const RenderBlocks: React.FC<{
-  blocks: Page['layout'][0][]
+  blocks: NonNullable<Page['layout']>
   tenantId?: string | null
 }> = (props) => {
   const { blocks, tenantId } = props

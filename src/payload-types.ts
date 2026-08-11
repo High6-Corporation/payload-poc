@@ -393,6 +393,10 @@ export interface Post {
      */
     image?: (string | null) | Media;
     description?: string | null;
+    /**
+     * Comma-separated keywords this post targets for SEO (e.g. "web design, agency, philippines").
+     */
+    focusKeyword?: string | null;
   };
   publishedAt?: string | null;
   authors?: (string | User)[] | null;
@@ -1967,6 +1971,7 @@ export interface PostsSelect<T extends boolean = true> {
         title?: T;
         image?: T;
         description?: T;
+        focusKeyword?: T;
       };
   publishedAt?: T;
   authors?: T;

@@ -1,15 +1,15 @@
 import type { CollectionConfig } from 'payload'
 
-import { authenticated } from '../access/authenticated'
+import { tenantReadAccess, tenantMutateAccess } from '@/access/tenantScoped'
 import { slugField } from 'payload'
 
 export const Sites: CollectionConfig = {
   slug: 'sites',
   access: {
-    create: authenticated,
-    delete: authenticated,
-    read: authenticated,
-    update: authenticated,
+    create: tenantMutateAccess,
+    delete: tenantMutateAccess,
+    read: tenantReadAccess,
+    update: tenantMutateAccess,
   },
   admin: {
     useAsTitle: 'name',
@@ -36,6 +36,22 @@ export const Sites: CollectionConfig = {
       required: true,
       admin: {
         position: 'sidebar',
+      },
+    },
+    {
+      name: 'disabledCollections',
+      type: 'json',
+      defaultValue: [],
+      admin: {
+        description:
+          'BLACKLIST — collections listed here are DISABLED for this site. ' +
+          'Everything else is enabled by default. Custom Collections are ' +
+          'auto-enabled on creation (they start absent from this list). ' +
+          'Built-in collection slugs are prefixed with "builtin:".',
+        position: 'sidebar',
+        components: {
+          Field: '@/components/EnabledCollectionsToggle#EnabledCollectionsToggle',
+        },
       },
     },
   ],

@@ -1,15 +1,15 @@
 import type { CollectionConfig } from 'payload'
 
-import { authenticated } from '../access/authenticated'
+import { superAdminOnly, tenantSelfReadAccess } from '@/access/tenantScoped'
 import { slugField } from 'payload'
 
 export const Tenants: CollectionConfig = {
   slug: 'tenants',
   access: {
-    create: authenticated,
-    delete: authenticated,
-    read: authenticated,
-    update: authenticated,
+    create: superAdminOnly,
+    delete: superAdminOnly,
+    read: tenantSelfReadAccess,
+    update: superAdminOnly,
   },
   admin: {
     useAsTitle: 'name',
@@ -24,5 +24,33 @@ export const Tenants: CollectionConfig = {
     slugField({
       fieldToUse: 'name',
     }),
+    {
+      name: 'defaultSite',
+      type: 'relationship',
+      relationTo: 'sites',
+      admin: {
+        position: 'sidebar',
+        description: 'Default site for this tenant. Used as fallback when no site cookie is set.',
+      },
+      filterOptions: ({ id }) => {
+        if (!id) return true
+        return { tenant: { equals: id } }
+      },
+    },
+    {
+      name: 'disabledCollections',
+      type: 'json',
+      defaultValue: [],
+      admin: {
+        description:
+          'BLACKLIST — standard collections listed here are DISABLED for this tenant. ' +
+          'Everything else is enabled by default. Standard collection slugs are ' +
+          'prefixed with "builtin:".',
+        position: 'sidebar',
+        components: {
+          Field: '@/components/EnabledCollectionsToggle#EnabledCollectionsToggle',
+        },
+      },
+    },
   ],
 }

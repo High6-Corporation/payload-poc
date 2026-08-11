@@ -212,6 +212,51 @@ export interface Tenant {
    */
   generateSlug?: boolean | null;
   slug: string;
+  /**
+   * Default site for this tenant. Used as fallback when no site cookie is set.
+   */
+  defaultSite?: (string | null) | Site;
+  /**
+   * BLACKLIST — standard collections listed here are DISABLED for this tenant. Everything else is enabled by default. Standard collection slugs are prefixed with "builtin:".
+   */
+  disabledCollections?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "sites".
+ */
+export interface Site {
+  id: string;
+  name: string;
+  /**
+   * When enabled, the slug will auto-generate from the title field on save and autosave.
+   */
+  generateSlug?: boolean | null;
+  slug: string;
+  url: string;
+  tenant: string | Tenant;
+  /**
+   * BLACKLIST — collections listed here are DISABLED for this site. Everything else is enabled by default. Custom Collections are auto-enabled on creation (they start absent from this list). Built-in collection slugs are prefixed with "builtin:".
+   */
+  disabledCollections?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -240,23 +285,6 @@ export interface PortalClient {
     | null;
   password?: string | null;
   collection: 'portal-clients';
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "sites".
- */
-export interface Site {
-  id: string;
-  name: string;
-  /**
-   * When enabled, the slug will auto-generate from the title field on save and autosave.
-   */
-  generateSlug?: boolean | null;
-  slug: string;
-  url: string;
-  tenant: string | Tenant;
-  updatedAt: string;
-  createdAt: string;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -317,6 +345,10 @@ export interface Page {
      */
     image?: (string | null) | Media;
     description?: string | null;
+    /**
+     * Comma-separated keywords this page targets for SEO (e.g. "web design, agency, philippines").
+     */
+    focusKeyword?: string | null;
   };
   publishedAt?: string | null;
   /**
@@ -544,6 +576,10 @@ export interface Category {
 export interface User {
   id: string;
   name?: string | null;
+  /**
+   * super-admin sees all tenants. tenant-admin is scoped to the tenants assigned below.
+   */
+  roles?: ('super-admin' | 'tenant-admin')[] | null;
   tenants?:
     | {
         tenant: string | Tenant;
@@ -1393,6 +1429,7 @@ export interface Search {
  */
 export interface Export {
   id: string;
+  tenant?: (string | null) | Tenant;
   name?: string | null;
   format: 'csv' | 'json';
   limit?: number | null;
@@ -1430,8 +1467,12 @@ export interface Export {
  */
 export interface Import {
   id: string;
+  tenant?: (string | null) | Tenant;
   collectionSlug: string;
-  importMode?: ('create' | 'update' | 'upsert') | null;
+  /**
+   * Entries are always created as new. Duplicates are rejected.
+   */
+  importMode?: 'create' | null;
   matchField?: string | null;
   status?: ('pending' | 'completed' | 'partial' | 'failed') | null;
   summary?: {
@@ -1449,6 +1490,11 @@ export interface Import {
       | boolean
       | null;
   };
+  /**
+   * Select the Custom Collection to import entries into.
+   */
+  targetCollection: string | CustomCollection;
+  uploadedBy?: (string | null) | User;
   updatedAt: string;
   createdAt: string;
   url?: string | null;
@@ -1725,6 +1771,8 @@ export interface TenantsSelect<T extends boolean = true> {
   name?: T;
   generateSlug?: T;
   slug?: T;
+  defaultSite?: T;
+  disabledCollections?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -1761,6 +1809,7 @@ export interface SitesSelect<T extends boolean = true> {
   slug?: T;
   url?: T;
   tenant?: T;
+  disabledCollections?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -1808,6 +1857,7 @@ export interface PagesSelect<T extends boolean = true> {
         title?: T;
         image?: T;
         description?: T;
+        focusKeyword?: T;
       };
   publishedAt?: T;
   generateSlug?: T;
@@ -2058,6 +2108,7 @@ export interface CategoriesSelect<T extends boolean = true> {
  */
 export interface UsersSelect<T extends boolean = true> {
   name?: T;
+  roles?: T;
   tenants?:
     | T
     | {
@@ -2487,6 +2538,7 @@ export interface SearchSelect<T extends boolean = true> {
  * via the `definition` "exports_select".
  */
 export interface ExportsSelect<T extends boolean = true> {
+  tenant?: T;
   name?: T;
   format?: T;
   limit?: T;
@@ -2515,6 +2567,7 @@ export interface ExportsSelect<T extends boolean = true> {
  * via the `definition` "imports_select".
  */
 export interface ImportsSelect<T extends boolean = true> {
+  tenant?: T;
   collectionSlug?: T;
   importMode?: T;
   matchField?: T;
@@ -2528,6 +2581,8 @@ export interface ImportsSelect<T extends boolean = true> {
         issues?: T;
         issueDetails?: T;
       };
+  targetCollection?: T;
+  uploadedBy?: T;
   updatedAt?: T;
   createdAt?: T;
   url?: T;

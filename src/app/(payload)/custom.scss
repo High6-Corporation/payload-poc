@@ -132,4 +132,15 @@
       transition-duration: 0.01ms !important;
     }
   }
+
+  /* ---- Select dropdown — constrain height with scroll ---- */
+  .rs__menu-list {
+    max-height: 200px !important;
+    overflow-y: scroll !important;
+  }
+
+  /* Hide Payload's default empty-dashboard text (replaced by AfterDashboard) */
+  .modular-dashboard__empty {
+    display: none !important;
+  }
 }

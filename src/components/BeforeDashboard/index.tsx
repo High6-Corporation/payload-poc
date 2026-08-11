@@ -2,6 +2,8 @@
 
 import React, { useEffect, useState } from 'react'
 
+import { getCookie } from '@/utilities/admin-cookies'
+
 import type { DashboardResponse } from '@/app/(payload)/api/dashboard/route'
 
 import './index.scss'
@@ -13,13 +15,36 @@ const baseClass = 'before-dashboard'
 interface QuickAction {
   label: string
   href: string
+  /** Collection slug used for disabled-collection filtering (tenant-level: builtin:<slug>) */
+  collectionSlug?: string
 }
 
 const quickActions: QuickAction[] = [
-  { label: 'Add FAQ', href: '/admin/collections/faqs/create' },
-  { label: 'Add Testimonial', href: '/admin/collections/testimonials/create' },
-  { label: 'View Forms', href: '/admin/collections/forms' },
-  { label: 'View Form Submissions', href: '/admin/collections/form-submissions' },
+  { label: 'Create Page', href: '/admin/collections/pages/create', collectionSlug: 'pages' },
+  { label: 'Write Post', href: '/admin/collections/posts/create', collectionSlug: 'posts' },
+  { label: 'Upload Media', href: '/admin/collections/media/create', collectionSlug: 'media' },
+  { label: 'Add FAQ', href: '/admin/collections/faqs/create', collectionSlug: 'faqs' },
+  {
+    label: 'Add Testimonial',
+    href: '/admin/collections/testimonials/create',
+    collectionSlug: 'testimonials',
+  },
+  {
+    label: 'Add Portfolio Item',
+    href: '/admin/collections/portfolio-items/create',
+    collectionSlug: 'portfolio-items',
+  },
+  {
+    label: 'Add Pricing Plan',
+    href: '/admin/collections/pricing-plans/create',
+    collectionSlug: 'pricing-plans',
+  },
+  { label: 'View Forms', href: '/admin/collections/forms', collectionSlug: 'forms' },
+  {
+    label: 'View Form Submissions',
+    href: '/admin/collections/form-submissions',
+    collectionSlug: 'form-submissions',
+  },
 ]
 
 // ── Stat card ──────────────────────────────────────────────
@@ -37,6 +62,7 @@ const BeforeDashboard: React.FC = () => {
   const [data, setData] = useState<DashboardResponse | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [disabledIds, setDisabledIds] = useState<string[]>([])
 
   useEffect(() => {
     let cancelled = false
@@ -70,6 +96,59 @@ const BeforeDashboard: React.FC = () => {
     }
 
     fetchData()
+
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  // Fetch active site + tenant disabledCollections for quick-action filtering
+  useEffect(() => {
+    const siteId = getCookie('payload-site')
+    const tenantId = getCookie('payload-tenant')
+
+    if (!siteId || !tenantId) {
+      setDisabledIds([])
+      return
+    }
+
+    let cancelled = false
+
+    async function load() {
+      try {
+        // Site-level disabled (custom collections)
+        const siteRes = await fetch(`/api/sites/${encodeURIComponent(siteId!)}?depth=0`, {
+          credentials: 'include',
+        })
+        let siteDisabled: string[] = []
+        if (siteRes.ok) {
+          const data = await siteRes.json()
+          siteDisabled = Array.isArray(data.disabledCollections) ? data.disabledCollections : []
+        }
+
+        // Tenant-level disabled (standard collections)
+        let tenantDisabled: string[] = []
+        try {
+          const tenantRes = await fetch(`/api/tenants/${encodeURIComponent(tenantId!)}?depth=0`, {
+            credentials: 'include',
+          })
+          if (tenantRes.ok) {
+            const data = await tenantRes.json()
+            tenantDisabled = Array.isArray(data.disabledCollections) ? data.disabledCollections : []
+          }
+        } catch {
+          /* tenant fetch is non-critical */
+        }
+
+        if (!cancelled) {
+          setDisabledIds([...siteDisabled, ...tenantDisabled])
+        }
+      } catch {
+        // Silently fail — quick-action filtering is non-critical
+      }
+    }
+
+    load()
 
     return () => {
       cancelled = true
@@ -114,17 +193,20 @@ const BeforeDashboard: React.FC = () => {
       <div className={`${baseClass}__card`}>
         <h2 className={`${baseClass}__section-title`}>Quick Actions</h2>
         <div className={`${baseClass}__actions`}>
-          {quickActions.map((action) => (
-            <a
-              key={action.href}
-              href={action.href}
-              className={`${baseClass}__action-link`}
-            >
-              {action.label}
-            </a>
-          ))}
+          {quickActions
+            .filter((action) => {
+              if (!action.collectionSlug) return true
+              const builtinKey = `builtin:${action.collectionSlug}`
+              return !disabledIds.includes(builtinKey)
+            })
+            .map((action) => (
+              <a key={action.href} href={action.href} className={`${baseClass}__action-link`}>
+                {action.label}
+              </a>
+            ))}
         </div>
       </div>
+
     </div>
   )
 }

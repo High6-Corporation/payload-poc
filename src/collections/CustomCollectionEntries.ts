@@ -19,6 +19,9 @@ export const CustomCollectionEntries: CollectionConfig = {
     group: 'Custom Content',
     useAsTitle: 'title',
     defaultColumns: ['title', 'parentCollection', 'updatedAt'],
+    components: {
+      afterList: ['@/components/ImportHistory#ImportHistory'],
+    },
   },
   fields: [
     {

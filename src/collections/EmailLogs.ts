@@ -1,12 +1,13 @@
 import type { CollectionConfig } from 'payload'
 
 import { authenticated } from '../access/authenticated'
+import { siteTenantReadAccess } from '@/access/tenantScoped'
 
 export const EmailLogs: CollectionConfig = {
   slug: 'email-logs',
   access: {
     create: () => false,
-    read: authenticated,
+    read: siteTenantReadAccess,
     update: () => false,
     delete: () => false,
   },

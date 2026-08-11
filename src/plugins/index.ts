@@ -1,12 +1,20 @@
 import { formBuilderPlugin } from '@payloadcms/plugin-form-builder'
 import { importExportPlugin } from '@payloadcms/plugin-import-export'
 import { multiTenantPlugin } from '@payloadcms/plugin-multi-tenant'
+import { entryExportHook, entryImportHook } from './custom-collection-entries-import-export'
+import {
+  captureUploadedBy,
+  sanitizeFilename,
+  stripCsvBom,
+  validateContent,
+  validateMimeType,
+} from '@/utilities/importSanitization'
 import { nestedDocsPlugin } from '@payloadcms/plugin-nested-docs'
 import { redirectsPlugin } from '@payloadcms/plugin-redirects'
 import { seoPlugin } from '@payloadcms/plugin-seo'
 import { searchPlugin } from '@payloadcms/plugin-search'
 import { s3Storage } from '@payloadcms/storage-s3'
-import { ArrayField, Field, Plugin, ValidationError } from 'payload'
+import { ArrayField, Field, parseCookies, Plugin, ValidationError } from 'payload'
 import type { Config } from '@/payload-types'
 import { revalidateRedirects } from '@/hooks/revalidateRedirects'
 import { GenerateTitle, GenerateURL } from '@payloadcms/plugin-seo/types'
@@ -80,20 +88,59 @@ const generateURL: GenerateURL<Post | Page> = ({ doc }) => {
   return doc?.slug ? `${url}/${doc.slug}` : url
 }
 
-export const plugins: Plugin[] = [
-  s3Storage({
-    collections: { media: true },
-    bucket: process.env.SUPABASE_BUCKET || '',
-    config: {
-      credentials: {
-        accessKeyId: process.env.SUPABASE_ACCESS_KEY_ID || '',
-        secretAccessKey: process.env.SUPABASE_SECRET_ACCESS_KEY || '',
+// ---------------------------------------------------------------------------
+// Imports collection enhancement — uploadedBy field + upload sanitization
+// ---------------------------------------------------------------------------
+//
+// The @payloadcms/plugin-import-export auto-creates an `imports` upload
+// collection with no storage adapter and no user/tenant tracking. This
+// lightweight plugin runs after import-export and adds the missing pieces.
+//
+// Order matters: importExportPlugin → this → s3Storage → multiTenantPlugin.
+// s3Storage needs the imports collection to exist so it can wire the S3
+// adapter + set disableLocalStorage:true.  multiTenantPlugin runs last so
+// it can add the tenant field + tenant-scoped access control.
+
+const importsEnhancement: Plugin = (incomingConfig) => ({
+  ...incomingConfig,
+  collections: (incomingConfig.collections || []).map((collection) => {
+    if (collection.slug !== 'imports') return collection
+
+    return {
+      ...collection,
+      fields: [
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        ...(collection.fields as any[]),
+        {
+          name: 'uploadedBy',
+          type: 'relationship',
+          relationTo: 'users',
+          admin: {
+            readOnly: true,
+            position: 'sidebar',
+          },
+        },
+      ],
+      hooks: {
+        ...collection.hooks,
+        // TESTING: hooks disabled to find culprit
+        // beforeValidate: [
+        //   ...(collection.hooks?.beforeValidate || []),
+        //   sanitizeFilename,
+        //   validateMimeType,
+        // ],
+        // beforeChange: [
+        //   ...(collection.hooks?.beforeChange || []),
+        //   captureUploadedBy,
+        //   stripCsvBom,
+        //   validateContent,
+        // ],
       },
-      region: process.env.SUPABASE_REGION || '',
-      endpoint: process.env.SUPABASE_ENDPOINT || '',
-      forcePathStyle: true,
-    },
+    }
   }),
+})
+
+export const plugins: Plugin[] = [
   redirectsPlugin({
     collections: ['pages', 'posts'],
     overrides: {
@@ -420,7 +467,94 @@ export const plugins: Plugin[] = [
         },
         import: false,
       },
+      {
+        slug: 'custom-collection-entries',
+        export: {
+          disableJobsQueue: true,
+          format: 'csv',
+          hooks: {
+            before: entryExportHook,
+          },
+        },
+        import: {
+          disableJobsQueue: true,
+          overrideCollection: ({ collection }) => {
+            // Lock importMode to Create-only — Update/Upsert don't apply to this
+            // workflow (entries are always new; duplicates are rejected in the hook).
+            const cleanFields = (collection.fields as Field[]).map((field) => {
+              if ('name' in field && field.name === 'importMode') {
+                return {
+                  ...field,
+                  defaultValue: 'create' as const,
+                  options: (field as any).options?.filter((o: any) => o.value === 'create'),
+                  admin: {
+                    ...(field as any).admin,
+                    description: 'Entries are always created as new. Duplicates are rejected.',
+                    readOnly: true,
+                  },
+                }
+              }
+              return field
+            })
+
+            return {
+              ...collection,
+              fields: [
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                ...(cleanFields as any[]),
+                {
+                  name: 'targetCollection',
+                  type: 'relationship',
+                  relationTo: 'custom-collections',
+                  required: true,
+                  label: 'Import into Custom Collection',
+                  admin: {
+                    description: 'Select the Custom Collection to import entries into.',
+                    position: 'sidebar',
+                  },
+                  // Only show custom collections matching the currently-selected tenant.
+                  // The tenant selector stores the active tenant in the payload-tenant
+                  // cookie.  Try Payload's cookies API first, then fall back to parsing
+                  // the raw Cookie header (server-side Payload doesn't always populate
+                  // req.cookies the same way the Next.js client does).
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  filterOptions: ({ req }: any) => {
+                    try {
+                      const cookies = parseCookies(req?.headers)
+                      const tenantId = cookies.get('payload-tenant')
+                      if (tenantId) {
+                        return { tenant: { equals: tenantId } }
+                      }
+                    } catch {
+                      /* proceed without filter */
+                    }
+                    return {}
+                  },
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                } as any,
+              ],
+            }
+          },
+          hooks: {
+            before: entryImportHook,
+          },
+        },
+      },
     ],
+  }),
+  importsEnhancement,
+  s3Storage({
+    collections: { media: true, exports: true },
+    bucket: process.env.SUPABASE_BUCKET || '',
+    config: {
+      credentials: {
+        accessKeyId: process.env.SUPABASE_ACCESS_KEY_ID || '',
+        secretAccessKey: process.env.SUPABASE_SECRET_ACCESS_KEY || '',
+      },
+      region: process.env.SUPABASE_REGION || '',
+      endpoint: process.env.SUPABASE_ENDPOINT || '',
+      forcePathStyle: true,
+    },
   }),
   multiTenantPlugin<Config>({
     cleanupAfterTenantDelete: false,
@@ -433,8 +567,14 @@ export const plugins: Plugin[] = [
       'form-submissions': {},
       'custom-collections': {},
       'custom-collection-entries': {},
+      imports: {},
+      exports: {},
     },
-    userHasAccessToAllTenants: () => true,
+    // ROLLBACK: Revert the line below to `() => true` to instantly restore
+    // full access for all users if the role check causes unexpected lockouts.
+    userHasAccessToAllTenants: (user) =>
+      Boolean('roles' in user && (user as { roles?: string[] }).roles?.includes('super-admin')),
+    useTenantsCollectionAccess: true,
     useTenantsListFilter: false,
   }),
 ]

@@ -157,6 +157,24 @@ export const Posts: CollectionConfig<'posts'> = {
               titlePath: 'meta.title',
               descriptionPath: 'meta.description',
             }),
+            {
+              name: 'focusKeyword',
+              type: 'textarea',
+              label: 'Focus Keywords',
+              admin: {
+                description:
+                  'Comma-separated keywords this post targets for SEO (e.g. "web design, agency, philippines").',
+              },
+            },
+            {
+              name: 'seoChecklist',
+              type: 'ui',
+              admin: {
+                components: {
+                  Field: '@/components/SeoChecklistPanel#SeoChecklistPanel',
+                },
+              },
+            },
           ],
         },
       ],

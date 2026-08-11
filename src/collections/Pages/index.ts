@@ -115,6 +115,15 @@ export const Pages: CollectionConfig<'pages'> = {
                   'Comma-separated keywords this page targets for SEO (e.g. "web design, agency, philippines").',
               },
             },
+            {
+              name: 'seoChecklist',
+              type: 'ui',
+              admin: {
+                components: {
+                  Field: '@/components/SeoChecklistPanel#SeoChecklistPanel',
+                },
+              },
+            },
           ],
         },
       ],

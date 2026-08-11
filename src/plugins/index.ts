@@ -124,18 +124,17 @@ const importsEnhancement: Plugin = (incomingConfig) => ({
       ],
       hooks: {
         ...collection.hooks,
-        // TESTING: hooks disabled to find culprit
-        // beforeValidate: [
-        //   ...(collection.hooks?.beforeValidate || []),
-        //   sanitizeFilename,
-        //   validateMimeType,
-        // ],
-        // beforeChange: [
-        //   ...(collection.hooks?.beforeChange || []),
-        //   captureUploadedBy,
-        //   stripCsvBom,
-        //   validateContent,
-        // ],
+        beforeValidate: [
+          ...(collection.hooks?.beforeValidate || []),
+          sanitizeFilename,
+          validateMimeType,
+        ],
+        beforeChange: [
+          ...(collection.hooks?.beforeChange || []),
+          captureUploadedBy,
+          stripCsvBom,
+          validateContent,
+        ],
       },
     }
   }),
@@ -557,7 +556,7 @@ export const plugins: Plugin[] = [
   }),
   importsEnhancement,
   s3Storage({
-    collections: { media: true, exports: true },
+    collections: { media: true, imports: true, exports: true },
     bucket: process.env.SUPABASE_BUCKET || '',
     config: {
       credentials: {

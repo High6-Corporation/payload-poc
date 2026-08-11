@@ -63,6 +63,12 @@ export function validateMimeType({
   data?: any
   req: PayloadRequest
 }): void {
+  // Skip validation when no file is being uploaded (e.g. during the
+  // import-export plugin's afterChange update, which re-invokes
+  // beforeValidate but has no req.file).  Throwing here would roll back
+  // the transaction and cause the import document to vanish (404).
+  if (!req.file) return
+
   const mimeType = (data?.mimeType as string) || ''
 
   if (!ALLOWED_MIMES.includes(mimeType)) {
@@ -76,7 +82,7 @@ export function validateMimeType({
     })
   }
 
-  const fileData = req.file?.data as Buffer | undefined
+  const fileData = req.file.data as Buffer | undefined
   if (!fileData || fileData.length === 0) {
     throw new ValidationError({
       errors: [

@@ -241,6 +241,11 @@ const SiteFilteredNav: React.FC = () => {
       setCustomCollections([])
       setDisabledIds([])
       setTenantDisabledIds([])
+      // No tenant/site selected yet — dismiss the overlay.  The
+      // collections list is unfiltered, but that is expected before
+      // the user picks a tenant.  Keeping the overlay up forever was
+      // blocking the entire admin UI.
+      setOverlayVisible(false)
       return
     }
 
@@ -296,6 +301,12 @@ const SiteFilteredNav: React.FC = () => {
                 /* quota exceeded — non-critical */
               }
             }
+          } else if (!cancelled) {
+            // Non-ok response (404, 500, etc.) — dismiss the overlay anyway.
+            // The tenant toggle data is non-critical; blocking the entire admin
+            // UI behind a failed tenant fetch is worse than showing unfiltered
+            // collections for a moment.
+            setOverlayVisible(false)
           }
         } catch {
           /* tenant fetch is non-critical */

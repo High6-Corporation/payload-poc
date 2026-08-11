@@ -3,12 +3,6 @@
 .dashboard .before-dashboard {
   margin-bottom: base(1.5);
 
-  /* ── Loading ──────────────────────────────────────────── */
-  &__loading {
-    color: var(--theme-elevation-500);
-    font-style: italic;
-  }
-
   /* ── Stats grid (3 cards, centered) ──────────────────── */
   &__stats-grid {
     display: grid;
@@ -62,7 +56,11 @@
   /* ── Section title ────────────────────────────────────── */
   &__section-title {
     margin: 0 0 base(0.65);
-    font-family: 'Space Grotesk', 'DM Sans', -apple-system, sans-serif;
+    font-family:
+      'Space Grotesk',
+      'DM Sans',
+      -apple-system,
+      sans-serif;
     font-weight: 600;
     font-size: 1rem;
     color: var(--theme-elevation-800);
@@ -86,7 +84,9 @@
     border: 1px solid var(--theme-elevation-150);
     border-radius: var(--style-radius-s);
     text-decoration: none;
-    transition: background 0.15s ease, border-color 0.15s ease;
+    transition:
+      background 0.15s ease,
+      border-color 0.15s ease;
     cursor: pointer;
 
     &:hover,

@@ -2,6 +2,7 @@
 
 import React, { useCallback, useEffect, useLayoutEffect, useState } from 'react'
 import { ChevronIcon, Link, SelectInput, useConfig, useAuth } from '@payloadcms/ui'
+import { AdminLoading } from '@/components/ui/admin-loading'
 import { getCookie } from '@/utilities/admin-cookies'
 import SiteSwitcher from '@/components/SiteSwitcher'
 import { useTenantSelection } from '@payloadcms/plugin-multi-tenant/client'
@@ -213,13 +214,22 @@ const SiteFilteredNav: React.FC = () => {
   const [tenantDisabledIds, setTenantDisabledIds] = useState<string[]>([])
   const [siteReady, setSiteReady] = useState(false)
 
+  // Full-page overlay gate — visible until tenant + site filtering data resolves.
+  // Prevents the flash of unfiltered collections on first login.
+  const [overlayVisible, setOverlayVisible] = useState(true)
+
   // Seed from sessionStorage synchronously before paint — avoids hydration
   // mismatch (server always renders []) and prevents flash on client navs.
+  // If cached data exists, dismiss the overlay immediately — no need to gate
+  // a subsequent navigation behind the same fetch.
   useLayoutEffect(() => {
     if (!tenantCacheKey) return
     try {
       const raw = sessionStorage.getItem(tenantCacheKey)
-      if (raw) setTenantDisabledIds(JSON.parse(raw))
+      if (raw) {
+        setTenantDisabledIds(JSON.parse(raw))
+        setOverlayVisible(false)
+      }
     } catch {
       /* non-critical */
     }
@@ -275,6 +285,7 @@ const SiteFilteredNav: React.FC = () => {
               : []
             if (!cancelled) {
               setTenantDisabledIds(tenantDisabled)
+              setOverlayVisible(false)
               // Persist so remounts (nav clicks) read the correct value instantly
               try {
                 sessionStorage.setItem(
@@ -288,6 +299,7 @@ const SiteFilteredNav: React.FC = () => {
           }
         } catch {
           /* tenant fetch is non-critical */
+          if (!cancelled) setOverlayVisible(false)
         }
       } catch (err) {
         console.error('[SiteFilteredNav] Failed to load site data:', err)
@@ -295,6 +307,7 @@ const SiteFilteredNav: React.FC = () => {
           setCustomCollections([])
           setDisabledIds([])
           setSiteReady(false)
+          setOverlayVisible(false)
         }
       }
     }
@@ -386,94 +399,97 @@ const SiteFilteredNav: React.FC = () => {
   // ---- Render ----
 
   return (
-    <nav
-      className="nav__wrap"
-      style={{
-        backgroundColor: '#0a0e1a',
-        color: 'rgba(255, 255, 255, 0.85)',
-        minHeight: '100vh',
-        position: 'sticky',
-        top: 0,
-        padding: '4rem 1.25rem 1rem',
-      }}
-    >
-      {/* Tenant Selector (from multi-tenant plugin — was admin.components.beforeNav) */}
-      <TenantSelector />
-
-      {/* Dashboard */}
-      <Link className="nav__link" href={adminRoute}>
-        <span className="nav__link-label">Dashboard</span>
-      </Link>
-
-      {/* Collection groups */}
-      {groupedCollections.map(([groupName, cols]) => (
-        <NavGroup key={groupName} label={groupName}>
-          {cols.map((col) => (
-            <Link
-              className="nav__link"
-              key={col.slug}
-              href={`${adminRoute}/collections/${col.slug}`}
-            >
-              <span className="nav__link-label">{colLabel(col)}</span>
-            </Link>
-          ))}
-        </NavGroup>
-      ))}
-
-      {/* Globals */}
-      {visibleGlobals.length > 0 && (
-        <NavGroup key="__globals__" label="Globals">
-          {visibleGlobals.map((g) => (
-            <Link className="nav__link" key={g.slug} href={`${adminRoute}/globals/${g.slug}`}>
-              <span className="nav__link-label">{g.label || g.slug}</span>
-            </Link>
-          ))}
-        </NavGroup>
-      )}
-
-      {/* Custom Content (schema management + per-collection entries) */}
-      <NavGroup label="Custom Content">
-        <Link className="nav__link" href={`${adminRoute}/collections/custom-collections`}>
-          <span className="nav__link-label">Custom Collections</span>
-        </Link>
-        {/* Per-collection links for this site */}
-        {siteReady &&
-          filteredCustomCollections.map((cc) => (
-            <Link
-              className="nav__link"
-              key={cc.id}
-              href={`${adminRoute}/collections/custom-collection-entries?where%5BparentCollection%5D%5Bequals%5D=${encodeURIComponent(cc.id)}`}
-            >
-              <span className="nav__link-label">{cc.name}</span>
-            </Link>
-          ))}
-      </NavGroup>
-
-      {/* Browse by Folder */}
-      <Link className="nav__link browse-by-folder-button" href={`${adminRoute}/browse-by-folder`}>
-        <span className="nav__link-label">Browse by Folder</span>
-      </Link>
-
-      {/* Site Switcher (moved from beforeNavLinks) */}
-      <SiteSwitcher />
-
-      {/* Logout */}
-      <Link
-        className="nav__log-out"
-        href={`${adminRoute}/logout`}
+    <>
+      <AdminLoading mode="fullpage" show={overlayVisible} minDisplayMs={300} />
+      <nav
+        className="nav__wrap"
         style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '0.5rem',
-          padding: '0.5rem 0',
-          color: 'inherit',
-          textDecoration: 'none',
+          backgroundColor: '#0a0e1a',
+          color: 'rgba(255, 255, 255, 0.85)',
+          minHeight: '100vh',
+          position: 'sticky',
+          top: 0,
+          padding: '4rem 1.25rem 1rem',
         }}
       >
-        <LogoutIcon />
-        <span>Log out</span>
-      </Link>
-    </nav>
+        {/* Tenant Selector (from multi-tenant plugin — was admin.components.beforeNav) */}
+        <TenantSelector />
+
+        {/* Dashboard */}
+        <Link className="nav__link" href={adminRoute}>
+          <span className="nav__link-label">Dashboard</span>
+        </Link>
+
+        {/* Collection groups */}
+        {groupedCollections.map(([groupName, cols]) => (
+          <NavGroup key={groupName} label={groupName}>
+            {cols.map((col) => (
+              <Link
+                className="nav__link"
+                key={col.slug}
+                href={`${adminRoute}/collections/${col.slug}`}
+              >
+                <span className="nav__link-label">{colLabel(col)}</span>
+              </Link>
+            ))}
+          </NavGroup>
+        ))}
+
+        {/* Globals */}
+        {visibleGlobals.length > 0 && (
+          <NavGroup key="__globals__" label="Globals">
+            {visibleGlobals.map((g) => (
+              <Link className="nav__link" key={g.slug} href={`${adminRoute}/globals/${g.slug}`}>
+                <span className="nav__link-label">{g.label || g.slug}</span>
+              </Link>
+            ))}
+          </NavGroup>
+        )}
+
+        {/* Custom Content (schema management + per-collection entries) */}
+        <NavGroup label="Custom Content">
+          <Link className="nav__link" href={`${adminRoute}/collections/custom-collections`}>
+            <span className="nav__link-label">Custom Collections</span>
+          </Link>
+          {/* Per-collection links for this site */}
+          {siteReady &&
+            filteredCustomCollections.map((cc) => (
+              <Link
+                className="nav__link"
+                key={cc.id}
+                href={`${adminRoute}/collections/custom-collection-entries?where%5BparentCollection%5D%5Bequals%5D=${encodeURIComponent(cc.id)}`}
+              >
+                <span className="nav__link-label">{cc.name}</span>
+              </Link>
+            ))}
+        </NavGroup>
+
+        {/* Browse by Folder */}
+        <Link className="nav__link browse-by-folder-button" href={`${adminRoute}/browse-by-folder`}>
+          <span className="nav__link-label">Browse by Folder</span>
+        </Link>
+
+        {/* Site Switcher (moved from beforeNavLinks) */}
+        <SiteSwitcher />
+
+        {/* Logout */}
+        <Link
+          className="nav__log-out"
+          href={`${adminRoute}/logout`}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            padding: '0.5rem 0',
+            color: 'inherit',
+            textDecoration: 'none',
+          }}
+        >
+          <LogoutIcon />
+          <span>Log out</span>
+        </Link>
+      </nav>
+    </>
   )
 }
 

@@ -11,6 +11,7 @@ import path from 'path'
 import { fileURLToPath } from 'url'
 import { anyone } from '../access/anyone'
 import { authenticated } from '../access/authenticated'
+import { tenantEnabledAccess } from '@/access/tenantScoped'
 import { sanitizeMediaFilename } from '../utilities/sanitizeMediaFilename'
 
 const filename = fileURLToPath(import.meta.url)
@@ -19,14 +20,16 @@ const dirname = path.dirname(filename)
 // The multi-tenant plugin middleware decorates req.user with the active tenant at runtime
 type UserWithTenant = User & { tenant?: string | { id: string } }
 
+const mediaAccess = tenantEnabledAccess('media')
+
 export const Media: CollectionConfig = {
   slug: 'media',
   folders: true,
   access: {
-    create: authenticated,
-    delete: authenticated,
-    read: anyone,
-    update: authenticated,
+    create: mediaAccess,
+    delete: mediaAccess,
+    read: mediaAccess,
+    update: mediaAccess,
   },
   admin: {
     useAsTitle: 'title',

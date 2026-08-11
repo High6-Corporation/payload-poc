@@ -574,21 +574,7 @@ const LinkIcon: React.FC<{ size?: number }> = ({ size = 40 }) => (
   </svg>
 )
 
-const LoaderIcon: React.FC<{ size?: number }> = ({ size = 20 }) => (
-  <svg
-    width={size}
-    height={size}
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke={C.elevation800}
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    style={{ animation: 'spin 1s linear infinite' }}
-  >
-    <path d="M21 12a9 9 0 1 1-6.219-8.56" />
-  </svg>
-)
+import { LoaderIcon } from '@/components/ui/admin-loading'
 
 const CheckIcon: React.FC<{ size?: number }> = ({ size = 14 }) => (
   <svg
@@ -1216,12 +1202,7 @@ const GalleryPicker: React.FC<FieldInputProps> = ({ field, value, onChange, read
   const getThumbnail = (doc: Record<string, unknown> | null | undefined): string | null => {
     if (!doc) return null
     const sizes = doc.sizes as Record<string, { url?: string }> | undefined
-    return (
-      (doc.thumbnailURL as string) ||
-      (doc.url as string) ||
-      sizes?.thumbnail?.url ||
-      null
-    )
+    return (doc.thumbnailURL as string) || (doc.url as string) || sizes?.thumbnail?.url || null
   }
 
   const getFilename = (doc: Record<string, unknown> | null | undefined, id: string): string =>
@@ -1277,9 +1258,7 @@ const GalleryPicker: React.FC<FieldInputProps> = ({ field, value, onChange, read
                     <ImageIcon size={14} />
                   )}
                 </span>
-                <span style={S.chipLabel}>
-                  {docsLoading && !doc ? 'Loading…' : filename}
-                </span>
+                <span style={S.chipLabel}>{docsLoading && !doc ? 'Loading…' : filename}</span>
                 {!readOnly && (
                   <button
                     type="button"
@@ -1484,9 +1463,6 @@ export const EntryDataField: React.FC<EntryDataFieldProps> = (props) => {
 
   return (
     <div style={S.wrapper}>
-      {/* Keyframes for spinner animation */}
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-
       {/* State: No parent collection selected */}
       {!hasParentCollection && (
         <div style={S.stateBox}>

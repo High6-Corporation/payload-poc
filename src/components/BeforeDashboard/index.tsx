@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react'
 
+import { AdminLoading } from '@/components/ui/admin-loading'
 import { getCookie } from '@/utilities/admin-cookies'
 
 import type { DashboardResponse } from '@/app/(payload)/api/dashboard/route'
@@ -63,6 +64,7 @@ const BeforeDashboard: React.FC = () => {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [disabledIds, setDisabledIds] = useState<string[]>([])
+  const [disabledLoading, setDisabledLoading] = useState(true)
 
   useEffect(() => {
     let cancelled = false
@@ -109,6 +111,7 @@ const BeforeDashboard: React.FC = () => {
 
     if (!siteId || !tenantId) {
       setDisabledIds([])
+      setDisabledLoading(false)
       return
     }
 
@@ -142,9 +145,11 @@ const BeforeDashboard: React.FC = () => {
 
         if (!cancelled) {
           setDisabledIds([...siteDisabled, ...tenantDisabled])
+          setDisabledLoading(false)
         }
       } catch {
         // Silently fail — quick-action filtering is non-critical
+        if (!cancelled) setDisabledLoading(false)
       }
     }
 
@@ -161,7 +166,7 @@ const BeforeDashboard: React.FC = () => {
     return (
       <div className={baseClass}>
         <div className={`${baseClass}__card`}>
-          <p className={`${baseClass}__loading`}>Loading dashboard…</p>
+          <AdminLoading mode="inline" show />
         </div>
       </div>
     )
@@ -192,21 +197,24 @@ const BeforeDashboard: React.FC = () => {
       {/* ── Quick actions ─────────────────────────────── */}
       <div className={`${baseClass}__card`}>
         <h2 className={`${baseClass}__section-title`}>Quick Actions</h2>
-        <div className={`${baseClass}__actions`}>
-          {quickActions
-            .filter((action) => {
-              if (!action.collectionSlug) return true
-              const builtinKey = `builtin:${action.collectionSlug}`
-              return !disabledIds.includes(builtinKey)
-            })
-            .map((action) => (
-              <a key={action.href} href={action.href} className={`${baseClass}__action-link`}>
-                {action.label}
-              </a>
-            ))}
-        </div>
+        {disabledLoading ? (
+          <AdminLoading mode="inline" show />
+        ) : (
+          <div className={`${baseClass}__actions`}>
+            {quickActions
+              .filter((action) => {
+                if (!action.collectionSlug) return true
+                const builtinKey = `builtin:${action.collectionSlug}`
+                return !disabledIds.includes(builtinKey)
+              })
+              .map((action) => (
+                <a key={action.href} href={action.href} className={`${baseClass}__action-link`}>
+                  {action.label}
+                </a>
+              ))}
+          </div>
+        )}
       </div>
-
     </div>
   )
 }

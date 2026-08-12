@@ -32,8 +32,18 @@ const inputStyle: React.CSSProperties = {
  * TextInput because TextInput hardcodes type="text" and accepts no type
  * prop (htmlAttributes is restricted to autoComplete).
  */
-export function SmtpApiKeyField() {
-  const { value, setValue, showError, errorMessage } = useField<string>({ path: 'apiKey' })
+export function SmtpApiKeyField({ path }: { path?: string }) {
+  // `path` is the ABSOLUTE form path passed by Payload to custom field
+  // components.  The apiKey field lives inside the NAMED "smtp" tab, so
+  // the path is `smtp.apiKey` — NOT the flat `apiKey` from the field
+  // config.  Hardcoding `apiKey` (the field's `name`) registers form state
+  // at the wrong path: setValue writes a value that is never serialized
+  // into the submit payload, and the server rejects with "smtp.apiKey:
+  // required".  Verified in the admin UI on 2026-08-12 (create form save
+  // returned 400 with path `smtp.apiKey` until this fix).
+  const { value, setValue, showError, errorMessage } = useField<string>({
+    path: path ?? 'apiKey',
+  })
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState('')
 

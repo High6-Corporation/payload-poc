@@ -1,4 +1,4 @@
-import type { CollectionBeforeValidateHook } from 'payload'
+import { APIError, type CollectionBeforeValidateHook } from 'payload'
 
 /**
  * Enforce (tenant, site) uniqueness AND copy apiKey → _apiKey.
@@ -48,9 +48,11 @@ export const validateUniquePair: CollectionBeforeValidateHook = async ({
       const conflictType = siteId
         ? 'A site-level override already exists for this site'
         : 'A tenant default already exists for this tenant'
-      throw new Error(
+      throw new APIError(
         `${conflictType}. Each tenant may have one default config, ` +
           'and each site may have at most one override.',
+        400,
+        undefined, // no field-specific error
       )
     }
   } catch (err) {

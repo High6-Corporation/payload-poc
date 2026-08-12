@@ -19,6 +19,7 @@ import { Posts } from './collections/Posts'
 import { PricingPlans } from './collections/PricingPlans'
 import { SiteSettings } from './collections/SiteSettings'
 import { Sites } from './collections/Sites'
+import { SmtpSettings } from './collections/SmtpSettings'
 import { Tenants } from './collections/Tenants'
 import { Testimonials } from './collections/Testimonials'
 import { Users } from './collections/Users'
@@ -189,6 +190,7 @@ export default buildConfig({
     PortfolioItems,
     PricingPlans,
     SiteSettings,
+    SmtpSettings,
     CustomCollections,
     CustomCollectionEntries,
     AgentAuditLog,

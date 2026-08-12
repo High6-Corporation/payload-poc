@@ -81,6 +81,7 @@ export interface Config {
     'portfolio-items': PortfolioItem;
     'pricing-plans': PricingPlan;
     'site-settings': SiteSetting;
+    'smtp-settings': SmtpSetting;
     'custom-collections': CustomCollection;
     'custom-collection-entries': CustomCollectionEntry;
     'agent-audit-log': AgentAuditLog;
@@ -117,6 +118,7 @@ export interface Config {
     'portfolio-items': PortfolioItemsSelect<false> | PortfolioItemsSelect<true>;
     'pricing-plans': PricingPlansSelect<false> | PricingPlansSelect<true>;
     'site-settings': SiteSettingsSelect<false> | SiteSettingsSelect<true>;
+    'smtp-settings': SmtpSettingsSelect<false> | SmtpSettingsSelect<true>;
     'custom-collections': CustomCollectionsSelect<false> | CustomCollectionsSelect<true>;
     'custom-collection-entries': CustomCollectionEntriesSelect<false> | CustomCollectionEntriesSelect<true>;
     'agent-audit-log': AgentAuditLogSelect<false> | AgentAuditLogSelect<true>;
@@ -1247,6 +1249,52 @@ export interface SiteSetting {
   createdAt: string;
 }
 /**
+ * Per-tenant SMTP2GO configuration. One default per tenant, optional per-site overrides.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "smtp-settings".
+ */
+export interface SmtpSetting {
+  id: string;
+  /**
+   * Human-readable label (e.g. "Default", "Marketing Site Override")
+   */
+  label: string;
+  tenant: string | Tenant;
+  /**
+   * Leave empty for a tenant-wide default. Set to scope this config to a specific site.
+   */
+  site?: (string | null) | Site;
+  enabled?: boolean | null;
+  enableLogging?: boolean | null;
+  smtp: {
+    /**
+     * INTERNAL: Raw SMTP2GO API key. Never exposed in client-facing API responses. The afterRead hook masks apiKey from this value. Internal reads (resolveSmtpConfig, smtp-test endpoint) bypass Payload hooks and read this field directly from MongoDB.
+     */
+    _apiKey?: string | null;
+    /**
+     * SMTP2GO API key. Masked in the admin UI and API responses — the raw key is never returned after initial save.
+     */
+    apiKey: string;
+    apiRegion: 'us' | 'eu' | 'au';
+    /**
+     * From address for emails sent with this config
+     */
+    senderEmail: string;
+    /**
+     * When enabled, all emails sent with this config use the sender email above, overriding any from address set by the calling code.
+     */
+    forceSenderEmail?: boolean | null;
+    /**
+     * From name for emails sent with this config
+     */
+    senderName: string;
+  };
+  test?: {};
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "custom-collections".
  */
@@ -1678,6 +1726,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'site-settings';
         value: string | SiteSetting;
+      } | null)
+    | ({
+        relationTo: 'smtp-settings';
+        value: string | SmtpSetting;
       } | null)
     | ({
         relationTo: 'custom-collections';
@@ -2261,6 +2313,30 @@ export interface SiteSettingsSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "smtp-settings_select".
+ */
+export interface SmtpSettingsSelect<T extends boolean = true> {
+  label?: T;
+  tenant?: T;
+  site?: T;
+  enabled?: T;
+  enableLogging?: T;
+  smtp?:
+    | T
+    | {
+        _apiKey?: T;
+        apiKey?: T;
+        apiRegion?: T;
+        senderEmail?: T;
+        forceSenderEmail?: T;
+        senderName?: T;
+      };
+  test?: T | {};
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "custom-collections_select".
  */
 export interface CustomCollectionsSelect<T extends boolean = true> {
@@ -2820,6 +2896,7 @@ export interface TaskCreateCollectionExport {
       | 'portfolio-items'
       | 'pricing-plans'
       | 'site-settings'
+      | 'smtp-settings'
       | 'custom-collections'
       | 'custom-collection-entries'
       | 'agent-audit-log'

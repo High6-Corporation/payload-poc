@@ -93,10 +93,20 @@ async function docToConfig(
   payload: Payload,
   doc: Record<string, unknown>,
 ): Promise<ResolvedSmtpConfig> {
-  let apiKey = doc._apiKey as string | undefined
+  // All SMTP fields live inside the named "smtp" tab, so both storage and
+  // response docs carry them nested (`doc.smtp.apiKey`, `doc.smtp.apiRegion`,
+  // ...).  Read nested-first with a flat fallback for robustness.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const smtp = (doc as any)?.smtp as Record<string, unknown> | undefined
+  const get = (key: string): unknown => smtp?.[key] ?? doc[key]
+
+  let apiKey = get('_apiKey') as string | undefined
 
   // _apiKey is stripped by the afterRead mask hook, so read it raw from
   // MongoDB via the mongoose connection's native db handle.
+  //
+  // DATA SHAPE (verified empirically 2026-08-12): the raw key is stored at
+  // `smtp._apiKey` (nested).  A flat fallback is kept for robustness.
   let rawReadError: string | null = null
   if (!apiKey && doc.id) {
     try {
@@ -104,11 +114,16 @@ async function docToConfig(
       const conn = (payload.db as any)?.connection
       if (conn?.db) {
         const { ObjectId } = await import('mongodb')
-        const rawDoc = await conn.db
+        const rawDoc = (await conn.db
           .collection(SMTP_SETTINGS_COLLECTION)
-          .findOne({ _id: new ObjectId(doc.id as string) }, { projection: { _apiKey: 1 } })
-        if (rawDoc?._apiKey) {
-          apiKey = rawDoc._apiKey
+          .findOne(
+            { _id: new ObjectId(doc.id as string) },
+            { projection: { 'smtp._apiKey': 1 } },
+          )) as Record<string, unknown> | null
+        const nested = (rawDoc?.smtp as Record<string, unknown> | undefined)?._apiKey
+        const flat = rawDoc?._apiKey
+        if (nested || flat) {
+          apiKey = (nested ?? flat) as string
         }
       }
     } catch (err) {
@@ -128,12 +143,12 @@ async function docToConfig(
   return {
     id: doc.id as string,
     apiKey,
-    apiRegion: (doc.apiRegion as 'us' | 'eu' | 'au') || 'us',
-    senderEmail: doc.senderEmail as string,
-    forceSenderEmail: (doc.forceSenderEmail as boolean) || false,
-    senderName: (doc.senderName as string) || 'High6',
+    apiRegion: (get('apiRegion') as 'us' | 'eu' | 'au') || 'us',
+    senderEmail: get('senderEmail') as string,
+    forceSenderEmail: (get('forceSenderEmail') as boolean) || false,
+    senderName: (get('senderName') as string) || 'High6',
     enabled: doc.enabled !== false,
-    enableLogging: doc.enableLogging !== false,
+    enableLogging: (get('enableLogging') as boolean) !== false,
     resolvedForSite: (doc.site as string) || undefined,
   }
 }

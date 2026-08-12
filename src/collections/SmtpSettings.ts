@@ -1,8 +1,14 @@
 import type { CollectionConfig } from 'payload'
+import { validateUniquePair } from './SmtpSettings/hooks/validateUniquePair'
+import { maskApiKey } from './SmtpSettings/hooks/maskApiKey'
 
 export const SmtpSettings: CollectionConfig = {
   slug: 'smtp-settings',
   labels: { singular: 'SMTP Setting', plural: 'SMTP Settings' },
+  hooks: {
+    beforeValidate: [validateUniquePair],
+    afterRead: [maskApiKey],
+  },
   admin: {
     useAsTitle: 'label',
     defaultColumns: ['label', 'tenant', 'site', 'enabled', 'senderEmail'],

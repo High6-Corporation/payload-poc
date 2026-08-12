@@ -1,6 +1,14 @@
 import type { CollectionConfig } from 'payload'
+import { tenantEnabledAccess } from '@/access/tenantScoped'
+import { authenticated } from '@/access/authenticated'
 import { validateUniquePair } from './SmtpSettings/hooks/validateUniquePair'
 import { maskApiKey } from './SmtpSettings/hooks/maskApiKey'
+
+// tenantEnabledAccess('smtp-settings') for all operations, with
+// `authenticated` as the baseline gate: anonymous users are denied
+// (tenantEnabledAccess defaults to `true` for unauthenticated requests,
+// which would otherwise leave this API-key-bearing collection open).
+const access = tenantEnabledAccess('smtp-settings', { publicAccess: authenticated })
 
 export const SmtpSettings: CollectionConfig = {
   slug: 'smtp-settings',
@@ -8,6 +16,12 @@ export const SmtpSettings: CollectionConfig = {
   hooks: {
     beforeValidate: [validateUniquePair],
     afterRead: [maskApiKey],
+  },
+  access: {
+    create: access,
+    delete: access,
+    read: access,
+    update: access,
   },
   admin: {
     useAsTitle: 'label',

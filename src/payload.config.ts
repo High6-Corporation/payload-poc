@@ -103,28 +103,67 @@ const loggingEmailAdapter: EmailAdapter = ({ payload }) => ({
     }
 
     if (!config || !config.enabled) {
-      throw new Error(
-        config
-          ? `SMTP config "${config.id}" is disabled. Enable it before sending emails.`
-          : `No SMTP config found for recipient "${recipient}". ` +
-              `Ensure a SmtpSettings tenant-default exists for at least one tenant.`,
-      )
+      // ---- Fallback: original env-var SMTP2GO transport ----
+      // Kept as a safety net while tenants migrate to SmtpSettings docs.
+      const envHost = process.env.SMTP2GO_HOST
+      const envPort = process.env.SMTP2GO_PORT
+      const envUser = process.env.SMTP2GO_USERNAME
+      const envPass = process.env.SMTP2GO_PASSWORD
+      const envFrom = process.env.SMTP2GO_FROM_EMAIL
+
+      if (envHost && envUser && envPass) {
+        config = {
+          id: 'env-fallback',
+          apiKey: envUser,
+          apiRegion: 'us',
+          senderEmail: envFrom || 'no-reply@h6app.site',
+          forceSenderEmail: false,
+          senderName: 'High6',
+          enabled: true,
+          enableLogging: true,
+        }
+      } else {
+        throw new Error(
+          config
+            ? `SMTP config "${config.id}" is disabled. Enable it before sending emails.`
+            : `No SMTP config found for recipient "${recipient}". ` +
+                `Ensure a SmtpSettings tenant-default exists for at least one tenant, ` +
+                `or set SMTP2GO_* env vars as a fallback.`,
+        )
+      }
     }
 
     // ---- Create transport from resolved config ----
-    const regionHosts: Record<string, string> = {
-      us: 'mail.smtp2go.com',
-      eu: 'mail-eu.smtp2go.com',
-      au: 'mail-au.smtp2go.com',
+    let host: string
+    let port: number
+    let authUser: string
+    let authPass: string
+
+    if (config.id === 'env-fallback') {
+      // Env-var fallback: SMTP2GO uses API key as both user and pass,
+      // but the env var transport uses the original username/password pair.
+      host = process.env.SMTP2GO_HOST!
+      port = Number(process.env.SMTP2GO_PORT) || 2525
+      authUser = process.env.SMTP2GO_USERNAME!
+      authPass = process.env.SMTP2GO_PASSWORD!
+    } else {
+      const regionHosts: Record<string, string> = {
+        us: 'mail.smtp2go.com',
+        eu: 'mail-eu.smtp2go.com',
+        au: 'mail-au.smtp2go.com',
+      }
+      host = regionHosts[config.apiRegion] || regionHosts.us
+      port = 2525
+      authUser = config.apiKey
+      authPass = config.apiKey // SMTP2GO uses API key as both user and pass
     }
-    const host = regionHosts[config.apiRegion] || regionHosts.us
 
     const transport = nodemailer.createTransport({
       host,
-      port: 2525,
+      port,
       auth: {
-        user: config.apiKey,
-        pass: config.apiKey, // SMTP2GO uses API key as both user and pass
+        user: authUser,
+        pass: authPass,
       },
     })
 

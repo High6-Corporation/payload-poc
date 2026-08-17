@@ -115,6 +115,15 @@ export const Pages: CollectionConfig<'pages'> = {
               },
             },
             {
+              name: 'canonicalUrl',
+              type: 'text',
+              label: 'Canonical URL',
+              admin: {
+                description:
+                  'The final live URL of this page (e.g. https://example.com/our-solutions). The SEO checklist evaluates this URL when set; otherwise the Payload slug is used.',
+              },
+            },
+            {
               name: 'seoChecklist',
               type: 'ui',
               admin: {

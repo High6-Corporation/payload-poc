@@ -21,6 +21,8 @@ export interface SeoChecklistInput {
   metaDescription: string
   slug: string
   content: string // pre-extracted plain text (lowercased)
+  /** Final live URL (e.g. https://example.com/my-page) — its path is used for the URL check when present; falls back to slug otherwise. */
+  canonicalUrl?: string
 }
 
 export type ChecklistStatus = 'pass' | 'fail' | 'na'
@@ -157,7 +159,10 @@ const FUNCTION_WORDS = new Set([
 
 /** Split text into lowercase word tokens. */
 function tokenise(text: string): string[] {
-  return text.toLowerCase().split(/[^a-z0-9]+/).filter(Boolean)
+  return text
+    .toLowerCase()
+    .split(/[^a-z0-9]+/)
+    .filter(Boolean)
 }
 
 /**
@@ -213,6 +218,21 @@ function hasKeywordInSlug(slug: string, keyword: string): boolean {
   if (!keyword || !slug) return false
   const normalised = slug.toLowerCase().replace(/[-_]/g, ' ')
   return hasKeywordInText(normalised, keyword)
+}
+
+/**
+ * Extract the path from a canonical URL for the URL check (leading slash and
+ * trailing slashes stripped). Returns null for missing/invalid URLs so
+ * callers can fall back to the slug.
+ */
+function getCanonicalPath(canonicalUrl: string | undefined): string | null {
+  if (!canonicalUrl || !canonicalUrl.trim()) return null
+  try {
+    const path = new URL(canonicalUrl.trim()).pathname.replace(/\/+$/, '')
+    return path.startsWith('/') ? path.slice(1) : path
+  } catch {
+    return null
+  }
 }
 
 /**
@@ -286,7 +306,11 @@ export function evaluateSeoChecklist(input: SeoChecklistInput): SeoChecklistResu
   const matchedInDescription = keywords.filter((keyword) =>
     hasKeyword(input.metaDescription, keyword),
   )
-  const matchedInSlug = keywords.filter((keyword) => hasKeywordInSlug(input.slug, keyword))
+  // The URL check evaluates the canonical URL's path when one is set
+  // (the live apir-tayo URL may differ from the Payload slug); otherwise it
+  // falls back to the Payload slug.
+  const slugSource = getCanonicalPath(input.canonicalUrl) ?? input.slug
+  const matchedInSlug = keywords.filter((keyword) => hasKeywordInSlug(slugSource, keyword))
   const matchedInContent = keywords.filter((keyword) => hasKeyword(input.content, keyword))
 
   // ---- Checklist items ----
@@ -320,8 +344,7 @@ export function evaluateSeoChecklist(input: SeoChecklistInput): SeoChecklistResu
             keywords,
             matched: matchedInDescription,
             pass: (kw) => `"${kw}" found in the meta description.`,
-            passMany: (matched) =>
-              `Matched in the meta description: ${formatKeywords(matched)}.`,
+            passMany: (matched) => `Matched in the meta description: ${formatKeywords(matched)}.`,
             fail: (kw) =>
               `"${kw}" is not in the meta description. Add it naturally to improve click-through.`,
             failMany: () =>
@@ -339,7 +362,8 @@ export function evaluateSeoChecklist(input: SeoChecklistInput): SeoChecklistResu
             matched: matchedInSlug,
             pass: (kw) => `"${kw}" appears in the URL slug.`,
             passMany: (matched) => `Matched in the URL slug: ${formatKeywords(matched)}.`,
-            fail: (kw) => `"${kw}" is not in the URL slug. A keyword-rich URL helps search engines.`,
+            fail: (kw) =>
+              `"${kw}" is not in the URL slug. A keyword-rich URL helps search engines.`,
             failMany: () =>
               'None of your focus keywords are in the URL slug. A keyword-rich URL helps search engines.',
           }),
@@ -355,7 +379,8 @@ export function evaluateSeoChecklist(input: SeoChecklistInput): SeoChecklistResu
             matched: matchedInContent,
             pass: (kw) => `"${kw}" found in the body content.`,
             passMany: (matched) => `Matched in the body content: ${formatKeywords(matched)}.`,
-            fail: (kw) => `"${kw}" is not in the body content. Use it naturally in your first paragraph.`,
+            fail: (kw) =>
+              `"${kw}" is not in the body content. Use it naturally in your first paragraph.`,
             failMany: () =>
               'None of your focus keywords are in the body content. Use them naturally in your first paragraph.',
           }),

@@ -351,6 +351,10 @@ export interface Page {
      * Comma-separated keywords this page targets for SEO (e.g. "web design, agency, philippines").
      */
     focusKeyword?: string | null;
+    /**
+     * The final live URL of this page (e.g. https://example.com/our-solutions). The SEO checklist evaluates this URL when set; otherwise the Payload slug is used.
+     */
+    canonicalUrl?: string | null;
   };
   publishedAt?: string | null;
   /**
@@ -399,6 +403,10 @@ export interface Post {
      * Comma-separated keywords this post targets for SEO (e.g. "web design, agency, philippines").
      */
     focusKeyword?: string | null;
+    /**
+     * The final live URL of this post (e.g. https://example.com/blog/our-post). The SEO checklist evaluates this URL when set; otherwise the Payload slug is used.
+     */
+    canonicalUrl?: string | null;
   };
   publishedAt?: string | null;
   authors?: (string | User)[] | null;
@@ -1914,6 +1922,7 @@ export interface PagesSelect<T extends boolean = true> {
         image?: T;
         description?: T;
         focusKeyword?: T;
+        canonicalUrl?: T;
       };
   publishedAt?: T;
   generateSlug?: T;
@@ -2024,6 +2033,7 @@ export interface PostsSelect<T extends boolean = true> {
         image?: T;
         description?: T;
         focusKeyword?: T;
+        canonicalUrl?: T;
       };
   publishedAt?: T;
   authors?: T;

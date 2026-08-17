@@ -394,6 +394,7 @@ export const SeoChecklistPanel: React.FC = () => {
   const { value: focusKeyword } = useField<string>({ path: 'meta.focusKeyword' })
   const { value: seoTitle } = useField<string>({ path: 'meta.title' })
   const { value: metaDescription } = useField<string>({ path: 'meta.description' })
+  const { value: canonicalUrl } = useField<string>({ path: 'meta.canonicalUrl' })
   const { value: slug } = useField<string>({ path: 'slug' })
 
   // Content is in different fields per collection — watch both
@@ -415,8 +416,9 @@ export const SeoChecklistPanel: React.FC = () => {
         metaDescription: metaDescription ?? '',
         slug: slug ?? '',
         content: bodyText,
+        canonicalUrl: canonicalUrl ?? undefined,
       }),
-    [focusKeyword, seoTitle, metaDescription, slug, bodyText],
+    [focusKeyword, seoTitle, metaDescription, slug, bodyText, canonicalUrl],
   )
 
   const passCount = result.items.filter((i) => i.status === 'pass').length

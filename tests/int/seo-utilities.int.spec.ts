@@ -451,3 +451,52 @@ describe('evaluateSeoChecklist — multi-word keyphrase matching', () => {
     expect(result.items[2].status).toBe('pass')
   })
 })
+
+// ---------------------------------------------------------------------------
+// evaluateSeoChecklist — canonical URL
+// ---------------------------------------------------------------------------
+
+describe('evaluateSeoChecklist — canonical URL', () => {
+  const baseInput = {
+    focusKeyword: 'renewable energy solutions',
+    seoTitle: 'Renewable Energy Solutions | Equator Energy Philippines',
+    metaDescription: 'Renewable energy solutions from Equator Energy.',
+    slug: 'solutions',
+    content: 'we deliver renewable energy solutions',
+  }
+
+  it('evaluates the canonical URL path when set', () => {
+    const result = evaluateSeoChecklist({
+      ...baseInput,
+      canonicalUrl: 'https://example.com/renewable-energy-solutions',
+    })
+    expect(result.items[2].status).toBe('pass')
+    expect(result.items[2].detail).toBe('"renewable energy solutions" appears in the URL slug.')
+  })
+
+  it('ignores the slug when a canonical URL is set (no fallback)', () => {
+    const result = evaluateSeoChecklist({
+      ...baseInput,
+      slug: 'renewable-energy-solutions',
+      canonicalUrl: 'https://example.com/something-else',
+    })
+    expect(result.items[2].status).toBe('fail')
+  })
+
+  it('falls back to the slug when the canonical URL is invalid', () => {
+    const result = evaluateSeoChecklist({
+      ...baseInput,
+      slug: 'renewable-energy-solutions',
+      canonicalUrl: 'not a valid url',
+    })
+    expect(result.items[2].status).toBe('pass')
+  })
+
+  it('uses the slug when no canonical URL is provided', () => {
+    const result = evaluateSeoChecklist({
+      ...baseInput,
+      slug: 'renewable-energy-solutions',
+    })
+    expect(result.items[2].status).toBe('pass')
+  })
+})

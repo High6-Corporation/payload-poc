@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useMemo } from 'react'
-import { useField } from '@payloadcms/ui'
+import { useDocumentInfo, useField } from '@payloadcms/ui'
 
 import { extractPlainText } from '@/utilities/extractPlainText'
 import {
@@ -397,15 +397,30 @@ export const SeoChecklistPanel: React.FC = () => {
   const { value: canonicalUrl } = useField<string>({ path: 'meta.canonicalUrl' })
   const { value: slug } = useField<string>({ path: 'slug' })
 
-  // Content is in different fields per collection — watch both
+  // Content is in different fields per collection — watch the leaf fields,
+  // plus the Page hero richText (a separate top-level group outside the
+  // layout blocks). Tab fields are lazy-mounted and Payload's form never
+  // registers group values under the group path, so every value falls back
+  // to the loaded document (useDocumentInfo initialData) until its field
+  // mounts.
+  const { initialData: doc } = useDocumentInfo()
+  const docData = (doc ?? {}) as Record<string, unknown>
+  const docHero = docData.hero as { richText?: unknown } | undefined
+  const docLayout = docData.layout as unknown
+  const docContent = docData.content as unknown
+
   const { value: lexicalContent } = useField({ path: 'content' })
   const { value: blocksLayout } = useField({ path: 'layout' })
+  const { value: heroRichText } = useField({ path: 'hero.richText' })
 
-  // Extract plain text from whichever content field has data
+  // Extract plain text from every body field that has data
   const bodyText = useMemo(() => {
-    const content = lexicalContent ?? blocksLayout ?? ''
-    return extractPlainText(content)
-  }, [lexicalContent, blocksLayout])
+    const heroSource = heroRichText ?? docHero?.richText
+    const layoutSource = Array.isArray(blocksLayout) ? blocksLayout : docLayout
+    const contentSource = lexicalContent ?? docContent
+    const parts = [extractPlainText(heroSource), extractPlainText(contentSource ?? layoutSource)]
+    return parts.join(' ').trim()
+  }, [heroRichText, lexicalContent, blocksLayout, docHero, docLayout, docContent])
 
   // Evaluate checklist
   const result = useMemo(

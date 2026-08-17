@@ -91,6 +91,33 @@ describe('extractPlainText', () => {
     }
     expect(extractPlainText(deep)).toBe('a b')
   })
+
+  it('extracts text from a hero group object (nested richText)', () => {
+    const hero = {
+      type: 'lowImpact',
+      richText: {
+        root: {
+          children: [
+            {
+              children: [
+                { text: 'Equator Energy powers ', type: 'text' },
+                { text: 'solar systems', type: 'text' },
+              ],
+              type: 'paragraph',
+            },
+          ],
+        },
+      },
+      links: [],
+    }
+    const result = extractPlainText(hero)
+    expect(result).toContain('equator energy powers')
+    expect(result).toContain('solar systems')
+  })
+
+  it('returns empty string for a hero group without richText', () => {
+    expect(extractPlainText({ type: 'lowImpact', links: [] })).toBe('')
+  })
 })
 
 // ---------------------------------------------------------------------------

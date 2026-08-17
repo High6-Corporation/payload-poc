@@ -1190,6 +1190,29 @@ const GalleryPicker: React.FC<FieldInputProps> = ({ field, value, onChange, read
     [mediaIds, onChange, drawerCtx],
   )
 
+  // Bulk select — receives the drawer's Selection Map (every page row is
+  // pre-seeded, so only entries whose value is `true` are actually selected).
+  // Mirrors Payload's native onListBulkSelect in Upload/Input.js: collect the
+  // selected IDs, merge with the existing value, then close the drawer.
+  const handleBulkSelect = useCallback(
+    (selected: Map<number | string, boolean>) => {
+      const selectedIds: string[] = []
+      for (const [id, isSelected] of selected) {
+        if (isSelected) selectedIds.push(String(id))
+      }
+
+      // Dedupe against existing selections, preserving their current order
+      const merged = [...mediaIds]
+      for (const id of selectedIds) {
+        if (!merged.includes(id)) merged.push(id)
+      }
+
+      onChange(merged)
+      drawerCtx.closeDrawer()
+    },
+    [mediaIds, onChange, drawerCtx],
+  )
+
   const handleRemove = useCallback(
     (id: string) => {
       onChange(mediaIds.filter((mid) => mid !== id))
@@ -1215,7 +1238,12 @@ const GalleryPicker: React.FC<FieldInputProps> = ({ field, value, onChange, read
   return (
     <div style={S.fieldGroup}>
       {/* ListDrawer — rendered here so its context is within the component tree */}
-      <ListDrawer allowCreate onSelect={handleSelect} />
+      <ListDrawer
+        allowCreate
+        enableRowSelections
+        onBulkSelect={handleBulkSelect}
+        onSelect={handleSelect}
+      />
 
       {/* Selected media thumbnail chips */}
       {hasSelection && (

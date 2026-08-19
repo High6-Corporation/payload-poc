@@ -101,17 +101,6 @@ export const SmtpSettings: CollectionConfig = {
               },
             },
             {
-              name: 'apiRegion',
-              type: 'select',
-              defaultValue: 'us',
-              options: [
-                { label: 'US (api.smtp2go.com)', value: 'us' },
-                { label: 'EU (api-eu.smtp2go.com)', value: 'eu' },
-                { label: 'AU (api-au.smtp2go.com)', value: 'au' },
-              ],
-              required: true,
-            },
-            {
               name: 'senderEmail',
               type: 'email',
               required: true,

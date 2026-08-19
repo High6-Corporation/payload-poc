@@ -66,7 +66,11 @@ export function SmtpTestAction() {
         Send a test email using the current SMTP config to verify it works.
       </p>
 
-      <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start' }}>
+      {/* margin={false} strips Payload's default 24px vertical button margin
+          (--margin-block = base * 1.2); center-aligns the 32px button with
+          the 40px input. Measured: with the default margin the button floated
+          20px above the input's center */}
+      <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
         <div style={{ flex: 1 }}>
           <TextInput
             path="testEmail"
@@ -76,6 +80,7 @@ export function SmtpTestAction() {
           />
         </div>
         <Button
+          margin={false}
           onClick={handleTest}
           disabled={status === 'sending' || !id || !testEmail.trim()}
           size="medium"

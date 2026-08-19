@@ -4,7 +4,6 @@ import type { Payload } from 'payload'
 export interface ResolvedSmtpConfig {
   id: string
   apiKey: string
-  apiRegion: 'us' | 'eu' | 'au'
   senderEmail: string
   forceSenderEmail: boolean
   senderName: string
@@ -94,8 +93,8 @@ async function docToConfig(
   doc: Record<string, unknown>,
 ): Promise<ResolvedSmtpConfig> {
   // All SMTP fields live inside the named "smtp" tab, so both storage and
-  // response docs carry them nested (`doc.smtp.apiKey`, `doc.smtp.apiRegion`,
-  // ...).  Read nested-first with a flat fallback for robustness.
+  // response docs carry them nested (e.g. `doc.smtp.apiKey`).
+  // Read nested-first with a flat fallback for robustness.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const smtp = (doc as any)?.smtp as Record<string, unknown> | undefined
   const get = (key: string): unknown => smtp?.[key] ?? doc[key]
@@ -143,7 +142,6 @@ async function docToConfig(
   return {
     id: doc.id as string,
     apiKey,
-    apiRegion: (get('apiRegion') as 'us' | 'eu' | 'au') || 'us',
     senderEmail: get('senderEmail') as string,
     forceSenderEmail: (get('forceSenderEmail') as boolean) || false,
     senderName: (get('senderName') as string) || 'High6',

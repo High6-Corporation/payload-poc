@@ -12,6 +12,7 @@ import { CustomCollectionEntries } from './collections/CustomCollectionEntries'
 import { CustomCollections } from './collections/CustomCollections'
 import { FAQs } from './collections/FAQs'
 import { Media } from './collections/Media'
+import { MenuItems } from './collections/MenuItems'
 import { Pages } from './collections/Pages'
 import { PortalClients } from './collections/PortalClients'
 import { PortfolioItems } from './collections/PortfolioItems'
@@ -115,7 +116,6 @@ const loggingEmailAdapter: EmailAdapter = ({ payload }) => ({
         config = {
           id: 'env-fallback',
           apiKey: envUser,
-          apiRegion: 'us',
           senderEmail: envFrom || 'no-reply@h6app.site',
           forceSenderEmail: false,
           senderName: 'High6',
@@ -147,12 +147,10 @@ const loggingEmailAdapter: EmailAdapter = ({ payload }) => ({
       authUser = process.env.SMTP2GO_USERNAME!
       authPass = process.env.SMTP2GO_PASSWORD!
     } else {
-      const regionHosts: Record<string, string> = {
-        us: 'mail.smtp2go.com',
-        eu: 'mail-eu.smtp2go.com',
-        au: 'mail-au.smtp2go.com',
-      }
-      host = regionHosts[config.apiRegion] || regionHosts.us
+      // SMTP2GO account is US-hosted — relay host is mail.smtp2go.com.
+      // (mail.smtp2go.com is the SMTP relay; api.smtp2go.com is the REST API —
+      // not interchangeable.)
+      host = 'mail.smtp2go.com'
       port = 2525
       authUser = config.apiKey
       authPass = config.apiKey // SMTP2GO uses API key as both user and pass
@@ -293,6 +291,7 @@ export default buildConfig({
     PortfolioItems,
     PricingPlans,
     SiteSettings,
+    MenuItems,
     SmtpSettings,
     CustomCollections,
     CustomCollectionEntries,

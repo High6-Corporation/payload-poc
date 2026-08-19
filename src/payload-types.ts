@@ -81,6 +81,7 @@ export interface Config {
     'portfolio-items': PortfolioItem;
     'pricing-plans': PricingPlan;
     'site-settings': SiteSetting;
+    'menu-items': MenuItem;
     'smtp-settings': SmtpSetting;
     'custom-collections': CustomCollection;
     'custom-collection-entries': CustomCollectionEntry;
@@ -118,6 +119,7 @@ export interface Config {
     'portfolio-items': PortfolioItemsSelect<false> | PortfolioItemsSelect<true>;
     'pricing-plans': PricingPlansSelect<false> | PricingPlansSelect<true>;
     'site-settings': SiteSettingsSelect<false> | SiteSettingsSelect<true>;
+    'menu-items': MenuItemsSelect<false> | MenuItemsSelect<true>;
     'smtp-settings': SmtpSettingsSelect<false> | SmtpSettingsSelect<true>;
     'custom-collections': CustomCollectionsSelect<false> | CustomCollectionsSelect<true>;
     'custom-collection-entries': CustomCollectionEntriesSelect<false> | CustomCollectionEntriesSelect<true>;
@@ -1257,6 +1259,45 @@ export interface SiteSetting {
   createdAt: string;
 }
 /**
+ * Tenant/site-scoped navigation menu items. Items with a site override the tenant defaults for that site.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "menu-items".
+ */
+export interface MenuItem {
+  id: string;
+  /**
+   * Text shown in the navigation (e.g. "About Us").
+   */
+  label: string;
+  link?: {
+    type?: ('reference' | 'custom') | null;
+    newTab?: boolean | null;
+    reference?:
+      | ({
+          relationTo: 'pages';
+          value: string | Page;
+        } | null)
+      | ({
+          relationTo: 'posts';
+          value: string | Post;
+        } | null);
+    url?: string | null;
+  };
+  /**
+   * Ascending sort order within the menu.
+   */
+  order?: number | null;
+  enabled?: boolean | null;
+  tenant: string | Tenant;
+  /**
+   * Leave empty for a tenant-wide default. Set to scope this item to a specific site.
+   */
+  site?: (string | null) | Site;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * Per-tenant SMTP2GO configuration. One default per tenant, optional per-site overrides.
  *
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1284,7 +1325,6 @@ export interface SmtpSetting {
      * SMTP2GO API key. Masked in the admin UI and API responses — the raw key is never returned after initial save.
      */
     apiKey: string;
-    apiRegion: 'us' | 'eu' | 'au';
     /**
      * From address for emails sent with this config
      */
@@ -1734,6 +1774,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'site-settings';
         value: string | SiteSetting;
+      } | null)
+    | ({
+        relationTo: 'menu-items';
+        value: string | MenuItem;
       } | null)
     | ({
         relationTo: 'smtp-settings';
@@ -2323,6 +2367,27 @@ export interface SiteSettingsSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "menu-items_select".
+ */
+export interface MenuItemsSelect<T extends boolean = true> {
+  label?: T;
+  link?:
+    | T
+    | {
+        type?: T;
+        newTab?: T;
+        reference?: T;
+        url?: T;
+      };
+  order?: T;
+  enabled?: T;
+  tenant?: T;
+  site?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "smtp-settings_select".
  */
 export interface SmtpSettingsSelect<T extends boolean = true> {
@@ -2336,7 +2401,6 @@ export interface SmtpSettingsSelect<T extends boolean = true> {
     | {
         _apiKey?: T;
         apiKey?: T;
-        apiRegion?: T;
         senderEmail?: T;
         forceSenderEmail?: T;
         senderName?: T;
@@ -2906,6 +2970,7 @@ export interface TaskCreateCollectionExport {
       | 'portfolio-items'
       | 'pricing-plans'
       | 'site-settings'
+      | 'menu-items'
       | 'smtp-settings'
       | 'custom-collections'
       | 'custom-collection-entries'

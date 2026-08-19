@@ -398,6 +398,17 @@ const SiteFilteredNav: React.FC = () => {
     })
   }, [config.globals, permissions])
 
+  // ---- Split Logs out — it renders at the bottom, after Custom Content ----
+
+  const mainGroups = React.useMemo(
+    () => groupedCollections.filter(([groupName]) => groupName !== 'Logs'),
+    [groupedCollections],
+  )
+  const logsGroup = React.useMemo(
+    () => groupedCollections.find(([groupName]) => groupName === 'Logs'),
+    [groupedCollections],
+  )
+
   // ---- Collection label helper ----
 
   const colLabel = (col: ClientCollection): string =>
@@ -417,9 +428,19 @@ const SiteFilteredNav: React.FC = () => {
         style={{
           backgroundColor: '#0a0e1a',
           color: 'rgba(255, 255, 255, 0.85)',
-          minHeight: '100vh',
+          // Pinned to the viewport with its own scroll container — mirrors
+          // Payload's stock `.nav` (position: sticky; height: 100vh) plus
+          // overflow-y so a tall sidebar scrolls independently of the page.
+          // The previous `minHeight: 100vh` let the nav grow past the
+          // viewport, which both made sticky travel zero (the nav was the
+          // tallest grid item) and hid the bottom links (Log out, Site
+          // Switcher) permanently.
           position: 'sticky',
           top: 0,
+          height: '100vh',
+          overflowY: 'auto',
+          overflowX: 'hidden',
+          boxSizing: 'border-box',
           padding: '4rem 1.25rem 1rem',
         }}
       >
@@ -432,7 +453,7 @@ const SiteFilteredNav: React.FC = () => {
         </Link>
 
         {/* Collection groups */}
-        {groupedCollections.map(([groupName, cols]) => (
+        {mainGroups.map(([groupName, cols]) => (
           <NavGroup key={groupName} label={groupName}>
             {cols.map((col) => (
               <Link
@@ -474,6 +495,21 @@ const SiteFilteredNav: React.FC = () => {
               </Link>
             ))}
         </NavGroup>
+
+        {/* Logs — bottom of the nav, after Custom Content */}
+        {logsGroup && (
+          <NavGroup label="Logs">
+            {logsGroup[1].map((col) => (
+              <Link
+                className="nav__link"
+                key={col.slug}
+                href={`${adminRoute}/collections/${col.slug}`}
+              >
+                <span className="nav__link-label">{colLabel(col)}</span>
+              </Link>
+            ))}
+          </NavGroup>
+        )}
 
         {/* Browse by Folder */}
         <Link className="nav__link browse-by-folder-button" href={`${adminRoute}/browse-by-folder`}>

@@ -91,13 +91,8 @@ export async function POST(request: Request): Promise<Response> {
     const smtpConfig = await resolveSmtpConfig(payload, tenantId, siteId)
 
     // Build transport — same pattern as the smtp2go-dynamic email adapter in
-    // payload.config.ts: region host + port 2525 + API key as both user and pass.
-    const regionHosts: Record<string, string> = {
-      us: 'mail.smtp2go.com',
-      eu: 'mail-eu.smtp2go.com',
-      au: 'mail-au.smtp2go.com',
-    }
-    const host = regionHosts[smtpConfig.apiRegion] || regionHosts.us
+    // payload.config.ts: US relay host + port 2525 + API key as both user and pass.
+    const host = 'mail.smtp2go.com'
 
     const transport = nodemailer.createTransport({
       host,
@@ -121,7 +116,6 @@ export async function POST(request: Request): Promise<Response> {
           <p>This email confirms that your SMTP2GO configuration is working correctly.</p>
           <table style="border-collapse: collapse; width: 100%; margin: 1rem 0;">
             <tr><td style="padding: 0.4rem 0; color: #666;">Config</td><td>${smtpDoc.label || 'N/A'}</td></tr>
-            <tr><td style="padding: 0.4rem 0; color: #666;">Region</td><td>${smtpConfig.apiRegion}</td></tr>
             <tr><td style="padding: 0.4rem 0; color: #666;">Sender</td><td>${smtpConfig.senderEmail}</td></tr>
           </table>
           <p style="color: #999; font-size: 0.8rem;">

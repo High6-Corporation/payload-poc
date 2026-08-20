@@ -30,6 +30,7 @@ import { plugins } from './plugins'
 import { defaultLexical } from '@/fields/defaultLexical'
 import { getServerSideURL } from './utilities/getURL'
 import { normalizeTo } from '@/email/loggingAdapter'
+import { sendViaSmtp2goApi } from '@/email/smtp2go'
 import {
   resolveSmtpConfig,
   resolveTenantFromRecipient,
@@ -51,8 +52,10 @@ const dirname = path.dirname(filename)
  *      up via PortalClients/Users.
  *   3. No config (or a disabled one) → throw — never a silent fallback.
  *
- * A nodemailer transport is created per send from the resolved config's
- * raw API key (read directly from MongoDB, bypassing the afterRead mask).
+ * SmtpSettings sends go through SMTP2GO's HTTP API (`sendViaSmtp2goApi`)
+ * using the config's raw API key (read directly from MongoDB, bypassing
+ * the afterRead mask). The env-var fallback keeps the legacy SMTP relay
+ * transport.
  * Log-write failures are silently swallowed — they never block or change
  * the outcome of the real email send.
  */
@@ -133,45 +136,33 @@ const loggingEmailAdapter: EmailAdapter = ({ payload }) => ({
       }
     }
 
-    // ---- Create transport from resolved config ----
-    let host: string
-    let port: number
-    let authUser: string
-    let authPass: string
-
-    if (config.id === 'env-fallback') {
-      // Env-var fallback: SMTP2GO uses API key as both user and pass,
-      // but the env var transport uses the original username/password pair.
-      host = process.env.SMTP2GO_HOST!
-      port = Number(process.env.SMTP2GO_PORT) || 2525
-      authUser = process.env.SMTP2GO_USERNAME!
-      authPass = process.env.SMTP2GO_PASSWORD!
-    } else {
-      // SMTP2GO account is US-hosted — relay host is mail.smtp2go.com.
-      // (mail.smtp2go.com is the SMTP relay; api.smtp2go.com is the REST API —
-      // not interchangeable.)
-      host = 'mail.smtp2go.com'
-      port = 2525
-      authUser = config.apiKey
-      authPass = config.apiKey // SMTP2GO uses API key as both user and pass
-    }
-
-    const transport = nodemailer.createTransport({
-      host,
-      port,
-      auth: {
-        user: authUser,
-        pass: authPass,
-      },
-    })
-
-    // Apply sender overrides
+    // ---- Send: HTTP API for SmtpSettings configs, relay for the env fallback ----
+    // SmtpSettings configs carry an API key — valid ONLY on the HTTP API
+    // (api.smtp2go.com). The SMTP relay (mail.smtp2go.com) authenticates with a
+    // separate "SMTP User" username/password pair, so an API key there always
+    // 535s. The env-var fallback uses SMTP2GO_USERNAME/PASSWORD, which IS an
+    // SMTP-User credential pair — that branch keeps the relay transport.
     const sendMessage = { ...message }
     if (config.forceSenderEmail || !sendMessage.from) {
       sendMessage.from = {
         address: config.senderEmail,
         name: config.senderName,
       }
+    }
+
+    let send: () => Promise<unknown>
+    if (config.id === 'env-fallback') {
+      const transport = nodemailer.createTransport({
+        host: process.env.SMTP2GO_HOST!,
+        port: Number(process.env.SMTP2GO_PORT) || 2525,
+        auth: {
+          user: process.env.SMTP2GO_USERNAME!,
+          pass: process.env.SMTP2GO_PASSWORD!,
+        },
+      })
+      send = () => transport.sendMail(sendMessage)
+    } else {
+      send = () => sendViaSmtp2goApi(config, sendMessage)
     }
 
     // ---- Send + Log ----
@@ -183,7 +174,7 @@ const loggingEmailAdapter: EmailAdapter = ({ payload }) => ({
     }
 
     try {
-      const result = await transport.sendMail(sendMessage)
+      const result = await send()
 
       if (config.enableLogging) {
         try {

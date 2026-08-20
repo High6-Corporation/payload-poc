@@ -24,4 +24,4 @@ node_modules/
 graphify-out
 .playwright/
 /imports/
-/docs/
+/docs/misc/*

@@ -167,6 +167,15 @@ export const Posts: CollectionConfig<'posts'> = {
               },
             },
             {
+              name: 'canonicalUrl',
+              type: 'text',
+              label: 'Canonical URL',
+              admin: {
+                description:
+                  'The final live URL of this post (e.g. https://example.com/blog/our-post). The SEO checklist evaluates this URL when set; otherwise the Payload slug is used.',
+              },
+            },
+            {
               name: 'seoChecklist',
               type: 'ui',
               admin: {

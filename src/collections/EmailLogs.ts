@@ -14,7 +14,7 @@ export const EmailLogs: CollectionConfig = {
   admin: {
     useAsTitle: 'subject',
     defaultColumns: ['status', 'site', 'to', 'subject', 'sentAt'],
-    group: 'Tenant Management',
+    group: 'Logs',
   },
   defaultSort: '-sentAt',
   fields: [

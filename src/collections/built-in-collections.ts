@@ -38,4 +38,6 @@ export const BUILT_IN_COLLECTIONS: BuiltInCollection[] = [
   { slug: 'faqs', label: 'FAQs', description: 'Frequently asked questions' },
   { slug: 'testimonials', label: 'Testimonials', description: 'Client testimonials' },
   { slug: 'portfolio-items', label: 'Portfolio Items', description: 'Portfolio project entries' },
+  { slug: 'smtp-settings', label: 'SMTP Settings', description: 'Per-tenant SMTP2GO configuration' },
+  { slug: 'menu-items', label: 'Menu Items', description: 'Site navigation menu links' },
 ]

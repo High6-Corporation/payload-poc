@@ -81,6 +81,8 @@ export interface Config {
     'portfolio-items': PortfolioItem;
     'pricing-plans': PricingPlan;
     'site-settings': SiteSetting;
+    'menu-items': MenuItem;
+    'smtp-settings': SmtpSetting;
     'custom-collections': CustomCollection;
     'custom-collection-entries': CustomCollectionEntry;
     'agent-audit-log': AgentAuditLog;
@@ -117,6 +119,8 @@ export interface Config {
     'portfolio-items': PortfolioItemsSelect<false> | PortfolioItemsSelect<true>;
     'pricing-plans': PricingPlansSelect<false> | PricingPlansSelect<true>;
     'site-settings': SiteSettingsSelect<false> | SiteSettingsSelect<true>;
+    'menu-items': MenuItemsSelect<false> | MenuItemsSelect<true>;
+    'smtp-settings': SmtpSettingsSelect<false> | SmtpSettingsSelect<true>;
     'custom-collections': CustomCollectionsSelect<false> | CustomCollectionsSelect<true>;
     'custom-collection-entries': CustomCollectionEntriesSelect<false> | CustomCollectionEntriesSelect<true>;
     'agent-audit-log': AgentAuditLogSelect<false> | AgentAuditLogSelect<true>;
@@ -349,6 +353,10 @@ export interface Page {
      * Comma-separated keywords this page targets for SEO (e.g. "web design, agency, philippines").
      */
     focusKeyword?: string | null;
+    /**
+     * The final live URL of this page (e.g. https://example.com/our-solutions). The SEO checklist evaluates this URL when set; otherwise the Payload slug is used.
+     */
+    canonicalUrl?: string | null;
   };
   publishedAt?: string | null;
   /**
@@ -397,6 +405,10 @@ export interface Post {
      * Comma-separated keywords this post targets for SEO (e.g. "web design, agency, philippines").
      */
     focusKeyword?: string | null;
+    /**
+     * The final live URL of this post (e.g. https://example.com/blog/our-post). The SEO checklist evaluates this URL when set; otherwise the Payload slug is used.
+     */
+    canonicalUrl?: string | null;
   };
   publishedAt?: string | null;
   authors?: (string | User)[] | null;
@@ -1247,6 +1259,90 @@ export interface SiteSetting {
   createdAt: string;
 }
 /**
+ * Tenant/site-scoped navigation menu items. Items with a site override the tenant defaults for that site.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "menu-items".
+ */
+export interface MenuItem {
+  id: string;
+  /**
+   * Text shown in the navigation (e.g. "About Us").
+   */
+  label: string;
+  link?: {
+    type?: ('reference' | 'custom') | null;
+    newTab?: boolean | null;
+    reference?:
+      | ({
+          relationTo: 'pages';
+          value: string | Page;
+        } | null)
+      | ({
+          relationTo: 'posts';
+          value: string | Post;
+        } | null);
+    url?: string | null;
+  };
+  /**
+   * Ascending sort order within the menu.
+   */
+  order?: number | null;
+  enabled?: boolean | null;
+  tenant: string | Tenant;
+  /**
+   * Leave empty for a tenant-wide default. Set to scope this item to a specific site.
+   */
+  site?: (string | null) | Site;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Per-tenant SMTP2GO configuration. One default per tenant, optional per-site overrides.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "smtp-settings".
+ */
+export interface SmtpSetting {
+  id: string;
+  /**
+   * Human-readable label (e.g. "Default", "Marketing Site Override")
+   */
+  label: string;
+  tenant: string | Tenant;
+  /**
+   * Leave empty for a tenant-wide default. Set to scope this config to a specific site.
+   */
+  site?: (string | null) | Site;
+  enabled?: boolean | null;
+  enableLogging?: boolean | null;
+  smtp: {
+    /**
+     * INTERNAL: Raw SMTP2GO API key. Never exposed in client-facing API responses. The afterRead hook masks apiKey from this value. Internal reads (resolveSmtpConfig, smtp-test endpoint) bypass Payload hooks and read this field directly from MongoDB.
+     */
+    _apiKey?: string | null;
+    /**
+     * SMTP2GO API key. Masked in the admin UI and API responses — the raw key is never returned after initial save.
+     */
+    apiKey: string;
+    /**
+     * From address for emails sent with this config
+     */
+    senderEmail: string;
+    /**
+     * When enabled, all emails sent with this config use the sender email above, overriding any from address set by the calling code.
+     */
+    forceSenderEmail?: boolean | null;
+    /**
+     * From name for emails sent with this config
+     */
+    senderName: string;
+  };
+  test?: {};
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "custom-collections".
  */
@@ -1680,6 +1776,14 @@ export interface PayloadLockedDocument {
         value: string | SiteSetting;
       } | null)
     | ({
+        relationTo: 'menu-items';
+        value: string | MenuItem;
+      } | null)
+    | ({
+        relationTo: 'smtp-settings';
+        value: string | SmtpSetting;
+      } | null)
+    | ({
         relationTo: 'custom-collections';
         value: string | CustomCollection;
       } | null)
@@ -1862,6 +1966,7 @@ export interface PagesSelect<T extends boolean = true> {
         image?: T;
         description?: T;
         focusKeyword?: T;
+        canonicalUrl?: T;
       };
   publishedAt?: T;
   generateSlug?: T;
@@ -1972,6 +2077,7 @@ export interface PostsSelect<T extends boolean = true> {
         image?: T;
         description?: T;
         focusKeyword?: T;
+        canonicalUrl?: T;
       };
   publishedAt?: T;
   authors?: T;
@@ -2256,6 +2362,50 @@ export interface SiteSettingsSelect<T extends boolean = true> {
         description?: T;
         focusKeyword?: T;
       };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "menu-items_select".
+ */
+export interface MenuItemsSelect<T extends boolean = true> {
+  label?: T;
+  link?:
+    | T
+    | {
+        type?: T;
+        newTab?: T;
+        reference?: T;
+        url?: T;
+      };
+  order?: T;
+  enabled?: T;
+  tenant?: T;
+  site?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "smtp-settings_select".
+ */
+export interface SmtpSettingsSelect<T extends boolean = true> {
+  label?: T;
+  tenant?: T;
+  site?: T;
+  enabled?: T;
+  enableLogging?: T;
+  smtp?:
+    | T
+    | {
+        _apiKey?: T;
+        apiKey?: T;
+        senderEmail?: T;
+        forceSenderEmail?: T;
+        senderName?: T;
+      };
+  test?: T | {};
   updatedAt?: T;
   createdAt?: T;
 }
@@ -2820,6 +2970,8 @@ export interface TaskCreateCollectionExport {
       | 'portfolio-items'
       | 'pricing-plans'
       | 'site-settings'
+      | 'menu-items'
+      | 'smtp-settings'
       | 'custom-collections'
       | 'custom-collection-entries'
       | 'agent-audit-log'

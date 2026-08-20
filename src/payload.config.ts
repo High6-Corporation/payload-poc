@@ -1,9 +1,9 @@
 import { mongooseAdapter } from '@payloadcms/db-mongodb'
-import { nodemailerAdapter } from '@payloadcms/email-nodemailer'
 import sharp from 'sharp'
 import path from 'path'
 import { APIError, buildConfig, EmailAdapter, PayloadRequest } from 'payload'
 import { fileURLToPath } from 'url'
+import nodemailer from 'nodemailer'
 
 import { AgentAuditLog } from './collections/AgentAuditLog'
 import { Categories } from './collections/Categories'
@@ -12,6 +12,7 @@ import { CustomCollectionEntries } from './collections/CustomCollectionEntries'
 import { CustomCollections } from './collections/CustomCollections'
 import { FAQs } from './collections/FAQs'
 import { Media } from './collections/Media'
+import { MenuItems } from './collections/MenuItems'
 import { Pages } from './collections/Pages'
 import { PortalClients } from './collections/PortalClients'
 import { PortfolioItems } from './collections/PortfolioItems'
@@ -19,6 +20,7 @@ import { Posts } from './collections/Posts'
 import { PricingPlans } from './collections/PricingPlans'
 import { SiteSettings } from './collections/SiteSettings'
 import { Sites } from './collections/Sites'
+import { SmtpSettings } from './collections/SmtpSettings'
 import { Tenants } from './collections/Tenants'
 import { Testimonials } from './collections/Testimonials'
 import { Users } from './collections/Users'
@@ -28,64 +30,153 @@ import { plugins } from './plugins'
 import { defaultLexical } from '@/fields/defaultLexical'
 import { getServerSideURL } from './utilities/getURL'
 import { normalizeTo } from '@/email/loggingAdapter'
+import { sendViaSmtp2goApi } from '@/email/smtp2go'
+import {
+  resolveSmtpConfig,
+  resolveTenantFromRecipient,
+  type ResolvedSmtpConfig,
+} from '@/utilities/resolveSmtpConfig'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
 
 /**
- * Email adapter that delegates to `nodemailerAdapter` and logs every send
- * attempt — success or failure — to the `email-logs` collection.
+ * Email adapter that resolves the SMTP transport per-send from the
+ * SmtpSettings collection (per-tenant, with optional per-site overrides)
+ * and logs every send attempt — success or failure — to `email-logs`.
  *
- * Wrapped in an IIFE because `nodemailerAdapter` is async (returns a
- * Promise), so the real adapter is constructed once at module init and the
- * result — a sync `EmailAdapter` factory — is what the config uses.
+ * Resolution order (see src/utilities/resolveSmtpConfig.ts):
+ *   1. Form emails carry a `site` (injected by the form-builder plugin's
+ *      beforeEmail hook) — the site's tenant + site id resolve the config.
+ *   2. Auth/system emails have no site — the recipient's tenant is looked
+ *      up via PortalClients/Users.
+ *   3. No config (or a disabled one) → throw — never a silent fallback.
  *
- * Defined inline in payload.config.ts because Turbopack externalizes the
- * ESM `@payloadcms/email-nodemailer` package in a way that breaks both
- * static and dynamic imports from non-entry-point modules. The static
- * import here works correctly.
- *
- * - Log-write failures are silently swallowed — they never block or
- *   change the outcome of the real email send.
- * - Existing SMTP2go transport config is unchanged.
+ * SmtpSettings sends go through SMTP2GO's HTTP API (`sendViaSmtp2goApi`)
+ * using the config's raw API key (read directly from MongoDB, bypassing
+ * the afterRead mask). The env-var fallback keeps the legacy SMTP relay
+ * transport.
+ * Log-write failures are silently swallowed — they never block or change
+ * the outcome of the real email send.
  */
-const loggingEmailAdapter = (async (): Promise<EmailAdapter> => {
-  const adapterFn = await nodemailerAdapter({
-    defaultFromAddress: process.env.SMTP2GO_FROM_EMAIL || '',
-    defaultFromName: 'High6',
-    transportOptions: {
-      host: process.env.SMTP2GO_HOST,
-      port: Number(process.env.SMTP2GO_PORT),
-      auth: {
-        user: process.env.SMTP2GO_USERNAME,
-        pass: process.env.SMTP2GO_PASSWORD,
-      },
-    },
-  })
-  // adapterFn is () => { name, defaultFromAddress, defaultFromName, sendEmail };
-  // cast required — the .d.ts types it as EmailAdapter which expects ({ payload }),
-  // but the runtime implementation takes no arguments.
-  const real = (adapterFn as () => ReturnType<typeof adapterFn>)()
+const loggingEmailAdapter: EmailAdapter = ({ payload }) => ({
+  name: 'smtp2go-dynamic',
+  defaultFromAddress: 'no-reply@h6app.site',
+  defaultFromName: 'High6',
 
-  return ({ payload }) => ({
-    ...real,
+  sendEmail: async (message) => {
+    // site is injected by the form-builder plugin's beforeEmail hook;
+    // auth/system emails won't have it — those resolve via recipient lookup.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const siteId = (message as any).site as string | undefined
+    const recipient = normalizeTo(message.to)
+    const subject = message.subject ?? ''
 
-    sendEmail: async (message: Parameters<typeof real.sendEmail>[0]) => {
-      // site is injected by the form-builder plugin's beforeEmail hook;
-      // auth/system emails won't have it — that's fine, the field is optional.
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const siteId = (message as any).site as string | undefined
+    let config: ResolvedSmtpConfig | null = null
 
-      const logBase = {
-        to: normalizeTo(message.to),
-        subject: message.subject ?? '',
-        site: siteId || undefined,
-        sentAt: new Date().toISOString(),
-      }
-
+    // ---- Resolve SMTP config ----
+    if (siteId) {
+      // Form emails: resolve tenant from the site
       try {
-        const result = await real.sendEmail(message)
+        const site = await payload.findByID({
+          collection: 'sites',
+          id: siteId,
+          depth: 0,
+          overrideAccess: true,
+        })
+        const siteDoc = site as unknown as Record<string, unknown>
+        const tenantId =
+          typeof siteDoc.tenant === 'string'
+            ? siteDoc.tenant
+            : (siteDoc.tenant as { id: string })?.id
 
+        if (tenantId) {
+          config = await resolveSmtpConfig(payload, tenantId, siteId)
+        }
+      } catch {
+        // Fall through to recipient lookup
+      }
+    }
+
+    if (!config && recipient) {
+      // Auth/system emails: resolve tenant from recipient
+      const tenantId = await resolveTenantFromRecipient(payload, recipient)
+      if (tenantId) {
+        config = await resolveSmtpConfig(payload, tenantId)
+      }
+    }
+
+    if (!config || !config.enabled) {
+      // ---- Fallback: original env-var SMTP2GO transport ----
+      // Kept as a safety net while tenants migrate to SmtpSettings docs.
+      const envHost = process.env.SMTP2GO_HOST
+      const envPort = process.env.SMTP2GO_PORT
+      const envUser = process.env.SMTP2GO_USERNAME
+      const envPass = process.env.SMTP2GO_PASSWORD
+      const envFrom = process.env.SMTP2GO_FROM_EMAIL
+
+      if (envHost && envUser && envPass) {
+        config = {
+          id: 'env-fallback',
+          apiKey: envUser,
+          senderEmail: envFrom || 'no-reply@h6app.site',
+          forceSenderEmail: false,
+          senderName: 'High6',
+          enabled: true,
+          enableLogging: true,
+        }
+      } else {
+        throw new Error(
+          config
+            ? `SMTP config "${config.id}" is disabled. Enable it before sending emails.`
+            : `No SMTP config found for recipient "${recipient}". ` +
+                `Ensure a SmtpSettings tenant-default exists for at least one tenant, ` +
+                `or set SMTP2GO_* env vars as a fallback.`,
+        )
+      }
+    }
+
+    // ---- Send: HTTP API for SmtpSettings configs, relay for the env fallback ----
+    // SmtpSettings configs carry an API key — valid ONLY on the HTTP API
+    // (api.smtp2go.com). The SMTP relay (mail.smtp2go.com) authenticates with a
+    // separate "SMTP User" username/password pair, so an API key there always
+    // 535s. The env-var fallback uses SMTP2GO_USERNAME/PASSWORD, which IS an
+    // SMTP-User credential pair — that branch keeps the relay transport.
+    const sendMessage = { ...message }
+    if (config.forceSenderEmail || !sendMessage.from) {
+      sendMessage.from = {
+        address: config.senderEmail,
+        name: config.senderName,
+      }
+    }
+
+    let send: () => Promise<unknown>
+    if (config.id === 'env-fallback') {
+      const transport = nodemailer.createTransport({
+        host: process.env.SMTP2GO_HOST!,
+        port: Number(process.env.SMTP2GO_PORT) || 2525,
+        auth: {
+          user: process.env.SMTP2GO_USERNAME!,
+          pass: process.env.SMTP2GO_PASSWORD!,
+        },
+      })
+      send = () => transport.sendMail(sendMessage)
+    } else {
+      send = () => sendViaSmtp2goApi(config, sendMessage)
+    }
+
+    // ---- Send + Log ----
+    const logBase = {
+      to: recipient,
+      subject,
+      site: config.resolvedForSite || siteId || undefined,
+      sentAt: new Date().toISOString(),
+    }
+
+    try {
+      const result = await send()
+
+      if (config.enableLogging) {
         try {
           await payload.create({
             collection: 'email-logs',
@@ -93,11 +184,13 @@ const loggingEmailAdapter = (async (): Promise<EmailAdapter> => {
             overrideAccess: true,
           })
         } catch {
-          // Swallow logging failures
+          /* Swallow logging failures */
         }
+      }
 
-        return result
-      } catch (err) {
+      return result
+    } catch (err) {
+      if (config.enableLogging) {
         try {
           await payload.create({
             collection: 'email-logs',
@@ -109,14 +202,14 @@ const loggingEmailAdapter = (async (): Promise<EmailAdapter> => {
             overrideAccess: true,
           })
         } catch {
-          // Swallow logging failures
+          /* Swallow logging failures */
         }
-
-        throw err
       }
-    },
-  })
-})()
+
+      throw err
+    }
+  },
+})
 
 export default buildConfig({
   admin: {
@@ -189,6 +282,8 @@ export default buildConfig({
     PortfolioItems,
     PricingPlans,
     SiteSettings,
+    MenuItems,
+    SmtpSettings,
     CustomCollections,
     CustomCollectionEntries,
     AgentAuditLog,

@@ -68,6 +68,18 @@ function extractFromLexical(node: LexicalNode | LexicalRoot): string {
     if (obj.root && typeof obj.root === 'object') {
       walk(obj.root)
     }
+
+    // Descend into nested lexical-shaped values (e.g. a hero group's
+    // `richText` field) so group fields contribute to body text.
+    for (const [key, value] of Object.entries(obj)) {
+      if (key === 'text' || key === 'children' || key === 'root') continue
+      if (value && typeof value === 'object') {
+        const nested = value as Record<string, unknown>
+        if (nested.root && typeof nested.root === 'object') {
+          walk(nested)
+        }
+      }
+    }
   }
 
   walk(node)
@@ -148,5 +160,8 @@ export function extractPlainText(content: unknown): string {
     return extractFromBlocks(content as LayoutBlock[]).toLowerCase()
   }
 
-  return ''
+  // Group fields (e.g. the Page hero group) — walk for nested lexical
+  // richText values; returns '' when none are found.
+  const text = extractFromLexical(content as LexicalRoot)
+  return text.toLowerCase()
 }

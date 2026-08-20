@@ -27,40 +27,40 @@ Rather than adding SMTP User username/password fields to SmtpSettings (two crede
 
 ### Field mapping (verified against SMTP2GO endpoint reference, 2026-08-19)
 
-| Payload `SendEmailOptions` | SMTP2GO `/v3/email/send` field |
-| --- | --- |
-| `from` (after `forceSenderEmail`/missing-from override) | `sender` — required `"Name <email>"` string |
-| `to` | `to` — required array of `"Name <email>"` strings |
-| `cc` / `bcc` | `cc` / `bcc` arrays |
-| `subject` | `subject` |
-| `text` | `text_body` |
-| `html` | `html_body` |
-| `replyTo` | `custom_headers: [{ header: 'Reply-To', value }]` (no top-level `reply_to` field exists) |
-| `headers` (string values) | `custom_headers` entries |
-| `attachments` | `attachments: [{ filename, mimetype, fileblob(base64) }]` (path-only → throw) |
+| Payload `SendEmailOptions`                              | SMTP2GO `/v3/email/send` field                                                           |
+| ------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| `from` (after `forceSenderEmail`/missing-from override) | `sender` — required `"Name <email>"` string                                              |
+| `to`                                                    | `to` — required array of `"Name <email>"` strings                                        |
+| `cc` / `bcc`                                            | `cc` / `bcc` arrays                                                                      |
+| `subject`                                               | `subject`                                                                                |
+| `text`                                                  | `text_body`                                                                              |
+| `html`                                                  | `html_body`                                                                              |
+| `replyTo`                                               | `custom_headers: [{ header: 'Reply-To', value }]` (no top-level `reply_to` field exists) |
+| `headers` (string values)                               | `custom_headers` entries                                                                 |
+| `attachments`                                           | `attachments: [{ filename, mimetype, fileblob(base64) }]` (path-only → throw)            |
 
 Auth: `X-Smtp2go-Api-Key` header. 10s `AbortSignal.timeout` (bare fetch has no default timeout). Errors surface SMTP2GO's `data.error` instead of an opaque 535.
 
-### Files changed (4 commits + handoff)
+### Files changed (5 commits + handoff)
 
-| File | Change |
-| --- | --- |
-| `src/email/smtp2go.ts` | NEW — shared helper: `buildSmtp2goPayload` / `sendViaSmtp2goApi` / `formatAddress` / `Smtp2goApiResponse` |
-| `tests/int/smtp2go.int.spec.ts` | NEW — 14 unit tests locking the field mapping + error/timeout paths |
-| `src/payload.config.ts` | Adapter SmtpSettings branch → HTTP API helper; env-fallback branch keeps the relay (SMTP2GO_USERNAME/PASSWORD are SMTP-User creds — relay-valid); logging wrapper unchanged |
-| `src/app/api/smtp-test/route.ts` | Test-tab send → HTTP API helper; auth/access-control region byte-for-byte unchanged |
+| File                             | Change                                                                                                                                                                                                                         |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `src/email/smtp2go.ts`           | NEW — shared helper: `buildSmtp2goPayload` / `sendViaSmtp2goApi` / `formatAddress` / `Smtp2goApiResponse`. Also throws on 200-with-`data.failed` recipient rejections (final-review fix — the seam's last silent-failure path) |
+| `tests/int/smtp2go.int.spec.ts`  | NEW — 15 unit tests locking the field mapping + error/timeout/recipient-failure paths                                                                                                                                          |
+| `src/payload.config.ts`          | Adapter SmtpSettings branch → HTTP API helper; env-fallback branch keeps the relay (SMTP2GO_USERNAME/PASSWORD are SMTP-User creds — relay-valid); logging wrapper unchanged                                                    |
+| `src/app/api/smtp-test/route.ts` | Test-tab send → HTTP API helper; auth/access-control region byte-for-byte unchanged                                                                                                                                            |
 
 Untouched by design: `resolveSmtpConfig.ts`, SmtpSettings schema, apiKey masking hooks.
 
 ### Verification
 
-| Check | Result |
-| --- | --- |
-| `pnpm exec tsc --noEmit` | ✅ exit 0 |
-| `pnpm test:int` | ✅ 72/72 (58 existing + 14 new) |
-| `pnpm build` | ✅ clean (dev server stopped first — v36 guard followed) |
-| Live test send | ✅ `POST /api/smtp-test 200 in 3.8s` → **email received in joshsosme@gmail.com inbox (user-confirmed)**. Sender: no-reply@matchpoint.com.ph (Matchpoint SMTP config, enabled during the session) |
-| EmailLogs | ℹ️ Test-tab sends bypass the logging adapter (route sends directly) — no email-logs row for the test send, confirmed empirically (37 rows, none from 2026-08-20). `enableLogging` only covers adapter-path sends (form submissions, auth emails). |
+| Check                    | Result                                                                                                                                                                                                                                            |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pnpm exec tsc --noEmit` | ✅ exit 0                                                                                                                                                                                                                                         |
+| `pnpm test:int`          | ✅ 73/73 (58 existing + 15 new)                                                                                                                                                                                                                   |
+| `pnpm build`             | ✅ clean (dev server stopped first — v36 guard followed)                                                                                                                                                                                          |
+| Live test send           | ✅ `POST /api/smtp-test 200 in 3.8s` → **email received in joshsosme@gmail.com inbox (user-confirmed)**. Sender: no-reply@matchpoint.com.ph (Matchpoint SMTP config, enabled during the session)                                                  |
+| EmailLogs                | ℹ️ Test-tab sends bypass the logging adapter (route sends directly) — no email-logs row for the test send, confirmed empirically (37 rows, none from 2026-08-20). `enableLogging` only covers adapter-path sends (form submissions, auth emails). |
 
 ### Key discoveries
 

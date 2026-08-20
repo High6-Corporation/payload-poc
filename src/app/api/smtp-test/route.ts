@@ -1,7 +1,7 @@
 import { getPayload } from 'payload'
 import config from '@payload-config'
 import { headers } from 'next/headers'
-import nodemailer from 'nodemailer'
+import { sendViaSmtp2goApi } from '@/email/smtp2go'
 import { resolveSmtpConfig } from '@/utilities/resolveSmtpConfig'
 
 export const maxDuration = 30 // seconds
@@ -90,20 +90,10 @@ export async function POST(request: Request): Promise<Response> {
   try {
     const smtpConfig = await resolveSmtpConfig(payload, tenantId, siteId)
 
-    // Build transport — same pattern as the smtp2go-dynamic email adapter in
-    // payload.config.ts: US relay host + port 2525 + API key as both user and pass.
-    const host = 'mail.smtp2go.com'
-
-    const transport = nodemailer.createTransport({
-      host,
-      port: 2525,
-      auth: {
-        user: smtpConfig.apiKey,
-        pass: smtpConfig.apiKey,
-      },
-    })
-
-    await transport.sendMail({
+    // Send via SMTP2GO's HTTP API — the API key is only valid there.
+    // The SMTP relay (mail.smtp2go.com) authenticates with a separate SMTP
+    // User username/password pair, so relay sends always 535 with an API key.
+    await sendViaSmtp2goApi(smtpConfig, {
       from: {
         address: smtpConfig.senderEmail,
         name: smtpConfig.senderName,

@@ -146,7 +146,14 @@ export async function sendViaSmtp2goApi(
 
   const parsed = (await res.json().catch(() => null)) as {
     request_id?: string
-    data?: { email_id?: string; error?: string; error_code?: string }
+    data?: {
+      email_id?: string
+      error?: string
+      error_code?: string
+      succeeded?: number
+      failed?: number
+      failures?: string[]
+    }
   } | null
 
   if (!res.ok) {
@@ -154,6 +161,11 @@ export async function sendViaSmtp2goApi(
     throw new Error(
       apiError ? `SMTP2GO API error: ${apiError}` : `SMTP2GO API returned HTTP ${res.status}`,
     )
+  }
+
+  if (parsed?.data?.failed) {
+    const failures = parsed.data.failures?.length ? `: ${parsed.data.failures.join('; ')}` : ''
+    throw new Error(`SMTP2GO API rejected ${parsed.data.failed} recipient(s)${failures}`)
   }
 
   return parsed as Smtp2goApiResponse

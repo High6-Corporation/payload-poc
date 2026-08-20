@@ -193,4 +193,27 @@ describe('sendViaSmtp2goApi', () => {
     await vi.advanceTimersByTimeAsync(10_000)
     await assertion
   })
+
+  it('throws when the API reports failed recipients on a 200 response', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          request_id: 'req-4',
+          data: {
+            email_id: 'eml-4',
+            succeeded: 0,
+            failed: 1,
+            failures: ['invalid recipient: nope'],
+          },
+        }),
+      }),
+    )
+
+    await expect(sendViaSmtp2goApi(config, baseMessage)).rejects.toThrow(
+      'SMTP2GO API rejected 1 recipient(s): invalid recipient: nope',
+    )
+  })
 })

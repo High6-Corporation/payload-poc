@@ -7,6 +7,7 @@ import nodemailer from 'nodemailer'
 
 import { AgentAuditLog } from './collections/AgentAuditLog'
 import { Categories } from './collections/Categories'
+import { ChangeLog } from './collections/ChangeLog'
 import { EmailLogs } from './collections/EmailLogs'
 import { CustomCollectionEntries } from './collections/CustomCollectionEntries'
 import { CustomCollections } from './collections/CustomCollections'
@@ -295,6 +296,7 @@ export default buildConfig({
     CustomCollections,
     CustomCollectionEntries,
     AgentAuditLog,
+    ChangeLog,
     EmailLogs,
   ],
   cors: [getServerSideURL(), 'http://localhost:3001', 'http://localhost:3002'].filter(Boolean),

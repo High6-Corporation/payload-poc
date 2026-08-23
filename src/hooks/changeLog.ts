@@ -92,8 +92,8 @@ export function diffFields(
     } else if (stableStringify(pv) !== stableStringify(nv)) {
       rows.push({
         fieldPath: path,
-        previousValue: stripSensitive(pv, excludedPaths),
-        newValue: stripSensitive(nv, excludedPaths),
+        previousValue: pv === undefined || pv === null ? null : stripSensitive(pv, excludedPaths),
+        newValue: nv === undefined || nv === null ? null : stripSensitive(nv, excludedPaths),
       })
     }
   }
@@ -183,8 +183,8 @@ async function writeChangeLogRows(
 }
 
 export function buildChangeLogHooks(options: { excludedPaths?: string[] } = {}): {
-  afterChange: CollectionAfterChangeHook
-  afterDelete: CollectionAfterDeleteHook
+  afterChange: CollectionAfterChangeHook[]
+  afterDelete: CollectionAfterDeleteHook[]
 } {
   const excludedPaths = options.excludedPaths ?? []
 
@@ -235,5 +235,5 @@ export function buildChangeLogHooks(options: { excludedPaths?: string[] } = {}):
     return doc
   }
 
-  return { afterChange, afterDelete }
+  return { afterChange: [afterChange], afterDelete: [afterDelete] }
 }

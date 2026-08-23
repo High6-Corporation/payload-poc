@@ -1446,7 +1446,7 @@ export interface ChangeLog {
    */
   fieldPath?: string | null;
   /**
-   * Value before the change (null on create). Secret fields are stripped.
+   * Value before the change (null on create), JSON-encoded text — JSON.parse to recover. Secret fields are stripped.
    */
   previousValue?:
     | {
@@ -1458,7 +1458,7 @@ export interface ChangeLog {
     | boolean
     | null;
   /**
-   * Value after the change (null on delete). Secret fields are stripped.
+   * Value after the change (null on delete), JSON-encoded text — JSON.parse to recover. Secret fields are stripped.
    */
   newValue?:
     | {

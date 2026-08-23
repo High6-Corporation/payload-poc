@@ -13,6 +13,9 @@ const access = tenantEnabledAccess('menu-items')
 export const MenuItems: CollectionConfig = {
   slug: 'menu-items',
   labels: { singular: 'Menu Item', plural: 'Menu Items' },
+  versions: {
+    maxPerDoc: 50,
+  },
   access: {
     create: access,
     delete: access,

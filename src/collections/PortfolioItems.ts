@@ -4,6 +4,9 @@ import { siteTenantEnabledAccess } from '@/access/tenantScoped'
 
 export const PortfolioItems: CollectionConfig = {
   slug: 'portfolio-items',
+  versions: {
+    maxPerDoc: 50,
+  },
   access: {
     create: siteTenantEnabledAccess('portfolio-items'),
     delete: siteTenantEnabledAccess('portfolio-items'),

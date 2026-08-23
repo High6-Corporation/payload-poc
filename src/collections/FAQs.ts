@@ -4,6 +4,9 @@ import { siteTenantEnabledAccess } from '@/access/tenantScoped'
 
 export const FAQs: CollectionConfig = {
   slug: 'faqs',
+  versions: {
+    maxPerDoc: 50,
+  },
   access: {
     create: siteTenantEnabledAccess('faqs'),
     delete: siteTenantEnabledAccess('faqs'),

@@ -4,6 +4,9 @@ import { siteTenantEnabledAccess } from '@/access/tenantScoped'
 
 export const Testimonials: CollectionConfig = {
   slug: 'testimonials',
+  versions: {
+    maxPerDoc: 50,
+  },
   access: {
     create: siteTenantEnabledAccess('testimonials'),
     delete: siteTenantEnabledAccess('testimonials'),

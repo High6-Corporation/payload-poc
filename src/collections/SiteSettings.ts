@@ -18,6 +18,9 @@ const richtextEditor = lexicalEditor({
 
 export const SiteSettings: CollectionConfig = {
   slug: 'site-settings',
+  versions: {
+    maxPerDoc: 50,
+  },
   access: {
     create: authenticated,
     delete: siteTenantMutateAccess,

@@ -86,6 +86,7 @@ export interface Config {
     'custom-collections': CustomCollection;
     'custom-collection-entries': CustomCollectionEntry;
     'agent-audit-log': AgentAuditLog;
+    'change-log': ChangeLog;
     'email-logs': EmailLog;
     redirects: Redirect;
     forms: Form;
@@ -124,6 +125,7 @@ export interface Config {
     'custom-collections': CustomCollectionsSelect<false> | CustomCollectionsSelect<true>;
     'custom-collection-entries': CustomCollectionEntriesSelect<false> | CustomCollectionEntriesSelect<true>;
     'agent-audit-log': AgentAuditLogSelect<false> | AgentAuditLogSelect<true>;
+    'change-log': ChangeLogSelect<false> | ChangeLogSelect<true>;
     'email-logs': EmailLogsSelect<false> | EmailLogsSelect<true>;
     redirects: RedirectsSelect<false> | RedirectsSelect<true>;
     forms: FormsSelect<false> | FormsSelect<true>;
@@ -1423,6 +1425,74 @@ export interface AgentAuditLog {
   createdAt: string;
 }
 /**
+ * Immutable field-level change history (Phase 2 of the change-history design doc). Written only by hooks on smtp-settings, sites, tenants, users. Super-admin read only.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "change-log".
+ */
+export interface ChangeLog {
+  id: string;
+  /**
+   * Slug of the collection the change happened in.
+   */
+  collectionSlug: string;
+  /**
+   * ID of the changed document.
+   */
+  docId: string;
+  operation: 'create' | 'update' | 'delete';
+  /**
+   * Dotted path of the changed field. Null = whole-document change.
+   */
+  fieldPath?: string | null;
+  /**
+   * Value before the change (null on create). Secret fields are stripped.
+   */
+  previousValue?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  /**
+   * Value after the change (null on delete). Secret fields are stripped.
+   */
+  newValue?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  /**
+   * User who made the change. Null = system (adapter/job/seed).
+   */
+  actor?: (string | null) | User;
+  /**
+   * Comma-joined roles of the actor at write time.
+   */
+  actorRole?: string | null;
+  /**
+   * admin = authenticated REST call (admin UI or direct API — not distinguishable in v1); agent = AGENT_EMAIL service account; system = local API (adapter/seed/jobs). api and public are reserved and unused in v1.
+   */
+  source: 'admin' | 'api' | 'agent' | 'public' | 'system';
+  /**
+   * Attributed tenant when derivable (null for users).
+   */
+  tenant?: (string | null) | Tenant;
+  /**
+   * Attributed site when derivable.
+   */
+  site?: (string | null) | Site;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "email-logs".
  */
@@ -1813,6 +1883,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'agent-audit-log';
         value: string | AgentAuditLog;
+      } | null)
+    | ({
+        relationTo: 'change-log';
+        value: string | ChangeLog;
       } | null)
     | ({
         relationTo: 'email-logs';
@@ -2473,6 +2547,25 @@ export interface AgentAuditLogSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "change-log_select".
+ */
+export interface ChangeLogSelect<T extends boolean = true> {
+  collectionSlug?: T;
+  docId?: T;
+  operation?: T;
+  fieldPath?: T;
+  previousValue?: T;
+  newValue?: T;
+  actor?: T;
+  actorRole?: T;
+  source?: T;
+  tenant?: T;
+  site?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "email-logs_select".
  */
 export interface EmailLogsSelect<T extends boolean = true> {
@@ -3031,6 +3124,7 @@ export interface TaskCreateCollectionExport {
       | 'custom-collections'
       | 'custom-collection-entries'
       | 'agent-audit-log'
+      | 'change-log'
       | 'email-logs'
       | 'redirects'
       | 'forms'

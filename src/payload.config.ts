@@ -35,6 +35,7 @@ import { normalizeTo } from '@/email/loggingAdapter'
 import { sendViaSmtp2goApi } from '@/email/smtp2go'
 import { ensureEmailLogsTtlIndex } from './jobs/emailLogsTtl'
 import { archiveAgentAuditLogTask } from './jobs/archiveAgentAuditLog'
+import { archiveChangeLogTask } from './jobs/archiveChangeLog'
 import {
   resolveSmtpConfig,
   resolveTenantFromRecipient,
@@ -344,6 +345,6 @@ export default buildConfig({
         return authHeader === `Bearer ${secret}`
       },
     },
-    tasks: [archiveAgentAuditLogTask],
+    tasks: [archiveAgentAuditLogTask, archiveChangeLogTask],
   },
 })

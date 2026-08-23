@@ -221,6 +221,12 @@ export default buildConfig({
       beforeDashboard: ['@/components/BeforeDashboard'],
       afterDashboard: ['@/components/AfterDashboard'],
       Nav: '@/components/SiteFilteredNav',
+      views: {
+        pluginInventory: {
+          Component: '@/components/PluginInventoryView#PluginInventoryView',
+          path: '/plugin-inventory',
+        },
+      },
     },
     // Show the default "collections" dashboard widget for super-admins
     // only.  Tenant-admins get an empty dashboard (the BeforeDashboard

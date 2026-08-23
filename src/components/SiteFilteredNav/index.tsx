@@ -452,6 +452,13 @@ const SiteFilteredNav: React.FC = () => {
           <span className="nav__link-label">Dashboard</span>
         </Link>
 
+        {/* Plugin inventory — super-admins only (route enforces the gate too) */}
+        {isSuperAdmin && (
+          <Link className="nav__link" href={`${adminRoute}/plugin-inventory`}>
+            <span className="nav__link-label">Plugin Inventory</span>
+          </Link>
+        )}
+
         {/* Collection groups */}
         {mainGroups.map(([groupName, cols]) => (
           <NavGroup key={groupName} label={groupName}>

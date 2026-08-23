@@ -31,6 +31,7 @@ import { defaultLexical } from '@/fields/defaultLexical'
 import { getServerSideURL } from './utilities/getURL'
 import { normalizeTo } from '@/email/loggingAdapter'
 import { sendViaSmtp2goApi } from '@/email/smtp2go'
+import { ensureEmailLogsTtlIndex } from './jobs/emailLogsTtl'
 import {
   resolveSmtpConfig,
   resolveTenantFromRecipient,
@@ -316,6 +317,9 @@ export default buildConfig({
   },
   secret: process.env.PAYLOAD_SECRET,
   sharp,
+  onInit: async (payload) => {
+    await ensureEmailLogsTtlIndex(payload)
+  },
   typescript: {
     outputFile: path.resolve(dirname, 'payload-types.ts'),
   },

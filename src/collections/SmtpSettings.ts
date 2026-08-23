@@ -3,6 +3,7 @@ import { tenantEnabledAccess } from '@/access/tenantScoped'
 import { authenticated } from '@/access/authenticated'
 import { validateUniquePair } from './SmtpSettings/hooks/validateUniquePair'
 import { maskApiKey } from './SmtpSettings/hooks/maskApiKey'
+import { buildChangeLogHooks } from '@/hooks/changeLog'
 
 // tenantEnabledAccess('smtp-settings') for all operations, with
 // `authenticated` as the baseline gate: anonymous users are denied
@@ -16,6 +17,11 @@ export const SmtpSettings: CollectionConfig = {
   hooks: {
     beforeValidate: [validateUniquePair],
     afterRead: [maskApiKey],
+    ...buildChangeLogHooks({
+      // Never record SMTP credentials — the apiKey fields live inside the
+      // "smtp" tab, and the suffix match also covers the bare names.
+      excludedPaths: ['apiKey', '_apiKey'],
+    }),
   },
   access: {
     create: access,

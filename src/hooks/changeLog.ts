@@ -24,8 +24,16 @@ type JsonFieldValue =
   | null
   | undefined
 
+/**
+ * Payload's `json` field parses string input as JSON — plain text values
+ * (e.g. an email address) fail validation with "invalid input". Encoding
+ * every non-null value with JSON.stringify makes the field round-trip
+ * deterministically: stored values are JSON-encoded text; consumers
+ * recover the original with JSON.parse (numbers/booleans/objects arrive
+ * as JSON text too, keeping the encoding uniform).
+ */
 const asJsonField = (v: unknown): JsonFieldValue =>
-  (v === undefined || v === null ? null : v) as JsonFieldValue
+  v === undefined || v === null ? null : JSON.stringify(v)
 
 const isPlainObject = (v: unknown): v is Record<string, unknown> =>
   typeof v === 'object' && v !== null && !Array.isArray(v)

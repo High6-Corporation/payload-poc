@@ -55,12 +55,18 @@ export const ChangeLog: CollectionConfig = {
     {
       name: 'previousValue',
       type: 'json',
-      admin: { description: 'Value before the change (null on create). Secret fields are stripped.' },
+      admin: {
+        description:
+          'Value before the change (null on create), JSON-encoded text — JSON.parse to recover. Secret fields are stripped.',
+      },
     },
     {
       name: 'newValue',
       type: 'json',
-      admin: { description: 'Value after the change (null on delete). Secret fields are stripped.' },
+      admin: {
+        description:
+          'Value after the change (null on delete), JSON-encoded text — JSON.parse to recover. Secret fields are stripped.',
+      },
     },
     {
       name: 'actor',

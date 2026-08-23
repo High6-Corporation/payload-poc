@@ -20,7 +20,9 @@ const collections: CollectionSlug[] = [
   'search',
 ]
 
-const globals: GlobalSlug[] = ['header', 'footer']
+// Narrow union: jobs scheduling auto-adds the 'payload-jobs-stats' global to
+// GlobalSlug, which breaks updateGlobal's data typing for these two globals.
+const globals: ('header' | 'footer')[] = ['header', 'footer']
 
 const categories = ['Technology', 'News', 'Finance', 'Design', 'Software', 'Engineering']
 

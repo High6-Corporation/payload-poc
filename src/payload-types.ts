@@ -87,6 +87,7 @@ export interface Config {
     'custom-collection-entries': CustomCollectionEntry;
     'agent-audit-log': AgentAuditLog;
     'change-log': ChangeLog;
+    'job-run-log': JobRunLog;
     'email-logs': EmailLog;
     redirects: Redirect;
     forms: Form;
@@ -126,6 +127,7 @@ export interface Config {
     'custom-collection-entries': CustomCollectionEntriesSelect<false> | CustomCollectionEntriesSelect<true>;
     'agent-audit-log': AgentAuditLogSelect<false> | AgentAuditLogSelect<true>;
     'change-log': ChangeLogSelect<false> | ChangeLogSelect<true>;
+    'job-run-log': JobRunLogSelect<false> | JobRunLogSelect<true>;
     'email-logs': EmailLogsSelect<false> | EmailLogsSelect<true>;
     redirects: RedirectsSelect<false> | RedirectsSelect<true>;
     forms: FormsSelect<false> | FormsSelect<true>;
@@ -162,6 +164,7 @@ export interface Config {
   jobs: {
     tasks: {
       'archive-agent-audit-log': TaskArchiveAgentAuditLog;
+      'archive-change-log': TaskArchiveChangeLog;
       createCollectionExport: TaskCreateCollectionExport;
       createCollectionImport: TaskCreateCollectionImport;
       schedulePublish: TaskSchedulePublish;
@@ -1493,6 +1496,52 @@ export interface ChangeLog {
   createdAt: string;
 }
 /**
+ * Run history for retention archive jobs. Written by the job handlers themselves; a failed archive run appears here as status=failed with the error message.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "job-run-log".
+ */
+export interface JobRunLog {
+  id: string;
+  /**
+   * Task slug of the archive job.
+   */
+  jobName: string;
+  status: 'success' | 'failed';
+  startedAt: string;
+  finishedAt?: string | null;
+  /**
+   * Rows older than the cutoff found for this run.
+   */
+  rowsProcessed?: number | null;
+  /**
+   * Rows exported to the NDJSON archive.
+   */
+  rowsArchived?: number | null;
+  /**
+   * Read-back sha256 verification passed.
+   */
+  checksumOk?: boolean | null;
+  /**
+   * Rows deleted. 0 while ENABLE_RETENTION_DELETION is off (dry-run).
+   */
+  deletedCount?: number | null;
+  /**
+   * True when deletion was gated off for this run.
+   */
+  dryRun?: boolean | null;
+  /**
+   * Supabase object key of the NDJSON archive (null when nothing archived).
+   */
+  archiveKey?: string | null;
+  /**
+   * Failure reason when status is failed.
+   */
+  errorMessage?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "email-logs".
  */
@@ -1752,6 +1801,7 @@ export interface PayloadJob {
         taskSlug:
           | 'inline'
           | 'archive-agent-audit-log'
+          | 'archive-change-log'
           | 'createCollectionExport'
           | 'createCollectionImport'
           | 'schedulePublish';
@@ -1788,7 +1838,14 @@ export interface PayloadJob {
       }[]
     | null;
   taskSlug?:
-    | ('inline' | 'archive-agent-audit-log' | 'createCollectionExport' | 'createCollectionImport' | 'schedulePublish')
+    | (
+        | 'inline'
+        | 'archive-agent-audit-log'
+        | 'archive-change-log'
+        | 'createCollectionExport'
+        | 'createCollectionImport'
+        | 'schedulePublish'
+      )
     | null;
   queue?: string | null;
   waitUntil?: string | null;
@@ -1887,6 +1944,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'change-log';
         value: string | ChangeLog;
+      } | null)
+    | ({
+        relationTo: 'job-run-log';
+        value: string | JobRunLog;
       } | null)
     | ({
         relationTo: 'email-logs';
@@ -2566,6 +2627,25 @@ export interface ChangeLogSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "job-run-log_select".
+ */
+export interface JobRunLogSelect<T extends boolean = true> {
+  jobName?: T;
+  status?: T;
+  startedAt?: T;
+  finishedAt?: T;
+  rowsProcessed?: T;
+  rowsArchived?: T;
+  checksumOk?: T;
+  deletedCount?: T;
+  dryRun?: T;
+  archiveKey?: T;
+  errorMessage?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "email-logs_select".
  */
 export interface EmailLogsSelect<T extends boolean = true> {
@@ -3098,6 +3178,14 @@ export interface TaskArchiveAgentAuditLog {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "TaskArchive-change-log".
+ */
+export interface TaskArchiveChangeLog {
+  input?: unknown;
+  output?: unknown;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "TaskCreateCollectionExport".
  */
 export interface TaskCreateCollectionExport {
@@ -3125,6 +3213,7 @@ export interface TaskCreateCollectionExport {
       | 'custom-collection-entries'
       | 'agent-audit-log'
       | 'change-log'
+      | 'job-run-log'
       | 'email-logs'
       | 'redirects'
       | 'forms'

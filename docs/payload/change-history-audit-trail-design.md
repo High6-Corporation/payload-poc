@@ -1,7 +1,7 @@
 # Change History, Audit Trail & Retention — Design Doc (for sign-off)
 
 **Date:** 2026-08-23
-**Status:** IMPLEMENTED (Phases 1 + 2 + 2b) — EmailLogs TTL (dry-run by default), AgentAuditLog archive job (dry-run by default), change-log collection + hooks on smtp-settings/sites/tenants/users, native versions on Tier-1 content collections. Phase 3 (ChangeLog archive) and Phase 4 (monitoring) remain plan-only. See §7 for the flip-on runbook.
+**Status:** IMPLEMENTED (Phases 1 + 2 + 2b + 3 + 4) — EmailLogs TTL (dry-run by default), AgentAuditLog + ChangeLog archive jobs (dry-run by default, row-count reconcile), change-log collection + hooks on smtp-settings/sites/tenants/users, native versions on Tier-1 content collections, job-run-log failure visibility in the admin UI. See §7 for the flip-on runbook.
 **Related:** handoff v38 §2.2 (corrected scope — this covers field-level change tracking across all collections, not just the two log collections).
 
 ---
@@ -196,3 +196,11 @@ Deletion is inert by default. To enable real deletion after a dry-run cycle has 
 - Agent writes to the 4 tracked collections flow into change-log automatically (hooks fire on its REST PATCHes as the agent user). The agent has no actions on these collections today, so no AgentAuditLog duplication exists yet — if it gains Tier-2 actions later, both logs will record (intent log vs server-side truth log); decide then whether to keep both.
 - Archive files are run-stamped (`<ISO>.jsonl` + `.sha256` sidecar), not day-stamped — avoids dry-run/live-run filename collisions.
 - Imports (plugin-import-export) never write Tier-2 collections, so the `skipChangeLog` context flag has no import wiring; seed uses it for its users create/delete.
+
+### Phase 3/4 notes (2026-08-24)
+
+- `job-run-log` collection (Logs group, super-admin read, hooks-closed writes) records one row per archive run — success or failed — with jobName, startedAt/finishedAt, rowsProcessed/rowsArchived, checksumOk, deletedCount, dryRun, archiveKey, and errorMessage. Check it for failed runs instead of server logs.
+- ChangeLog archive runs at 03:05 (5 min after AgentAuditLog's 03:00) so both jobs don't hit Supabase at once; `CHANGE_LOG_RETENTION_DAYS` default 365, `CHANGE_LOG_ARCHIVE_PATH` default `archives/change-log/`. Cutoff field is `createdAt`.
+- Phase 3 reconcile (both jobs, shared pipeline in `src/jobs/archiveShared.ts`): read-back line count must equal the archived row count pre-delete, and `deletedCount` must equal the archived count post-delete — a mismatch aborts/throws a hard error, never silently proceeds.
+- Phase 4 alerting: deliberately NO Slack/email channel (none confirmed available) — admin-UI visibility (job-run-log) + structured console logging only. Wire an external channel only if one is later confirmed.
+- Failure path was empirically proven (2026-08-24): a deliberately broken Supabase bucket made the archive upload throw, deletion was blocked (row count unchanged), and a status=failed job-run-log row with the error message was recorded. Env reverted immediately.

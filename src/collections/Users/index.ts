@@ -1,6 +1,7 @@
 import type { Access, CollectionConfig, FieldAccess } from 'payload'
 
 import { authenticated } from '../../access/authenticated'
+import { buildChangeLogHooks } from '@/hooks/changeLog'
 
 const superAdminOnly: Access = ({ req: { user } }) => {
   if (!user) return false
@@ -29,6 +30,20 @@ export const Users: CollectionConfig = {
     group: 'Tenant Management',
   },
   auth: true,
+  hooks: buildChangeLogHooks({
+    // Auth-internal fields — never record password material or login noise.
+    excludedPaths: [
+      'password',
+      'salt',
+      'hash',
+      'loginAttempts',
+      'lockUntil',
+      'resetPasswordToken',
+      'resetPasswordExpiration',
+      '_verificationToken',
+      '_password',
+    ],
+  }),
   fields: [
     {
       name: 'name',

@@ -86,6 +86,8 @@ export interface Config {
     'custom-collections': CustomCollection;
     'custom-collection-entries': CustomCollectionEntry;
     'agent-audit-log': AgentAuditLog;
+    'change-log': ChangeLog;
+    'job-run-log': JobRunLog;
     'email-logs': EmailLog;
     redirects: Redirect;
     forms: Form;
@@ -124,6 +126,8 @@ export interface Config {
     'custom-collections': CustomCollectionsSelect<false> | CustomCollectionsSelect<true>;
     'custom-collection-entries': CustomCollectionEntriesSelect<false> | CustomCollectionEntriesSelect<true>;
     'agent-audit-log': AgentAuditLogSelect<false> | AgentAuditLogSelect<true>;
+    'change-log': ChangeLogSelect<false> | ChangeLogSelect<true>;
+    'job-run-log': JobRunLogSelect<false> | JobRunLogSelect<true>;
     'email-logs': EmailLogsSelect<false> | EmailLogsSelect<true>;
     redirects: RedirectsSelect<false> | RedirectsSelect<true>;
     forms: FormsSelect<false> | FormsSelect<true>;
@@ -145,10 +149,12 @@ export interface Config {
   globals: {
     header: Header;
     footer: Footer;
+    'payload-jobs-stats': PayloadJobsStat;
   };
   globalsSelect: {
     header: HeaderSelect<false> | HeaderSelect<true>;
     footer: FooterSelect<false> | FooterSelect<true>;
+    'payload-jobs-stats': PayloadJobsStatsSelect<false> | PayloadJobsStatsSelect<true>;
   };
   locale: null;
   widgets: {
@@ -157,6 +163,8 @@ export interface Config {
   user: PortalClient | User;
   jobs: {
     tasks: {
+      'archive-agent-audit-log': TaskArchiveAgentAuditLog;
+      'archive-change-log': TaskArchiveChangeLog;
       createCollectionExport: TaskCreateCollectionExport;
       createCollectionImport: TaskCreateCollectionImport;
       schedulePublish: TaskSchedulePublish;
@@ -1420,6 +1428,120 @@ export interface AgentAuditLog {
   createdAt: string;
 }
 /**
+ * Immutable field-level change history (Phase 2 of the change-history design doc). Written only by hooks on smtp-settings, sites, tenants, users. Super-admin read only.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "change-log".
+ */
+export interface ChangeLog {
+  id: string;
+  /**
+   * Slug of the collection the change happened in.
+   */
+  collectionSlug: string;
+  /**
+   * ID of the changed document.
+   */
+  docId: string;
+  operation: 'create' | 'update' | 'delete';
+  /**
+   * Dotted path of the changed field. Null = whole-document change.
+   */
+  fieldPath?: string | null;
+  /**
+   * Value before the change (null on create), JSON-encoded text — JSON.parse to recover. Secret fields are stripped.
+   */
+  previousValue?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  /**
+   * Value after the change (null on delete), JSON-encoded text — JSON.parse to recover. Secret fields are stripped.
+   */
+  newValue?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  /**
+   * User who made the change. Null = system (adapter/job/seed).
+   */
+  actor?: (string | null) | User;
+  /**
+   * Comma-joined roles of the actor at write time.
+   */
+  actorRole?: string | null;
+  /**
+   * admin = authenticated REST call (admin UI or direct API — not distinguishable in v1); agent = AGENT_EMAIL service account; system = local API (adapter/seed/jobs). api and public are reserved and unused in v1.
+   */
+  source: 'admin' | 'api' | 'agent' | 'public' | 'system';
+  /**
+   * Attributed tenant when derivable (null for users).
+   */
+  tenant?: (string | null) | Tenant;
+  /**
+   * Attributed site when derivable.
+   */
+  site?: (string | null) | Site;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Run history for retention archive jobs. Written by the job handlers themselves; a failed archive run appears here as status=failed with the error message.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "job-run-log".
+ */
+export interface JobRunLog {
+  id: string;
+  /**
+   * Task slug of the archive job.
+   */
+  jobName: string;
+  status: 'success' | 'failed';
+  startedAt: string;
+  finishedAt?: string | null;
+  /**
+   * Rows older than the cutoff found for this run.
+   */
+  rowsProcessed?: number | null;
+  /**
+   * Rows exported to the NDJSON archive.
+   */
+  rowsArchived?: number | null;
+  /**
+   * Read-back sha256 verification passed.
+   */
+  checksumOk?: boolean | null;
+  /**
+   * Rows deleted. 0 while ENABLE_RETENTION_DELETION is off (dry-run).
+   */
+  deletedCount?: number | null;
+  /**
+   * True when deletion was gated off for this run.
+   */
+  dryRun?: boolean | null;
+  /**
+   * Supabase object key of the NDJSON archive (null when nothing archived).
+   */
+  archiveKey?: string | null;
+  /**
+   * Failure reason when status is failed.
+   */
+  errorMessage?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "email-logs".
  */
@@ -1676,7 +1798,13 @@ export interface PayloadJob {
     | {
         executedAt: string;
         completedAt: string;
-        taskSlug: 'inline' | 'createCollectionExport' | 'createCollectionImport' | 'schedulePublish';
+        taskSlug:
+          | 'inline'
+          | 'archive-agent-audit-log'
+          | 'archive-change-log'
+          | 'createCollectionExport'
+          | 'createCollectionImport'
+          | 'schedulePublish';
         taskID: string;
         input?:
           | {
@@ -1709,10 +1837,28 @@ export interface PayloadJob {
         id?: string | null;
       }[]
     | null;
-  taskSlug?: ('inline' | 'createCollectionExport' | 'createCollectionImport' | 'schedulePublish') | null;
+  taskSlug?:
+    | (
+        | 'inline'
+        | 'archive-agent-audit-log'
+        | 'archive-change-log'
+        | 'createCollectionExport'
+        | 'createCollectionImport'
+        | 'schedulePublish'
+      )
+    | null;
   queue?: string | null;
   waitUntil?: string | null;
   processing?: boolean | null;
+  meta?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -1794,6 +1940,14 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'agent-audit-log';
         value: string | AgentAuditLog;
+      } | null)
+    | ({
+        relationTo: 'change-log';
+        value: string | ChangeLog;
+      } | null)
+    | ({
+        relationTo: 'job-run-log';
+        value: string | JobRunLog;
       } | null)
     | ({
         relationTo: 'email-logs';
@@ -2454,6 +2608,44 @@ export interface AgentAuditLogSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "change-log_select".
+ */
+export interface ChangeLogSelect<T extends boolean = true> {
+  collectionSlug?: T;
+  docId?: T;
+  operation?: T;
+  fieldPath?: T;
+  previousValue?: T;
+  newValue?: T;
+  actor?: T;
+  actorRole?: T;
+  source?: T;
+  tenant?: T;
+  site?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "job-run-log_select".
+ */
+export interface JobRunLogSelect<T extends boolean = true> {
+  jobName?: T;
+  status?: T;
+  startedAt?: T;
+  finishedAt?: T;
+  rowsProcessed?: T;
+  rowsArchived?: T;
+  checksumOk?: T;
+  deletedCount?: T;
+  dryRun?: T;
+  archiveKey?: T;
+  errorMessage?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "email-logs_select".
  */
 export interface EmailLogsSelect<T extends boolean = true> {
@@ -2786,6 +2978,7 @@ export interface PayloadJobsSelect<T extends boolean = true> {
   queue?: T;
   waitUntil?: T;
   processing?: T;
+  meta?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -2893,6 +3086,24 @@ export interface Footer {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "payload-jobs-stats".
+ */
+export interface PayloadJobsStat {
+  id: string;
+  stats?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "header_select".
  */
 export interface HeaderSelect<T extends boolean = true> {
@@ -2939,6 +3150,16 @@ export interface FooterSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "payload-jobs-stats_select".
+ */
+export interface PayloadJobsStatsSelect<T extends boolean = true> {
+  stats?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "collections_widget".
  */
 export interface CollectionsWidget {
@@ -2946,6 +3167,22 @@ export interface CollectionsWidget {
     [k: string]: unknown;
   };
   width: 'full';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "TaskArchive-agent-audit-log".
+ */
+export interface TaskArchiveAgentAuditLog {
+  input?: unknown;
+  output?: unknown;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "TaskArchive-change-log".
+ */
+export interface TaskArchiveChangeLog {
+  input?: unknown;
+  output?: unknown;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -2975,6 +3212,8 @@ export interface TaskCreateCollectionExport {
       | 'custom-collections'
       | 'custom-collection-entries'
       | 'agent-audit-log'
+      | 'change-log'
+      | 'job-run-log'
       | 'email-logs'
       | 'redirects'
       | 'forms'

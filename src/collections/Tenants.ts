@@ -1,6 +1,7 @@
 import type { CollectionConfig } from 'payload'
 
 import { superAdminOnly, tenantSelfReadAccess } from '@/access/tenantScoped'
+import { buildChangeLogHooks } from '@/hooks/changeLog'
 import { slugField } from 'payload'
 
 export const Tenants: CollectionConfig = {
@@ -11,6 +12,7 @@ export const Tenants: CollectionConfig = {
     read: tenantSelfReadAccess,
     update: superAdminOnly,
   },
+  hooks: buildChangeLogHooks(),
   admin: {
     useAsTitle: 'name',
     group: 'Tenant Management',

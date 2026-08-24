@@ -7,6 +7,8 @@ import nodemailer from 'nodemailer'
 
 import { AgentAuditLog } from './collections/AgentAuditLog'
 import { Categories } from './collections/Categories'
+import { ChangeLog } from './collections/ChangeLog'
+import { JobRunLog } from './collections/JobRunLog'
 import { EmailLogs } from './collections/EmailLogs'
 import { CustomCollectionEntries } from './collections/CustomCollectionEntries'
 import { CustomCollections } from './collections/CustomCollections'
@@ -31,6 +33,9 @@ import { defaultLexical } from '@/fields/defaultLexical'
 import { getServerSideURL } from './utilities/getURL'
 import { normalizeTo } from '@/email/loggingAdapter'
 import { sendViaSmtp2goApi } from '@/email/smtp2go'
+import { ensureEmailLogsTtlIndex } from './jobs/emailLogsTtl'
+import { archiveAgentAuditLogTask } from './jobs/archiveAgentAuditLog'
+import { archiveChangeLogTask } from './jobs/archiveChangeLog'
 import {
   resolveSmtpConfig,
   resolveTenantFromRecipient,
@@ -221,6 +226,12 @@ export default buildConfig({
       beforeDashboard: ['@/components/BeforeDashboard'],
       afterDashboard: ['@/components/AfterDashboard'],
       Nav: '@/components/SiteFilteredNav',
+      views: {
+        pluginInventory: {
+          Component: '@/components/PluginInventoryView#PluginInventoryView',
+          path: '/plugin-inventory',
+        },
+      },
     },
     // Show the default "collections" dashboard widget for super-admins
     // only.  Tenant-admins get an empty dashboard (the BeforeDashboard
@@ -287,6 +298,8 @@ export default buildConfig({
     CustomCollections,
     CustomCollectionEntries,
     AgentAuditLog,
+    ChangeLog,
+    JobRunLog,
     EmailLogs,
   ],
   cors: [getServerSideURL(), 'http://localhost:3001', 'http://localhost:3002'].filter(Boolean),
@@ -310,6 +323,9 @@ export default buildConfig({
   },
   secret: process.env.PAYLOAD_SECRET,
   sharp,
+  onInit: async (payload) => {
+    await ensureEmailLogsTtlIndex(payload)
+  },
   typescript: {
     outputFile: path.resolve(dirname, 'payload-types.ts'),
   },
@@ -329,6 +345,6 @@ export default buildConfig({
         return authHeader === `Bearer ${secret}`
       },
     },
-    tasks: [],
+    tasks: [archiveAgentAuditLogTask, archiveChangeLogTask],
   },
 })

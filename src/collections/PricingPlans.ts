@@ -4,6 +4,9 @@ import { siteTenantEnabledAccess } from '@/access/tenantScoped'
 
 export const PricingPlans: CollectionConfig = {
   slug: 'pricing-plans',
+  versions: {
+    maxPerDoc: 50,
+  },
   access: {
     create: siteTenantEnabledAccess('pricing-plans'),
     delete: siteTenantEnabledAccess('pricing-plans'),

@@ -1,0 +1,17 @@
+node_modules
+.next
+.git
+.env
+.env.*
+!.env.example
+test.env
+.vercel
+.claude
+.engram
+.superpowers
+.worktrees
+.vscode
+.playwright
+test-results
+*.log
+.DS_Store
